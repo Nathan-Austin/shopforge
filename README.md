@@ -343,3 +343,32 @@ Then every new project will be ready end-to-end from a single command.
 ## 📄 License
 
 This setup guide and scripts are provided as-is for creating e-commerce projects. Customize freely for your needs.
+
+---
+
+## Generated Output Example
+
+Running the chilli template:
+
+```
+./create-next-commerce-template-ssr.sh test-chilli en
+```
+
+Produces a Next.js app with:
+
+```
+ test-chilli/
+ ├─ .env.local                        # filled with Supabase keys you entered
+ ├─ supabase/
+ │  └─ migrations/0001_init.sql       # copied from store-modes/chilli/schema.sql
+ ├─ src/
+ │  ├─ components/store/              # chilli storefront pack
+ │  ├─ app/[locale]/admin/            # chilli admin pack (dashboard, CRUD)
+ │  ├─ lib/supabase/                  # SSR/client helpers (auto-installed)
+ │  └─ app/[locale]/auth/*            # ready-made auth pages
+ ├─ public/
+ ├─ package.json
+ └─ ...
+```
+
+Generic mode is similar but copies the `store-modes/generic` assets and applies the generic schema/seeds (no chilli metadata). After scaffolding, run `pnpm dev` and visit `http://localhost:3000/<locale>`.

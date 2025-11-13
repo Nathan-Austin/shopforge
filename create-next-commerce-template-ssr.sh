@@ -3,6 +3,26 @@ set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
+if ! command -v node >/dev/null 2>&1; then
+  echo "❌ Node.js is required (please install Node 18+)." >&2
+  exit 1
+fi
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "❌ pnpm is required (install via: corepack enable pnpm)." >&2
+  exit 1
+fi
+
+if ! command -v npx >/dev/null 2>&1; then
+  echo "❌ npx (Node.js) is required." >&2
+  exit 1
+fi
+
+if ! npx --yes supabase --help >/dev/null 2>&1; then
+  echo "❌ Supabase CLI not found. Install via npm: npm i -g supabase." >&2
+  exit 1
+fi
+
 STORE_MODE="chilli"
 POSITIONAL=()
 for arg in "$@"; do

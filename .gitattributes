@@ -1,0 +1,4 @@
+*.sql linguist-language=SQL
+*.sh  linguist-language=Shell
+*.tsx linguist-language=TypeScript
+*.ts  linguist-language=TypeScript
