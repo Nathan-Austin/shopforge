@@ -9,14 +9,15 @@ A repeatable workflow for building new e-commerce websites using **Next.js 16 + 
 1. [Workspace Setup](#%EF%B8%8F-workspace-setup)
 2. [Create New Project Accounts](#1%EF%B8%8F⃣-create-new-project-accounts)
 3. [Create Supabase Project](#2%EF%B8%8F⃣-create-supabase-project)
-4. [Scaffold the Project](#3%EF%B8%8F⃣-scaffold-the-project)
-5. [Configure Environment Variables](#4%EF%B8%8F⃣-configure-environment-variables)
-6. [Link Supabase Project](#5%EF%B8%8F⃣-link-supabase-project)
-7. [Extend the Template](#6%EF%B8%8F⃣-extend-the-template)
-8. [Create & Push Database Schema](#7%EF%B8%8F⃣-create--push-database-schema)
-9. [Connect to GitHub](#8%EF%B8%8F⃣-connect-to-github)
-10. [Deploy to Vercel](#9%EF%B8%8F⃣-deploy-to-vercel)
-11. [Verify Deployment](#%EF%B8%8F-verify-deployment)
+4. [Store Modes](#store-modes)
+5. [Scaffold the Project](#3%EF%B8%8F⃣-scaffold-the-project)
+6. [Configure Environment Variables](#4%EF%B8%8F⃣-configure-environment-variables)
+7. [Link Supabase Project](#5%EF%B8%8F⃣-link-supabase-project)
+8. [Extend the Template](#6%EF%B8%8F⃣-extend-the-template)
+9. [Supabase Automation](#supabase-automation)
+10. [Connect to GitHub](#8%EF%B8%8F⃣-connect-to-github)
+11. [Deploy to Vercel](#9%EF%B8%8F⃣-deploy-to-vercel)
+12. [Verify Deployment](#%EF%B8%8F-verify-deployment)
 
 ---
 
@@ -68,12 +69,36 @@ At [app.supabase.com](https://app.supabase.com):
 
 ---
 
+## Store Modes
+
+All scaffolding assets live under `store-modes/<mode>/`:
+
+```
+store-modes/
+  chilli/
+    store-components/
+    admin-components/
+    schema.sql
+    seeds.sql
+    brand-single.sql
+  generic/
+    ...
+```
+
+- `chilli` (default) includes chilli types, heat levels, and the spicy storefront/admin packs you’ve already been using.
+- `generic` is a clean catalogue (products/brands/categories only) with a simplified admin UI.
+
+Each mode ships its own schema + seed files, so the generator can push the right database objects and copy the matching React packs automatically.
+
+---
+
 ## 3️⃣ Scaffold the Project
 
 From `~/WEBDEV`:
 
 ```bash
-./create-next-commerce-template-ssr.sh clientname-store en "en,de,tr,ar"
+./create-next-commerce-template-ssr.sh clientname-store en "en,de,tr,ar"      # default chilli mode
+./create-next-commerce-template-ssr.sh clientname-store en --mode=generic    # generic mode
 cd clientname-store
 ```
 
@@ -81,12 +106,21 @@ cd clientname-store
 - `clientname-store` - Project name
 - `en` - Default locale
 - `"en,de,tr,ar"` - Comma-separated list of supported locales
+- `--mode=<chilli|generic>` - Optional flag; default is `chilli`
+
+What the script now does:
+- Scaffolds the Next.js app via `pnpm create next-app`
+- Prompts once for Supabase URL / anon / service keys (writes `.env.local`)
+- Links the Supabase project and runs `supabase db push` using the mode’s `schema.sql`
+- Seeds categories/brands/etc. via the mode’s `seeds.sql` (plus default brand for single-store setups)
+- Creates the `product-images` bucket + storage policies
+- Copies the matching `store-components` + `admin-components` pack into the app
 
 ---
 
 ## 4️⃣ Configure Environment Variables
 
-Add your Supabase credentials now so later steps can connect:
+The scaffolder writes `.env.local` using the values you just entered. Open the file and fill in any remaining app secrets (payments, site URL, etc.):
 
 ```bash
 cat > .env.local <<'EOF'
@@ -131,101 +165,23 @@ cat .supabase/config.toml
 Now that `.env.local` exists and Supabase is linked:
 
 ```bash
-../extend-commerce-template.sh
+../extend-commerce-template.sh                     # chilli mode sync
+../extend-commerce-template.sh --mode=generic      # generic mode sync
 ```
 
-This adds:
-- Profile helper functions
-- Payment adapters (Stripe, PayPal, Mollie)
-- Checkout API route
+Extend copies the relevant `store-components` + `admin-components` pack into an existing project (non-destructively) and ensures the profile helper/payments/checkout API are in place. It does **not** rewrite migrations or prompt for Supabase keys.
 
 ---
 
-## 7️⃣ Create & Push Database Schema
+## 7️⃣ Supabase Automation
 
-If `/supabase/migrations` doesn't exist yet, create it:
+No manual SQL editing is required. The generator handles everything:
 
-```bash
-mkdir -p supabase/migrations
-nano supabase/migrations/0001_init.sql
-```
+1. **Schema** – `create-next-commerce-template-ssr.sh` copies `store-modes/<mode>/schema.sql` into `supabase/migrations/0001_init.sql` and runs `npx supabase db push`.
+2. **Seeds** – it executes `store-modes/<mode>/seeds.sql` (plus `brand-single.sql` if you pick single-store mode) with `npx supabase db query`, so categories/brands/chilli types are ready immediately.
+3. **Storage** – the script creates the `product-images` bucket, enables RLS on `storage.objects`, and applies public-read/authenticated-upload policies.
 
-Paste the base schema:
-
-```sql
--- Profiles
-create table if not exists profiles (
-  id uuid references auth.users on delete cascade not null primary key,
-  full_name text,
-  email text unique,
-  phone text,
-  marketing_consent boolean default false,
-  cookie_consent boolean default false,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
--- Addresses
-create table if not exists addresses (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete cascade,
-  full_name text,
-  street text,
-  city text,
-  postal_code text,
-  country text,
-  phone text,
-  created_at timestamptz default now()
-);
-
--- Products
-create table if not exists products (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  description text,
-  price_cents integer not null,
-  currency text default 'EUR',
-  image_url text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
--- Orders
-create table if not exists orders (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete set null,
-  address_id uuid references addresses(id) on delete set null,
-  total_cents integer not null,
-  currency text default 'EUR',
-  status text default 'pending',
-  payment_provider text,
-  provider_session_id text,
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-
--- Order items
-create table if not exists order_items (
-  id uuid default gen_random_uuid() primary key,
-  order_id uuid references orders(id) on delete cascade,
-  product_id uuid references products(id) on delete cascade,
-  quantity integer not null default 1,
-  unit_price_cents integer not null,
-  created_at timestamptz default now()
-);
-
--- Indexes
-create index if not exists idx_orders_user_id on orders(user_id);
-create index if not exists idx_order_items_order_id on order_items(order_id);
-```
-
-Push the migration:
-
-```bash
-npx supabase db push
-```
-
-Confirm in the Supabase Table Editor that all tables exist.
+If you tweak a mode’s schema or seeds, update the files under `store-modes/<mode>/` and re-run the generator for new projects. Existing projects can manage their own migrations as usual.
 
 ---
 
