@@ -1,0 +1,27 @@
+# Ignore all generated stores
+*/store/
+*-store/
+*-shop/
+*-commerce/
+test-*/
+
+# Ignore Node modules anywhere
+node_modules/
+
+# Ignore build artifacts
+.next/
+dist/
+
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore Supabase generated folders
+supabase/.temp/
+supabase/.cache/
+supabase/.branches/
+
+# Common OS junk
+.DS_Store
+Thumbs.db
