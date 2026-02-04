@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { requireShopOwner } from './lib/auth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Package, Tag, Briefcase } from 'lucide-react';
 
 export default async function AdminDashboard({ params: { locale } }: { params: { locale: string } }) {
   const { supabase } = await requireShopOwner(locale);
@@ -12,26 +14,52 @@ export default async function AdminDashboard({ params: { locale } }: { params: {
   ]);
 
   const cards = [
-    { label: t('stats.products'), value: productCount ?? 0 },
-    { label: t('stats.brands'), value: brandCount ?? 0 },
-    { label: t('stats.categories'), value: categoryCount ?? 0 }
+    { 
+      label: t('stats.products'), 
+      value: productCount ?? 0, 
+      icon: Package, 
+      color: 'text-blue-600' 
+    },
+    { 
+      label: t('stats.brands'), 
+      value: brandCount ?? 0, 
+      icon: Briefcase, 
+      color: 'text-purple-600' 
+    },
+    { 
+      label: t('stats.categories'), 
+      value: categoryCount ?? 0, 
+      icon: Tag, 
+      color: 'text-green-600' 
+    }
   ];
 
   return (
     <div className="space-y-6">
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {cards.map((card) => (
-          <div key={card.label} className="rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <p className="text-sm text-text-muted">{card.label}</p>
-            <p className="mt-2 text-3xl font-bold text-foreground">{card.value}</p>
-          </div>
+          <Card key={card.label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {card.label}
+              </CardTitle>
+              <card.icon className={`h-4 w-4 ${card.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{card.value}</div>
+            </CardContent>
+          </Card>
         ))}
       </section>
 
-      <section className="rounded-2xl border border-border bg-white p-6 shadow-sm">
-        <h2 className="text-xl font-semibold text-foreground mb-2">{t('dashboardWelcomeHeading')}</h2>
-        <p className="text-text-muted">{t('dashboardWelcomeCopy')}</p>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">{t('dashboardWelcomeHeading')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">{t('dashboardWelcomeCopy')}</p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

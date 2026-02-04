@@ -1,36 +1,31 @@
-export interface ChilliType {
-  id: string | number;
-  name: string;
-  slug: string;
-  heatLevel?: string | number | null;
-}
+export type DbId = string | number;
 
 export interface Category {
-  id: string | number;
+  id: DbId;
   name: string;
   slug: string;
 }
 
 export interface StoreBrand {
-  id: string | number;
+  id: DbId;
   name: string;
   slug: string;
-  description?: string;
-  country?: string;
-  logo_url?: string;
+  description?: string | null;
+  country?: string | null;
+  logo_url?: string | null;
 }
 
 export interface StoreProduct {
-  id: string | number;
+  id: DbId;
   name: string;
   slug: string;
   price_cents: number;
   currency: string;
-  description?: string;
-  image_url?: string;
-  heatLevel?: string | number | null;
-  chilliTypes?: ChilliType[];
+  description?: string | null;
+  image_url?: string | null;
   category?: Category | null;
-  brandId?: string | number;
+  brandId?: DbId;
   brand?: StoreBrand | null;
+  stock?: number;
+  is_active?: boolean;
 }

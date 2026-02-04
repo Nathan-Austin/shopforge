@@ -4,7 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { StoreProduct } from './types';
-import Chip from './Chip';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -22,92 +24,81 @@ export default function ProductCard({ product, locale: propLocale }: ProductCard
   const categoryName = product.category?.name || null;
 
   return (
-    <article className="group rounded-2xl border border-roh-ash-grey overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
-      <Link href={productUrl} className="block">
-        <div className="relative bg-gray-100 aspect-square">
+    <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+      <Link href={productUrl} className="block relative">
+        <div className="relative aspect-square bg-muted/50">
           {product.image_url ? (
             <Image
               src={product.image_url}
               alt={`${product.name} hot sauce bottle`}
               fill
-              className="object-cover"
-              unoptimized
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <svg className="w-16 h-16 text-gray-300" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7l2-7z" />
-              </svg>
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <span className="text-4xl">🌶️</span>
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-semibold leading-tight flex-1 text-gray-900">
-            <Link href={productUrl} className="hover:underline">
+      <CardContent className="p-4 flex flex-col flex-1 gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-col gap-1">
+            <Link href={productUrl} className="font-semibold leading-tight hover:underline line-clamp-1">
               {product.name}
             </Link>
-          </h3>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {product.heatLevel && (
-              <Chip>{product.heatLevel}</Chip>
-            )}
-            {categoryName && (
-              <Chip>{categoryName}</Chip>
-            )}
+            <div className="text-sm text-muted-foreground">
+              by{' '}
+              {brandUrl ? (
+                <Link
+                  href={brandUrl}
+                  className="font-medium hover:text-foreground transition-colors"
+                >
+                  {brandName}
+                </Link>
+              ) : (
+                <span>{brandName}</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <p className="mt-1 text-sm text-gray-600">
-          by{' '}
-          {brandUrl ? (
-            <Link
-              href={brandUrl}
-              className="underline underline-offset-2 text-gray-700 hover:text-black"
-            >
-              {brandName}
-            </Link>
-          ) : (
-            <span className="text-gray-700">{brandName}</span>
+        <div className="flex flex-wrap gap-2">
+          {product.heatLevel && (
+            <Badge variant="secondary" className="font-normal text-xs">
+              {product.heatLevel}
+            </Badge>
           )}
-        </p>
+          {categoryName && (
+            <Badge variant="outline" className="font-normal text-xs">
+              {categoryName}
+            </Badge>
+          )}
+        </div>
 
         {product.description && (
-          <p className="mt-2 text-sm text-gray-700 line-clamp-2">
+          <p className="text-sm text-muted-foreground line-clamp-2">
             {product.description}
           </p>
         )}
 
-        {product.chilliTypes && product.chilliTypes.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {product.chilliTypes.slice(0, 2).map((chilli) => (
-              <Chip key={chilli.id}>
-                {chilli.name}
-              </Chip>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <span className="text-lg font-semibold text-gray-900">
-              {(product.price_cents / 100).toLocaleString(locale, {
-                style: 'currency',
-                currency: product.currency
-              })}
-            </span>
-          </div>
-          <Link
-            href={productUrl}
-            className="inline-flex items-center gap-1 rounded-lg bg-roh-flag-green px-3 py-1.5
-                     text-sm font-semibold text-white hover:brightness-95 transition-all"
-          >
-            {t('actions.seeMore')}
-          </Link>
+        <div className="mt-auto pt-2 flex items-center justify-between">
+          <span className="text-lg font-bold">
+            {(product.price_cents / 100).toLocaleString(locale, {
+              style: 'currency',
+              currency: product.currency
+            })}
+          </span>
+          
+          <Button asChild size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <Link href={productUrl}>
+              {t('actions.seeMore')}
+            </Link>
+          </Button>
         </div>
-      </div>
-    </article>
+      </CardContent>
+    </Card>
   );
 }

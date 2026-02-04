@@ -207,22 +207,47 @@ EOF
 mkdir -p src/app/api/checkout
 cat > src/app/api/checkout/route.ts <<'EOF'
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getAdapter } from '@/lib/payments';
 import type { PaymentAdapter } from '@/lib/payments/types';
 
+const checkoutSchema = z.object({
+  provider: z.enum(['stripe', 'paypal', 'mollie']).default('stripe'),
+  orderId: z.string().min(1),
+  amountCents: z.number().int().positive(),
+  currency: z.string().length(3).default('EUR'),
+});
+
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { provider = 'stripe', orderId, amountCents, currency = 'EUR' } = await req.json();
   try {
-    const adapter: PaymentAdapter = getAdapter(provider);
-    const session = await adapter.createCheckoutSession({ userId: user.id, orderId, amountCents, currency });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const json = await req.json();
+    const payload = checkoutSchema.parse(json);
+
+    const adapter: PaymentAdapter = getAdapter(payload.provider);
+    const session = await adapter.createCheckoutSession({ 
+      userId: user.id, 
+      orderId: payload.orderId, 
+      amountCents: payload.amountCents, 
+      currency: payload.currency 
+    });
+
     return NextResponse.json(session);
   } catch (e: any) {
-    console.error(e);
-    return NextResponse.json({ error: e.message }, { status: 400 });
+    console.error('Checkout error:', e);
+    
+    if (e instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Invalid payload', issues: e.flatten() }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: e.message || 'Internal server error' }, { status: 500 });
   }
 }
 EOF
