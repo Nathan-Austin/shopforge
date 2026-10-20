@@ -25,3 +25,8 @@ supabase/.branches/
 # Common OS junk
 .DS_Store
 Thumbs.db
+
+# local secrets
+.env*
+!.env.example
+PROPOSAL_TEA_EXPORTER.md
