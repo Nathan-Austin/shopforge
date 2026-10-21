@@ -33,3 +33,6 @@ Thumbs.db
 # local AI assistant notes
 GEMINI.md
 PROPOSAL_TEA_EXPORTER.md
+
+# local Claude Code settings (contain machine-specific paths)
+.claude/
