@@ -120,6 +120,22 @@ What the script now does:
 - Seeds categories/brands/etc. via the mode’s `seeds.sql` (plus default brand for single-store setups)
 - Creates the `product-images` bucket + storage policies
 - Copies the matching `store-components` + `admin-components` pack into the app
+- Generates a random `NEXTAUTH_SECRET`
+
+### Make yourself the shop owner
+
+New accounts are always created as `customer`; nobody is promoted
+automatically, so a store that goes live before you register can't be claimed
+by a stranger. Sign up through the store, then run this in the Supabase SQL
+editor:
+
+```sql
+update public.profiles set role = 'shop_owner'
+ where id = (select id from auth.users where email = 'you@example.com');
+```
+
+Customers can't change their own `role` (a database trigger blocks it), and
+`cart_items` is only reachable from server code via the service-role key.
 
 ---
 

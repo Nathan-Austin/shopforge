@@ -63,15 +63,8 @@ export async function POST() {
     return NextResponse.json({ error: profileError.message }, { status: 400 });
   }
 
-  let role = existingProfile?.role || 'customer';
-  
-  // Auto-promote first user to shop_owner
-  if (!existingProfile) {
-    const { count } = await supabase
-      .from('profiles')
-      .select('id', { head: true, count: 'exact' });
-    if ((count ?? 0) === 0) role = 'shop_owner';
-  }
+  // New profiles are always customers; promote the owner via the SQL editor.
+  const role = existingProfile?.role || 'customer';
 
   const { data, error } = await supabase
     .from('profiles')
@@ -97,7 +90,7 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { calculateShippingCost, SHIPPING_RATE_LABEL } from '@/lib/checkout/pricing';
 import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
 
@@ -118,8 +111,9 @@ export async function POST(request: Request) {
     const stripe = getStripeServerClient();
     const payload = checkoutSchema.parse(await request.json());
     
-    const supabase = await createClient();
-    
+    // cart_items is server-only (no RLS access for anon/authenticated)
+    const supabase = createAdminClient();
+
     // 1. Fetch cart items server-side (Security: Don't trust client prices/items)
     const { data: cartItems, error: cartError } = await supabase
       .from('cart_items')

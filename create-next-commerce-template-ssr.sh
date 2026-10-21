@@ -1282,14 +1282,8 @@ export async function POST() {
     return NextResponse.json({ error: profileError.message }, { status: 400 });
   }
 
-  let role = existingProfile?.role || null;
-  if (!role) {
-    const { count } = await supabase
-      .from('profiles')
-      .select('id', { head: true, count: 'exact' })
-      .eq('role', 'shop_owner');
-    role = (count ?? 0) === 0 ? 'shop_owner' : 'customer';
-  }
+  // New profiles are always customers; promote the owner via the SQL editor.
+  const role = existingProfile?.role || 'customer';
 
   const { data, error } = await supabase
     .from('profiles')
@@ -1310,7 +1304,7 @@ ensure_env_default "MOLLIE_API_KEY" "test_yourkey"
 ensure_env_default "PAYPAL_CLIENT_ID" "your_paypal_client_id"
 ensure_env_default "PAYPAL_SECRET" "your_paypal_secret"
 ensure_env_default "PAYPAL_API_URL" "https://api-m.sandbox.paypal.com"
-ensure_env_default "NEXTAUTH_SECRET" "changeme"
+ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
 cat > README.md <<'EOF'
@@ -1345,7 +1339,9 @@ echo ""
 echo "✅ Done! Next steps:"
 echo "  cd $APP_NAME"
 echo "  pnpm dev"
-echo "  Open http://localhost:3000/$DEFAULT_LOCALE/auth/sign-in and create the first account (it becomes shop_owner automatically)."
+echo "  Open http://localhost:3000/$DEFAULT_LOCALE/auth/sign-in and create your account."
+echo "  Then promote it in the Supabase SQL editor:"
+echo "    update public.profiles set role = 'shop_owner' where id = (select id from auth.users where email = 'you@example.com');"
 echo ""
 echo "📋 Supabase summary:"
 echo "  • Project: $NEXT_PUBLIC_SUPABASE_URL (ref: $SUPABASE_PROJECT_REF)"
@@ -1358,4 +1354,4 @@ fi
 if [ "$NEXT_PUBLIC_STORE_MODE" = "single" ] && [ -f "$MODE_DIR/brand-single.sql" ]; then
   echo "  • Default brand seeded for single-store setups."
 fi
-echo "  • Profile API promotes the first user to shop_owner automatically"
+echo "  • New accounts are customers; promote the owner via the SQL editor (see above)"
