@@ -5,7 +5,7 @@ import { requireShopOwner } from './lib/auth';
 
 interface AdminLayoutProps {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 const NAV_ITEMS = [
@@ -14,7 +14,8 @@ const NAV_ITEMS = [
   { key: 'newProduct', path: '/products/new' }
 ];
 
-export default async function AdminLayout({ children, params: { locale } }: AdminLayoutProps) {
+export default async function AdminLayout({ children, params }: AdminLayoutProps) {
+  const { locale } = await params;
   await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 

@@ -7,10 +7,11 @@ import { updateProduct } from '../../actions/updateProduct';
 import { deleteProduct } from '../../actions/deleteProduct';
 
 interface ProductPageProps {
-  params: { locale: string; id: string };
+  params: Promise<{ locale: string; id: string }>;
 }
 
-export default async function EditProductPage({ params: { locale, id } }: ProductPageProps) {
+export default async function EditProductPage({ params }: ProductPageProps) {
+  const { locale, id } = await params;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 

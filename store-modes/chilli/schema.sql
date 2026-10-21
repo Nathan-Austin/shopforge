@@ -60,10 +60,16 @@ create table if not exists public.products (
   name text not null,
   slug text not null unique,
   description text,
+  details text,
   price_cents integer not null,
-  currency text not null default 'GBP',
+  currency text not null default 'EUR',
   heat_level text,
   image_url text,
+  capacity_ml integer,
+  ingredients text,
+  nutrition_info jsonb,
+  size_options text[],
+  color_options text[],
   stock integer default 0,
   is_active boolean default true,
   created_at timestamptz default now(),
@@ -76,6 +82,18 @@ create table if not exists public.products_chilli_types (
   primary key (product_id, chilli_type_id)
 );
 
+-- New table for server-side cart management
+create table if not exists public.cart_items (
+  id uuid primary key default gen_random_uuid(),
+  cart_session_id uuid not null,
+  product_id uuid not null references public.products(id) on delete cascade,
+  quantity integer not null default 1,
+  selected_size text,
+  selected_color text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_products_brand on public.products(brand_id);
 create index if not exists idx_products_category on public.products(category_id);
 create index if not exists idx_products_owner on public.products(owner_id);
@@ -83,6 +101,7 @@ create index if not exists idx_products_slug on public.products(slug);
 create index if not exists idx_categories_slug on public.categories(slug);
 create index if not exists idx_brands_slug on public.brands(slug);
 create index if not exists idx_chilli_types_slug on public.chilli_types(slug);
+create index if not exists idx_cart_items_session on public.cart_items(cart_session_id);
 
 create or replace function public.touch_updated_at()
 returns trigger
@@ -153,6 +172,12 @@ before update on public.categories
 for each row
 execute function public.touch_updated_at();
 
+drop trigger if exists trg_cart_items_updated on public.cart_items;
+create trigger trg_cart_items_updated
+before update on public.cart_items
+for each row
+execute function public.touch_updated_at();
+
 alter table public.profiles enable row level security;
 alter table public.addresses enable row level security;
 alter table public.brands enable row level security;
@@ -160,6 +185,7 @@ alter table public.categories enable row level security;
 alter table public.chilli_types enable row level security;
 alter table public.products enable row level security;
 alter table public.products_chilli_types enable row level security;
+alter table public.cart_items enable row level security;
 
 drop policy if exists "Profiles select own" on public.profiles;
 create policy "Profiles select own"
@@ -251,3 +277,34 @@ create policy "Product chilli manage"
   for all
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
+
+-- Auto-create profile on signup; first confirmed user becomes shop_owner
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  owner_count integer;
+begin
+  select count(*) into owner_count from public.profiles where role = 'shop_owner';
+  insert into public.profiles (id, role)
+    values (new.id, case when owner_count = 0 then 'shop_owner' else 'customer' end)
+    on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_on_auth_user_created on auth.users;
+create trigger trg_on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- RLS for cart_items (accessible by anyone with the session ID)
+drop policy if exists "Cart items access" on public.cart_items;
+create policy "Cart items access"
+  on public.cart_items
+  for all
+  using (true)
+  with check (true);

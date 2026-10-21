@@ -3,7 +3,8 @@ import { requireShopOwner } from './lib/auth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, Tag, Briefcase } from 'lucide-react';
 
-export default async function AdminDashboard({ params: { locale } }: { params: { locale: string } }) {
+export default async function AdminDashboard({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 

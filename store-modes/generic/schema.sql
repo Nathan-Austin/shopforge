@@ -11,13 +11,24 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.addresses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade,
+  label text,
+  street text,
+  city text,
+  region text,
+  postal_code text,
+  country text,
+  created_at timestamptz default now()
+);
+
 create table if not exists public.brands (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid references public.profiles(id),
   name text not null,
   slug text not null unique,
   description text,
-  logo_url text,
+  country text,
   website text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -25,7 +36,6 @@ create table if not exists public.brands (
 
 create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid references public.profiles(id),
   name text not null,
   slug text not null unique,
   description text,
@@ -41,19 +51,40 @@ create table if not exists public.products (
   name text not null,
   slug text not null unique,
   description text,
+  details text,
   price_cents integer not null,
-  currency text not null default 'GBP',
+  currency text not null default 'EUR',
   image_url text,
+  capacity_ml integer,
+  ingredients text,
+  nutrition_info jsonb,
+  size_options text[],
+  color_options text[],
+  stock integer default 0,
   is_active boolean default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
-create index if not exists idx_generic_products_brand on public.products(brand_id);
-create index if not exists idx_generic_products_category on public.products(category_id);
-create index if not exists idx_generic_products_slug on public.products(slug);
-create index if not exists idx_generic_categories_slug on public.categories(slug);
-create index if not exists idx_generic_brands_slug on public.brands(slug);
+-- New table for server-side cart management
+create table if not exists public.cart_items (
+  id uuid primary key default gen_random_uuid(),
+  cart_session_id uuid not null,
+  product_id uuid not null references public.products(id) on delete cascade,
+  quantity integer not null default 1,
+  selected_size text,
+  selected_color text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_products_brand on public.products(brand_id);
+create index if not exists idx_products_category on public.products(category_id);
+create index if not exists idx_products_owner on public.products(owner_id);
+create index if not exists idx_products_slug on public.products(slug);
+create index if not exists idx_categories_slug on public.categories(slug);
+create index if not exists idx_brands_slug on public.brands(slug);
+create index if not exists idx_cart_items_session on public.cart_items(cart_session_id);
 
 create or replace function public.touch_updated_at()
 returns trigger
@@ -94,95 +125,141 @@ as $$
   );
 $$;
 
-drop trigger if exists trg_generic_products_owner on public.products;
-create trigger trg_generic_products_owner
+drop trigger if exists trg_products_owner on public.products;
+create trigger trg_products_owner
 before insert on public.products
 for each row
 execute function public.set_product_owner();
 
-drop trigger if exists trg_generic_products_updated on public.products;
-create trigger trg_generic_products_updated
+drop trigger if exists trg_products_updated on public.products;
+create trigger trg_products_updated
 before update on public.products
 for each row
 execute function public.touch_updated_at();
 
-drop trigger if exists trg_generic_profiles_updated on public.profiles;
-create trigger trg_generic_profiles_updated
+drop trigger if exists trg_profiles_updated on public.profiles;
+create trigger trg_profiles_updated
 before update on public.profiles
 for each row
 execute function public.touch_updated_at();
 
-drop trigger if exists trg_generic_brands_updated on public.brands;
-create trigger trg_generic_brands_updated
+drop trigger if exists trg_brands_updated on public.brands;
+create trigger trg_brands_updated
 before update on public.brands
 for each row
 execute function public.touch_updated_at();
 
-drop trigger if exists trg_generic_categories_updated on public.categories;
-create trigger trg_generic_categories_updated
+drop trigger if exists trg_categories_updated on public.categories;
+create trigger trg_categories_updated
 before update on public.categories
 for each row
 execute function public.touch_updated_at();
 
+drop trigger if exists trg_cart_items_updated on public.cart_items;
+create trigger trg_cart_items_updated
+before update on public.cart_items
+for each row
+execute function public.touch_updated_at();
+
 alter table public.profiles enable row level security;
+alter table public.addresses enable row level security;
 alter table public.brands enable row level security;
 alter table public.categories enable row level security;
 alter table public.products enable row level security;
+alter table public.cart_items enable row level security;
 
-drop policy if exists "Generic profiles select" on public.profiles;
-create policy "Generic profiles select"
+drop policy if exists "Profiles select own" on public.profiles;
+create policy "Profiles select own"
   on public.profiles
   for select
   using (auth.uid() = id);
 
-drop policy if exists "Generic profiles insert" on public.profiles;
-create policy "Generic profiles insert"
+drop policy if exists "Profiles insert own" on public.profiles;
+create policy "Profiles insert own"
   on public.profiles
   for insert
   with check (auth.uid() = id);
 
-drop policy if exists "Generic profiles update" on public.profiles;
-create policy "Generic profiles update"
+drop policy if exists "Profiles update own" on public.profiles;
+create policy "Profiles update own"
   on public.profiles
   for update
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
-drop policy if exists "Generic brands select" on public.brands;
-create policy "Generic brands select"
+drop policy if exists "Addresses access" on public.addresses;
+create policy "Addresses access"
+  on public.addresses
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Brands select all" on public.brands;
+create policy "Brands select all"
   on public.brands
   for select
   using (true);
 
-drop policy if exists "Generic brands manage" on public.brands;
-create policy "Generic brands manage"
+drop policy if exists "Brands manage" on public.brands;
+create policy "Brands manage"
   on public.brands
   for all
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
 
-drop policy if exists "Generic categories select" on public.categories;
-create policy "Generic categories select"
+drop policy if exists "Categories select all" on public.categories;
+create policy "Categories select all"
   on public.categories
   for select
   using (true);
 
-drop policy if exists "Generic categories manage" on public.categories;
-create policy "Generic categories manage"
+drop policy if exists "Categories manage" on public.categories;
+create policy "Categories manage"
   on public.categories
   for all
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
 
-drop policy if exists "Generic products select" on public.products;
-create policy "Generic products select"
+drop policy if exists "Products select all" on public.products;
+create policy "Products select all"
   on public.products
   for select
   using (true);
 
-drop policy if exists "Generic products manage" on public.products;
-create policy "Generic products manage"
+drop policy if exists "Products manage" on public.products;
+create policy "Products manage"
   on public.products
   for all
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
+
+-- Auto-create profile on signup; first confirmed user becomes shop_owner
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  owner_count integer;
+begin
+  select count(*) into owner_count from public.profiles where role = 'shop_owner';
+  insert into public.profiles (id, role)
+    values (new.id, case when owner_count = 0 then 'shop_owner' else 'customer' end)
+    on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_on_auth_user_created on auth.users;
+create trigger trg_on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- RLS for cart_items (accessible by anyone with the session ID)
+drop policy if exists "Cart items access" on public.cart_items;
+create policy "Cart items access"
+  on public.cart_items
+  for all
+  using (true)
+  with check (true);

@@ -4,7 +4,8 @@ import { requireShopOwner } from '../../lib/auth';
 import ProductForm from '../../components/ProductForm';
 import { createProduct } from '../../actions/createProduct';
 
-export default async function NewProductPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function NewProductPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 

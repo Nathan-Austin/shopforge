@@ -42,6 +42,7 @@ DEFAULT_LOCALE=${2:-en}
 LOCALES_CSV=${3:-"en,de,tr,ar"}  # comma-separated
 
 MODE_DIR="$SCRIPT_DIR/store-modes/$STORE_MODE"
+SHARED_DIR="$SCRIPT_DIR/shared-assets"
 if [ ! -d "$MODE_DIR" ]; then
   echo "❌ Unknown store mode: $STORE_MODE" >&2
   echo "   Available modes:" >&2
@@ -146,9 +147,14 @@ ensure_store_mode() {
 
 # 2) Install deps
 echo "📦 Installing dependencies..."
-pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx tailwind-merge class-variance-authority lucide-react @radix-ui/react-slot @radix-ui/react-label
-pnpm add tailwindcss-rtl
+pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx tailwind-merge class-variance-authority lucide-react @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select
+# tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
 pnpm add -D @types/node @types/react autoprefixer postcss prettier
+
+# 2.5) Copy shared-assets/lib (production-grade)
+echo "📦 Copying production-grade shared libraries..."
+mkdir -p src/lib
+cp -R "$SHARED_DIR/lib/." src/lib/
 
 # Optional: add Stripe now (commented)
 # pnpm add stripe
@@ -165,46 +171,75 @@ prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" fal
 ensure_store_mode
 
 echo "🔗 Linking Supabase project..."
+# Attempt to list projects to check login status
 if ! npx supabase projects list >/dev/null 2>&1; then
+  echo "🔑 Not logged into Supabase. Please log in."
   npx supabase login
+else
+  # Check if the project ref is accessible with the current login
+  if ! npx supabase projects list | grep -q "$SUPABASE_PROJECT_REF"; then
+    echo "⚠️  Current Supabase account doesn't have access to project $SUPABASE_PROJECT_REF."
+    echo "   Since you use separate accounts per store, you likely need to switch logins."
+    read -r -p "Log out and log in with the correct account? [Y/n]: " login_again
+    if [[ $login_again =~ ^[Yy]$ ]] || [ -z "$login_again" ]; then
+      npx supabase logout
+      npx supabase login
+    else
+      echo "⚠️  Continuing with current account, but 'supabase link' may fail."
+    fi
+  fi
 fi
+
+# Link the project (will prompt for database password)
 npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
-echo "📝 Writing base database schema (${STORE_MODE})..."
+echo "📝 Preparing database migrations (${STORE_MODE})..."
 mkdir -p supabase/migrations
+
+# 1. Base Schema
 cp "$MODE_DIR/schema.sql" supabase/migrations/0001_init.sql
 
-echo "🗄️ Pushing schema to Supabase..."
-npx supabase db push
+# 2. Seed Data
+if [ -f "$MODE_DIR/seeds.sql" ]; then
+  cp "$MODE_DIR/seeds.sql" supabase/migrations/0002_seeds.sql
+fi
 
-echo "🪣 Creating product image bucket..."
-npx supabase storage create-bucket product-images --public >/dev/null 2>&1 || true
-npx supabase db query "alter table storage.objects enable row level security;"
-npx supabase db query <<'SQL'
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE polname = 'Public read product-images'
-  ) THEN
-    EXECUTE 'create policy "Public read product-images" on storage.objects for select using (bucket_id = ''product-images'');';
-  END IF;
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE polname = 'Authenticated upload product-images'
-  ) THEN
-    EXECUTE 'create policy "Authenticated upload product-images" on storage.objects for insert with check (bucket_id = ''product-images'' AND (auth.role() = ''authenticated''));';
-  END IF;
-END $$;
+# 3. Single Store Brand
+if [ "$NEXT_PUBLIC_STORE_MODE" = "single" ] && [ -f "$MODE_DIR/brand-single.sql" ]; then
+  cp "$MODE_DIR/brand-single.sql" supabase/migrations/0003_brand_single.sql
+fi
+
+# 4. Storage Policies (Standard for all templates)
+cat > supabase/migrations/0004_storage_policies.sql <<'SQL'
+-- Storage Policies
+-- Note: 'product-images' bucket must be created in the Supabase Dashboard.
+-- These policies apply once the bucket exists.
+-- RLS should be enabled via the Dashboard Storage settings.
+
+create policy "Public read product-images" 
+on storage.objects for select 
+using (bucket_id = 'product-images');
+
+create policy "Authenticated upload product-images" 
+on storage.objects for insert 
+with check (bucket_id = 'product-images' AND (auth.role() = 'authenticated'));
+
+create policy "Authenticated delete product-images" 
+on storage.objects for delete 
+using (bucket_id = 'product-images' AND (auth.role() = 'authenticated'));
 SQL
 
-if [ -f "$MODE_DIR/seeds.sql" ]; then
-  echo "🌱 Running ${STORE_MODE} seed data..."
-  npx supabase db query < "$MODE_DIR/seeds.sql"
-fi
+echo "🗄️ Pushing all migrations to Supabase..."
+npx supabase db push --yes
 
-if [ "$NEXT_PUBLIC_STORE_MODE" = "single" ] && [ -f "$MODE_DIR/brand-single.sql" ]; then
-  echo "🏷️ Creating default single-store brand..."
-  npx supabase db query < "$MODE_DIR/brand-single.sql"
-fi
+# Note: Buckets and Storage RLS are difficult to manage via CLI for remote projects.
+echo ""
+echo "🪣 SUPABASE STORAGE SETUP (Manual Steps):"
+echo "  1. Log into your Supabase Dashboard."
+echo "  2. Go to 'Storage' and create a NEW PUBLIC BUCKET named 'product-images'."
+echo "  3. The security policies (0004) are already pushed and will apply automatically."
+
+
 
 # 4) i18n middleware with next-intl
 cat > middleware.ts <<'EOF'
@@ -216,13 +251,13 @@ export default createMiddleware({
 });
 
 export const config = {
-  matcher: ['/((?!_next|api|.*\\..*).*)']
+  matcher: ['/((?!_next|api|auth/callback|.*\\..*).*)']
 };
 EOF
 # inject locales/default
-sed -i "s/__DEFAULT__/$DEFAULT_LOCALE/g" middleware.ts
-SED_LOCALES=$(echo "$LOCALES_CSV" | sed "s/,/', '/g")
-sed -i "s/'__LOCALES__'/'$SED_LOCALES'/g" middleware.ts
+sed -i "s|__DEFAULT__|$DEFAULT_LOCALE|g" middleware.ts
+SED_LOCALES=$(echo "$LOCALES_CSV" | sed "s|,|', '|g")
+sed -i "s|'__LOCALES__'|'$SED_LOCALES'|g" middleware.ts
 
 # 5) Messages (minimal) for next-intl
 mkdir -p src/messages
@@ -531,10 +566,48 @@ cat > src/messages/ar.json <<'EOF'
 }
 EOF
 
-# 6) Tailwind RTL plugin config (non-destructive)
-# Add plugin & enable logical properties
-sed -i "1s;^;// NOTE: Generated by Next.js CLI. Modify safely; do not replace.\n;" tailwind.config.ts
-sed -i "s/plugins: \[\]/plugins: \[require\('tailwindcss-rtl'\)\]/" tailwind.config.ts || true
+# 6) Tailwind v4 RTL support
+# Tailwind v4 has native rtl:/ltr: variants built-in via the HTML dir attribute.
+# No tailwind.config.ts exists in v4; configuration is CSS-based in globals.css.
+
+# 6a) next-intl v4 request config
+mkdir -p src/i18n
+LOCALES_ARRAY=$(echo "$LOCALES_CSV" | sed "s|,|', '|g")
+cat > src/i18n/request.ts <<EOF
+import { getRequestConfig } from 'next-intl/server';
+
+const locales = ['$LOCALES_ARRAY'];
+
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale;
+  if (!locale || !locales.includes(locale)) {
+    locale = '$DEFAULT_LOCALE';
+  }
+  return {
+    locale,
+    messages: (await import(\`../messages/\${locale}.json\`)).default,
+  };
+});
+EOF
+
+# 6b) Wire next-intl plugin into next.config.ts
+cat > next.config.ts <<'EOF'
+import type { NextConfig } from "next";
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+const nextConfig: NextConfig = {};
+
+export default withNextIntl(nextConfig);
+EOF
+
+# 6c) Stub message files for any locale that doesn't have one yet
+for loc in $(echo "$LOCALES_CSV" | tr ',' ' '); do
+  if [ ! -f "src/messages/${loc}.json" ]; then
+    cp src/messages/en.json "src/messages/${loc}.json"
+  fi
+done
 
 # 6.5) UI Lib Utils & Components (shadcn-like)
 mkdir -p src/lib src/components/ui
@@ -718,6 +791,107 @@ Label.displayName = LabelPrimitive.Root.displayName
 export { Label }
 EOF
 
+cat > src/components/ui/textarea.tsx <<'EOF'
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ className, ...props }, ref) => (
+    <textarea
+      ref={ref}
+      className={cn(
+        'flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+        className
+      )}
+      {...props}
+    />
+  )
+);
+Textarea.displayName = 'Textarea';
+
+export { Textarea };
+EOF
+
+cat > src/components/ui/select.tsx <<'EOF'
+'use client';
+
+import * as React from 'react';
+import * as SelectPrimitive from '@radix-ui/react-select';
+import { Check, ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const Select = SelectPrimitive.Root;
+const SelectGroup = SelectPrimitive.Group;
+const SelectValue = SelectPrimitive.Value;
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      'flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
+  </SelectPrimitive.Trigger>
+));
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
+
+const SelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+>(({ className, children, position = 'popper', ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(
+        'relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-white text-gray-900 shadow-md',
+        position === 'popper' && 'translate-y-1',
+        className
+      )}
+      position={position}
+      {...props}
+    >
+      <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+));
+SelectContent.displayName = SelectPrimitive.Content.displayName;
+
+const SelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </SelectPrimitive.ItemIndicator>
+    </span>
+    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+  </SelectPrimitive.Item>
+));
+SelectItem.displayName = SelectPrimitive.Item.displayName;
+
+export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem };
+EOF
+
 # 7) Supabase SSR helpers
 mkdir -p src/lib/supabase
 
@@ -754,9 +928,11 @@ EOF
 # 8) Locale-aware root layout with RTL/LTR handling
 mkdir -p src/app/[locale]
 cat > src/app/[locale]/layout.tsx <<'EOF'
-import { NextIntlClientProvider, unstable_setRequestLocale, getMessages } from 'next-intl/server';
+import { NextIntlClientProvider } from 'next-intl';
+import { setRequestLocale, getMessages } from 'next-intl/server';
 import '../globals.css';
 import type { ReactNode } from 'react';
+import Header from '@/components/Header';
 
 const RTL_LOCALES = new Set(['ar', 'fa', 'he', 'ur']);
 
@@ -764,9 +940,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function LocaleLayout({
   children,
-  params: { locale }
-}: { children: ReactNode; params: { locale: string } }) {
-  unstable_setRequestLocale(locale);
+  params,
+}: {
+  children: ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   const messages = await getMessages();
   const dir = RTL_LOCALES.has(locale) ? 'rtl' : 'ltr';
 
@@ -774,7 +954,8 @@ export default async function LocaleLayout({
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body className="min-h-screen bg-white text-gray-900 antialiased">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <Header locale={locale} />
+          <main>{children}</main>
         </NextIntlClientProvider>
       </body>
     </html>
@@ -786,7 +967,8 @@ EOF
 cat > src/app/[locale]/page.tsx <<'EOF'
 import Link from 'next/link';
 
-export default function HomePage({ params: { locale } }: { params: { locale: string }}) {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   return (
     <main className="mx-auto max-w-3xl p-6">
       <h1 className="text-3xl font-bold mb-6">Next Commerce Template</h1>
@@ -795,6 +977,7 @@ export default function HomePage({ params: { locale } }: { params: { locale: str
         <Link href={`/${locale}/cart`} className="underline">Cart</Link>
         <Link href={`/${locale}/checkout`} className="underline">Checkout</Link>
         <Link href={`/${locale}/auth/sign-in`} className="underline">Sign in</Link>
+        <Link href={`/${locale}/auth/sign-up`} className="underline">Create account</Link>
       </nav>
     </main>
   );
@@ -817,7 +1000,8 @@ cat > src/app/[locale]/checkout/page.tsx <<'EOF'
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
-export default async function CheckoutPage({ params: { locale } }: { params: { locale: string }}) {
+export default async function CheckoutPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) redirect(`/${locale}/auth/sign-in`);
@@ -830,6 +1014,84 @@ EOF
 echo "🧱 Adding reusable store components (${STORE_MODE})..."
 mkdir -p src/components/store
 cp -R "$MODE_DIR/store-components/." src/components/store
+
+# 10.5a) Header component (logo + auth state + admin link for shop_owner)
+cat > src/components/Header.tsx <<'EOF'
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
+
+export default async function Header({ locale }: { locale: string }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let isShopOwner = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    isShopOwner = profile?.role === 'shop_owner';
+  }
+
+  return (
+    <header className="border-b border-gray-200 bg-white">
+      <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-3">
+        <Link href={`/${locale}`} className="font-bold text-lg tracking-tight">
+          🌶️ Store
+        </Link>
+
+        <nav className="flex items-center gap-5 text-sm">
+          <Link href={`/${locale}/shop`} className="text-gray-600 hover:text-gray-900">Shop</Link>
+          <Link href={`/${locale}/cart`} className="text-gray-600 hover:text-gray-900">Cart</Link>
+
+          {isShopOwner && (
+            <Link
+              href={`/${locale}/admin`}
+              className="rounded bg-gray-900 px-3 py-1 text-white hover:bg-gray-700"
+            >
+              Admin
+            </Link>
+          )}
+
+          {user ? (
+            <div className="flex items-center gap-3">
+              <span className="text-gray-500 hidden sm:block">{user.email}</span>
+              <form action="/api/auth/sign-out" method="POST">
+                <button type="submit" className="text-gray-600 hover:text-gray-900 underline">
+                  Sign out
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link href={`/${locale}/auth/sign-in`} className="text-gray-600 hover:text-gray-900">Sign in</Link>
+              <Link href={`/${locale}/auth/sign-up`} className="rounded bg-black px-3 py-1 text-white hover:bg-gray-800">
+                Sign up
+              </Link>
+            </div>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}
+EOF
+
+# 10.5b) Sign-out API route
+mkdir -p src/app/api/auth/sign-out
+cat > src/app/api/auth/sign-out/route.ts <<'EOF'
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+
+  const referer = request.headers.get('referer') ?? '/';
+  return NextResponse.redirect(referer, { status: 303 });
+}
+EOF
 
 # 10.6) Admin panel
 echo "🛡️ Adding admin panel (${STORE_MODE})..."
@@ -880,15 +1142,13 @@ cat > src/app/[locale]/auth/sign-up/page.tsx <<'EOF'
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { useRouter, useParams } from 'next/navigation';
 
 export default function SignUpPage() {
-  const { locale } = useParams() as { locale: string };
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -897,9 +1157,22 @@ export default function SignUpPage() {
       setErr('Passwords do not match');
       return;
     }
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
     if (error) setErr(error.message);
-    else router.push(`/${locale}`);
+    else setDone(true);
+  }
+
+  if (done) {
+    return (
+      <main className="mx-auto max-w-sm p-6">
+        <h1 className="text-2xl font-bold mb-2">Check your email</h1>
+        <p className="text-gray-600">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
+      </main>
+    );
   }
 
   return (
@@ -914,6 +1187,42 @@ export default function SignUpPage() {
       </form>
     </main>
   );
+}
+EOF
+
+# Auth callback route handler (exchanges Supabase code for session)
+mkdir -p src/app/auth/callback
+cat > src/app/auth/callback/route.ts <<'EOF'
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get('code');
+  const next = searchParams.get('next') ?? '/en';
+
+  if (code) {
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name) { return cookieStore.get(name)?.value; },
+          set(name, value, options) { cookieStore.set({ name, value, ...options }); },
+          remove(name, options) { cookieStore.set({ name, value: '', ...options }); },
+        },
+      }
+    );
+
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`);
+    }
+  }
+
+  return NextResponse.redirect(`${origin}/en/auth/sign-in?error=confirmation_failed`);
 }
 EOF
 
@@ -995,13 +1304,13 @@ EOF
 
 # 14) Ensure env defaults
 echo "🧾 Ensuring .env.local defaults..."
-set_env_default "NEXT_PUBLIC_SITE_URL" "http://localhost:3000"
-set_env_default "STRIPE_SECRET_KEY" "sk_test_yourkey"
-set_env_default "MOLLIE_API_KEY" "test_yourkey"
-set_env_default "PAYPAL_CLIENT_ID" "your_paypal_client_id"
-set_env_default "PAYPAL_SECRET" "your_paypal_secret"
-set_env_default "PAYPAL_API_URL" "https://api-m.sandbox.paypal.com"
-set_env_default "NEXTAUTH_SECRET" "changeme"
+ensure_env_default "NEXT_PUBLIC_SITE_URL" "http://localhost:3000"
+ensure_env_default "STRIPE_SECRET_KEY" "sk_test_yourkey"
+ensure_env_default "MOLLIE_API_KEY" "test_yourkey"
+ensure_env_default "PAYPAL_CLIENT_ID" "your_paypal_client_id"
+ensure_env_default "PAYPAL_SECRET" "your_paypal_secret"
+ensure_env_default "PAYPAL_API_URL" "https://api-m.sandbox.paypal.com"
+ensure_env_default "NEXTAUTH_SECRET" "changeme"
 
 # 15) Dev README
 cat > README.md <<'EOF'

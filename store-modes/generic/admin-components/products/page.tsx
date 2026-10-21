@@ -3,7 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import type { StoreProduct } from '@/components/store/types';
 import { requireShopOwner } from '../lib/auth';
 
-export default async function ProductsPage({ params: { locale } }: { params: { locale: string } }) {
+export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 
