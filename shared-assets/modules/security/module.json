@@ -1,0 +1,18 @@
+{
+  "name": "security",
+  "description": "Bot and spam protection for public forms: Postgres-backed rate limiting, honeypot + submit-timing guards, same-origin checks, disposable email filtering and Cloudflare Turnstile.",
+  "requires": [],
+  "dependencies": {
+    "disposable-email-domains": "^1.0.62"
+  },
+  "devDependencies": {
+    "@types/disposable-email-domains": "^1.0.6",
+    "vitest": "^5.0.0"
+  },
+  "migrations": ["rate_limiting.sql"],
+  "env": [
+    { "name": "SUPABASE_SERVICE_ROLE_KEY", "required": true, "description": "Used by checkRateLimit via the admin client (server only)." },
+    { "name": "NEXT_PUBLIC_TURNSTILE_SITE_KEY", "required": false, "description": "Cloudflare Turnstile site key. TurnstileWidget renders nothing without it." },
+    { "name": "TURNSTILE_SECRET_KEY", "required": false, "description": "Cloudflare Turnstile secret. verifyTurnstile fails closed without it." }
+  ]
+}

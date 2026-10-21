@@ -1,0 +1,123 @@
+-- Migration: Add translation columns
+
+-- Table: products
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_nl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_nl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_nl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_fr text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_fr text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_fr text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_cs text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_cs text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_cs text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_es text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_es text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_es text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_de text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_de text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_de text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_pl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_pl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_pl text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_pt text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_pt text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_pt text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_it text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_it text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_it text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_da text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_da text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_da text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_no text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_no text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_no text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_sv text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_sv text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_sv text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_uk text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_uk text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_uk text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_ar text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_ar text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_ar text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS description_bg text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS details_bg text;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS ingredients_bg text;
+
+-- Table: chilli_types
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_nl text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_nl text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_fr text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_fr text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_cs text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_cs text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_es text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_es text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_de text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_de text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_pl text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_pl text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_pt text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_pt text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_it text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_it text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_da text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_da text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_no text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_no text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_sv text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_sv text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_uk text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_uk text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_ar text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_ar text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS name_bg text;
+ALTER TABLE public.chilli_types ADD COLUMN IF NOT EXISTS description_bg text;
+
+-- Table: categories
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_nl text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_nl text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_fr text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_fr text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_cs text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_cs text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_es text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_es text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_de text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_de text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_pl text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_pl text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_pt text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_pt text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_it text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_it text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_da text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_da text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_no text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_no text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_sv text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_sv text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_uk text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_uk text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_ar text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_ar text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS name_bg text;
+ALTER TABLE public.categories ADD COLUMN IF NOT EXISTS description_bg text;
+
+-- Table: brands
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_nl text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_fr text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_cs text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_es text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_de text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_pl text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_pt text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_it text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_da text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_no text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_sv text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_uk text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_ar text;
+ALTER TABLE public.brands ADD COLUMN IF NOT EXISTS description_bg text;
+
+
