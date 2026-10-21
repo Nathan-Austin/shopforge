@@ -1,395 +1,134 @@
-# 🧭 Next.js + Supabase + Vercel Multi-Client Setup Guide
+# shopforge
 
-A repeatable workflow for building new e-commerce websites using **Next.js 16 + Supabase SSR + TailwindCSS 4 + Vercel**, with separate accounts per project to stay on the free tiers.
+Generate your own multilingual online shop with **Next.js 16, Supabase,
+Tailwind CSS 4 and Stripe**, ready to deploy on Vercel.
 
----
+One command scaffolds the foundation of a store: customer accounts, an admin
+panel for managing products, the database schema with row-level security, a
+server-side Stripe checkout API, and multilingual routing with right-to-left
+support for languages such as Arabic.
 
-## 📋 Table of Contents
+## What you get
 
-1. [Workspace Setup](#%EF%B8%8F-workspace-setup)
-2. [Create New Project Accounts](#1%EF%B8%8F⃣-create-new-project-accounts)
-3. [Create Supabase Project](#2%EF%B8%8F⃣-create-supabase-project)
-4. [Store Modes](#store-modes)
-5. [Scaffold the Project](#3%EF%B8%8F⃣-scaffold-the-project)
-6. [Configure Environment Variables](#4%EF%B8%8F⃣-configure-environment-variables)
-7. [Link Supabase Project](#5%EF%B8%8F⃣-link-supabase-project)
-8. [Extend the Template](#6%EF%B8%8F⃣-extend-the-template)
-9. [Supabase Automation](#supabase-automation)
-10. [Connect to GitHub](#8%EF%B8%8F⃣-connect-to-github)
-11. [Deploy to Vercel](#9%EF%B8%8F⃣-deploy-to-vercel)
-12. [Verify Deployment](#%EF%B8%8F-verify-deployment)
+**Ready to use**
 
----
+- **Accounts:** email and password sign-up, sign-in and password reset
+  (Supabase Auth); a profile row is created for every new user
+- **Admin panel** at `/<locale>/admin`, for the shop owner only: list, create,
+  edit and delete products, with image uploads to Supabase Storage
+- **Database:** profiles, addresses, brands, categories, products and cart
+  items, with row-level security and seed data
+- **Languages:** any set of locales via `next-intl`, with RTL layout for Arabic
+- **Two store modes:**
+  - `generic`: products, brands and categories
+  - `chilli`: adds heat levels and chilli types, for hot-sauce shops
+- **Security defaults:** customers can't change their own role, carts are
+  server-only, and nobody becomes an admin automatically
 
-## ⚙️ Workspace Setup
+**Starting points you finish yourself**
 
-Keep the generator and the generated stores in separate folders, so client
-projects never end up inside the shopforge repo:
+- **Storefront pages:** `/shop`, `/cart` and `/checkout` are placeholders
+  (checkout already requires sign-in). Storefront components (product
+  listing with filters, product card, brand showcase) are copied into
+  `src/components/store/` for you to wire in.
+- **Stripe:** `POST /api/checkout/session` creates a Checkout session from the
+  cart, using database prices. There's no add-to-cart button, success page or
+  webhook yet, so orders aren't recorded.
 
-```
-~/shopforge/                 # this repo (the generator)
-├── create-next-commerce-template-ssr.sh
-├── extend-commerce-template.sh
-├── store-modes/
-└── shared-assets/
+## Requirements
 
-~/websites/                  # generated client stores, each its own repo
-├── client1-store/
-├── client2-shop/
-└── ...
-```
+- Node.js 20 or newer and [pnpm](https://pnpm.io) (`corepack enable pnpm`)
+- A free [Supabase](https://supabase.com) project
+- A [Stripe](https://stripe.com) account (test keys are fine to start)
+- A [Vercel](https://vercel.com) account to deploy (optional)
 
-Make both scripts executable once:
-
-```bash
-chmod +x create-next-commerce-template-ssr.sh extend-commerce-template.sh
-```
-
----
-
-## 1️⃣ Create New Project Accounts
-
-For each new client or brand:
-
-1. **Create a new Gmail** (e.g., `clientname.dev@gmail.com`)
-2. **Create a new GitHub account** using that email
-   - Username format: `clientname-sys`
-3. **Create a new Supabase project** (log in with that GitHub)
-4. **Create a new Vercel account** (same GitHub)
-
-💡 **Why?** This isolates billing and keeps each project within free-tier limits.
-
----
-
-## 2️⃣ Create Supabase Project
-
-At [app.supabase.com](https://app.supabase.com):
-
-1. Click **New Project**
-2. Note these values:
-   - `project_ref` → e.g., `abcd1234xyz`
-   - Project URL → `https://abcd1234xyz.supabase.co`
-   - `anon key`
-   - `service_role key`
-
----
-
-## Store Modes
-
-All scaffolding assets live under `store-modes/<mode>/`:
-
-```
-store-modes/
-  chilli/
-    store-components/
-    admin-components/
-    schema.sql
-    seeds.sql
-    brand-single.sql
-  generic/
-    ...
-```
-
-- `chilli` (default) includes chilli types, heat levels, and the spicy storefront/admin packs you’ve already been using.
-- `generic` is a clean catalogue (products/brands/categories only) with a simplified admin UI.
-
-Each mode ships its own schema + seed files, so the generator can push the right database objects and copy the matching React packs automatically.
-
----
-
-## 3️⃣ Scaffold the Project
-
-From `~/websites` (the scripts find their own assets, and the store is created in the current folder):
+## Quick start
 
 ```bash
-~/shopforge/create-next-commerce-template-ssr.sh clientname-store en "en,de,tr,ar"      # default chilli mode
-~/shopforge/create-next-commerce-template-ssr.sh clientname-store en --mode=generic    # generic mode
-cd clientname-store
+git clone https://github.com/Nathan-Austin/shopforge.git
+cd ~/projects          # wherever you want your shop to live, outside shopforge
+~/path/to/shopforge/create-next-commerce-template-ssr.sh my-shop en "en,de,ar" --mode=generic
+cd my-shop
+~/path/to/shopforge/extend-commerce-template.sh --mode=generic
+pnpm dev
 ```
 
-**Arguments:**
-- `clientname-store` - Project name
-- `en` - Default locale
-- `"en,de,tr,ar"` - Comma-separated list of supported locales
-- `--mode=<chilli|generic>` - Optional flag; default is `chilli`
+The first script asks for your Supabase project URL, anon key, service-role
+key and project ref, then pushes the database schema. The second adds the
+profile API and Stripe checkout. Both create files in the current folder and
+find their templates relative to their own location.
 
-What the script now does:
-- Scaffolds the Next.js app via `pnpm create next-app`
-- Prompts once for Supabase URL / anon / service keys (writes `.env.local`)
-- Links the Supabase project and runs `supabase db push` using the mode’s `schema.sql`
-- Seeds categories/brands/etc. via the mode’s `seeds.sql` (plus default brand for single-store setups)
-- Creates the `product-images` bucket + storage policies
-- Copies the matching `store-components` + `admin-components` pack into the app
-- Generates a random `NEXTAUTH_SECRET`
+Then:
 
-### Make yourself the shop owner
+1. In the Supabase dashboard, create a **public** storage bucket named
+   `product-images`. Its access policies are already applied.
+2. Put your Stripe secret key in `.env.local` (`STRIPE_SECRET_KEY`).
+3. Sign up at `http://localhost:3000/en/auth/sign-up` and make yourself the
+   shop owner (below).
 
-New accounts are always created as `customer`; nobody is promoted
-automatically, so a store that goes live before you register can't be claimed
-by a stranger. Sign up through the store, then run this in the Supabase SQL
-editor:
+The full walkthrough, including deployment, is in [SETUP_GUIDE.md](SETUP_GUIDE.md).
+
+## Make yourself the shop owner
+
+New accounts are always created as `customer`. Nobody is promoted
+automatically, so a shop that goes live before you register can't be claimed by
+a stranger. After signing up, run this in the Supabase SQL editor:
 
 ```sql
 update public.profiles set role = 'shop_owner'
  where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-Customers can't change their own `role` (a database trigger blocks it), and
-`cart_items` is only reachable from server code via the service-role key.
+The admin panel is then available at `/en/admin`.
 
----
-
-## 4️⃣ Configure Environment Variables
-
-The scaffolder writes `.env.local` using the values you just entered. Open the file and fill in any remaining app secrets (payments, site URL, etc.):
-
-```bash
-cat > .env.local <<'EOF'
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-# App base URL
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-# Payment providers (use sandbox/test keys for dev)
-STRIPE_SECRET_KEY=sk_test_yourkey
-MOLLIE_API_KEY=test_yourkey
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_SECRET=your_paypal_secret
-PAYPAL_API_URL=https://api-m.sandbox.paypal.com
-EOF
-```
-
----
-
-## 5️⃣ Link Supabase Project
-
-Authenticate and link:
-
-```bash
-npx supabase login
-npx supabase link --project-ref your_project_ref
-```
-
-Verify:
-
-```bash
-cat .supabase/config.toml
-```
-
----
-
-## 6️⃣ Extend the Template
-
-Now that `.env.local` exists and Supabase is linked:
-
-```bash
-../extend-commerce-template.sh                     # chilli mode sync
-../extend-commerce-template.sh --mode=generic      # generic mode sync
-```
-
-Extend copies the relevant `store-components` + `admin-components` pack into an existing project (non-destructively) and ensures the profile helper/payments/checkout API are in place. It does **not** rewrite migrations or prompt for Supabase keys.
-
----
-
-## 7️⃣ Supabase Automation
-
-No manual SQL editing is required. The generator handles everything:
-
-1. **Schema** – `create-next-commerce-template-ssr.sh` copies `store-modes/<mode>/schema.sql` into `supabase/migrations/0001_init.sql` and runs `npx supabase db push`.
-2. **Seeds** – it executes `store-modes/<mode>/seeds.sql` (plus `brand-single.sql` if you pick single-store mode) with `npx supabase db query`, so categories/brands/chilli types are ready immediately.
-3. **Storage** – the script creates the `product-images` bucket, enables RLS on `storage.objects`, and applies public-read/authenticated-upload policies.
-
-If you tweak a mode’s schema or seeds, update the files under `store-modes/<mode>/` and re-run the generator for new projects. Existing projects can manage their own migrations as usual.
-
----
-
-## 8️⃣ Connect to GitHub
-
-### Generate SSH Key
-
-```bash
-ssh-keygen -t ed25519 -C "clientname.dev@gmail.com"
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-```
-
-### Add Public Key to GitHub
-
-Add the public key (`~/.ssh/id_ed25519.pub`) to:
-**GitHub → Settings → SSH and GPG Keys → New Key**
-
-### Configure SSH
-
-In `~/.ssh/config`:
-
-```bash
-Host github-clientname
-  HostName github.com
-  User git
-  IdentityFile ~/.ssh/id_ed25519
-```
-
-### Create Repository and Push
-
-Create an empty GitHub repo called `clientname-store`, then:
-
-```bash
-git remote add origin git@github-clientname:clientname-sys/clientname-store.git
-git branch -M main
-git push -u origin main
-```
-
----
-
-## 9️⃣ Deploy to Vercel
-
-1. Log into [vercel.com](https://vercel.com) with the new GitHub account
-2. Click **Add → New Project → Import Git Repository**
-3. Select `clientname-store`
-4. Add environment variables from `.env.local`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `NEXT_PUBLIC_SITE_URL` (use your Vercel domain)
-   - Payment provider keys
-5. Click **Deploy**
-
-Your site will be live at: `https://clientname-store.vercel.app/en`
-
----
-
-## 🔟 Verify Deployment
-
-### Post-Deployment Checklist
-
-- [ ] Supabase tables visible in dashboard
-- [ ] Auth (email/password) sign-up works
-- [ ] Profile creation after sign-up succeeds
-- [ ] `/checkout` page loads and requires authentication
-- [ ] `/cart` and `/shop` pages load
-- [ ] Multilingual routes work (`/en`, `/de`, `/tr`, `/ar`)
-- [ ] RTL layout works correctly for Arabic (`/ar`)
-- [ ] Vercel build logs show no errors
-
-### Expected Results
-
-| Check | Expected Result |
-|-------|----------------|
-| Supabase tables exist | ✅ |
-| Auth sign-up creates profiles row | ✅ |
-| Checkout page loads | ✅ |
-| Multilingual routes `/en`, `/de`, `/tr`, `/ar` | ✅ |
-| Vercel deploy successful | ✅ |
-
----
-
-## 📝 Quick Reference
-
-### Command Summary
-
-| Step | Description | Command |
-|------|-------------|---------|
-| 1 | Create accounts | Manual (Gmail, GitHub, Supabase, Vercel) |
-| 2 | Scaffold project | `./create-next-commerce-template-ssr.sh [name] [locale] [locales]` |
-| 3 | Add environment variables | Edit `.env.local` |
-| 4 | Link Supabase | `npx supabase link --project-ref [ref]` |
-| 5 | Extend template | `../extend-commerce-template.sh` |
-| 6 | Install dependencies | `pnpm install` |
-| 7 | Push database schema | `npx supabase db push` |
-| 8 | Connect GitHub | `git remote add origin [url]` |
-| 9 | Deploy to Vercel | Via dashboard |
-| 10 | Verify deployment | Browser test |
-
-### Scripts Reference
-
-#### `create-next-commerce-template-ssr.sh`
-Scaffolds a multilingual Next.js 16 + Supabase SSR e-commerce project with:
-- Tailwind CSS 4 with RTL support
-- Email/password authentication
-- i18n with next-intl
-- Protected routes
-- Database migrations
-
-#### `extend-commerce-template.sh`
-Extends the base template with:
-- Profile helper functions
-- Payment adapters (Stripe, PayPal, Mollie) with lazy initialization
-- Checkout API route
-- Next.js 16 compatibility (async cookies)
-
----
-
-## 💡 Tips & Best Practices
-
-- **SSH Keys**: Use unique SSH keys per GitHub account to avoid conflicts
-- **Accounts**: Use the same email/GitHub combo for Supabase and Vercel per project
-- **Organization**: Keep generated stores in `~/websites`, outside the shopforge repo
-- **Environment Variables**: Never commit `.env.local` to Git (already in `.gitignore`)
-- **Testing**: Always test locally with `pnpm dev` before deploying
-- **Database**: Use Supabase local development (`supabase start`) for testing migrations
-- **Payments**: Use test/sandbox keys during development
-
----
-
-## 🧠 Optional Automation Ideas
-
-Enhance `create-next-commerce-template-ssr.sh` to:
-
-1. Prompt for Supabase keys interactively
-2. Auto-generate `.env.local` with provided values
-3. Auto-create `/supabase/migrations/0001_init.sql`
-4. Run `npx supabase db push` automatically
-5. Print "Next Steps" summary with project-specific values
-
-Then every new project will be ready end-to-end from a single command.
-
----
-
-## 🏗️ Tech Stack
-
-- **Framework**: Next.js 16 (App Router, React 19)
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 4 with RTL support
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **i18n**: next-intl
-- **Payments**: Stripe, PayPal, Mollie
-- **Hosting**: Vercel
-- **Package Manager**: pnpm
-
----
-
-## 📄 License
-
-This setup guide and scripts are provided as-is for creating e-commerce projects. Customize freely for your needs.
-
----
-
-## Generated Output Example
-
-Running the chilli template:
+## Script options
 
 ```
-./create-next-commerce-template-ssr.sh test-chilli en
+create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=generic|chilli]
 ```
 
-Produces a Next.js app with:
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `name` | `next-commerce-template` | Folder and package name for the new shop |
+| `default-locale` | `en` | Language used at `/` |
+| `locales` | `en,de,tr,ar` | Comma-separated supported languages |
+| `--mode` | `chilli` | Store mode from `store-modes/` |
+
+The script also asks whether the shop sells a **single** brand or is a
+**multi**-brand marketplace, which decides whether the admin product form shows
+a brand selector.
+
+`extend-commerce-template.sh [--mode=…]` runs inside an existing generated shop
+and adds the profile API and Stripe checkout session route, plus the latest
+store and admin components for that mode. It doesn't change migrations or ask
+for keys.
+
+## Security model
+
+- **Roles:** a database trigger rejects any attempt by a customer to set or
+  change `profiles.role`. Owners are promoted from the SQL editor.
+- **Carts:** `cart_items` has no public access. Checkout reads it on the server
+  with the service-role key, and prices always come from the database, never
+  from the browser.
+- **Secrets:** the generator creates a random `NEXTAUTH_SECRET`. Keep
+  `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_SECRET_KEY` server-side only;
+  `.env.local` is already gitignored.
+
+## Repository layout
 
 ```
- test-chilli/
- ├─ .env.local                        # filled with Supabase keys you entered
- ├─ supabase/
- │  └─ migrations/0001_init.sql       # copied from store-modes/chilli/schema.sql
- ├─ src/
- │  ├─ components/store/              # chilli storefront pack
- │  ├─ app/[locale]/admin/            # chilli admin pack (dashboard, CRUD)
- │  ├─ lib/supabase/                  # SSR/client helpers (auto-installed)
- │  └─ app/[locale]/auth/*            # ready-made auth pages
- ├─ public/
- ├─ package.json
- └─ ...
+create-next-commerce-template-ssr.sh   scaffolds a new shop
+extend-commerce-template.sh            adds checkout + profile API to a shop
+store-modes/<mode>/                    schema, seeds, storefront and admin components
+shared-assets/lib/                     helpers copied into every shop
+shared-assets/modules/                 experimental feature modules (not used by the scripts yet)
 ```
 
-Generic mode is similar but copies the `store-modes/generic` assets and applies the generic schema/seeds (no chilli metadata). After scaffolding, run `pnpm dev` and visit `http://localhost:3000/<locale>`.
+## Tech stack
+
+Next.js 16 (App Router, React 19), TypeScript, Tailwind CSS 4, Supabase
+(Postgres, Auth, Storage), next-intl, Stripe, pnpm.
+
+## License
+
+[MIT](LICENSE) © 2025 Nathan Austin

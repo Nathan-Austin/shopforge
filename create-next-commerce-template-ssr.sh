@@ -179,7 +179,7 @@ else
   # Check if the project ref is accessible with the current login
   if ! npx supabase projects list | grep -q "$SUPABASE_PROJECT_REF"; then
     echo "⚠️  Current Supabase account doesn't have access to project $SUPABASE_PROJECT_REF."
-    echo "   Since you use separate accounts per store, you likely need to switch logins."
+    echo "   The project may belong to a different Supabase account."
     read -r -p "Log out and log in with the correct account? [Y/n]: " login_again
     if [[ $login_again =~ ^[Yy]$ ]] || [ -z "$login_again" ]; then
       npx supabase logout
@@ -1300,10 +1300,6 @@ EOF
 echo "🧾 Ensuring .env.local defaults..."
 ensure_env_default "NEXT_PUBLIC_SITE_URL" "http://localhost:3000"
 ensure_env_default "STRIPE_SECRET_KEY" "sk_test_yourkey"
-ensure_env_default "MOLLIE_API_KEY" "test_yourkey"
-ensure_env_default "PAYPAL_CLIENT_ID" "your_paypal_client_id"
-ensure_env_default "PAYPAL_SECRET" "your_paypal_secret"
-ensure_env_default "PAYPAL_API_URL" "https://api-m.sandbox.paypal.com"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
