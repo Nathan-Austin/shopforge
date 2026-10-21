@@ -29,4 +29,7 @@ Thumbs.db
 # local secrets
 .env*
 !.env.example
+
+# local AI assistant notes
+GEMINI.md
 PROPOSAL_TEA_EXPORTER.md
