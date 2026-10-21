@@ -22,12 +22,17 @@ A repeatable workflow for building new e-commerce websites using **Next.js 16 + 
 
 ## ⚙️ Workspace Setup
 
-Keep all projects in one folder:
+Keep the generator and the generated stores in separate folders, so client
+projects never end up inside the shopforge repo:
 
 ```
-~/WEBDEV/
+~/shopforge/                 # this repo (the generator)
 ├── create-next-commerce-template-ssr.sh
 ├── extend-commerce-template.sh
+├── store-modes/
+└── shared-assets/
+
+~/websites/                  # generated client stores, each its own repo
 ├── client1-store/
 ├── client2-shop/
 └── ...
@@ -70,10 +75,10 @@ At [app.supabase.com](https://app.supabase.com):
 
 ## 3️⃣ Scaffold the Project
 
-From `~/WEBDEV`:
+From `~/websites` (the scripts find their own assets, and the store is created in the current folder):
 
 ```bash
-./create-next-commerce-template-ssr.sh clientname-store en "en,de,tr,ar"
+~/shopforge/create-next-commerce-template-ssr.sh clientname-store en "en,de,tr,ar"
 cd clientname-store
 ```
 
@@ -351,7 +356,7 @@ Extends the base template with:
 
 - **SSH Keys**: Use unique SSH keys per GitHub account to avoid conflicts
 - **Accounts**: Use the same email/GitHub combo for Supabase and Vercel per project
-- **Organization**: Keep all projects in `~/WEBDEV` for easy maintenance
+- **Organization**: Keep generated stores in `~/websites`, outside the shopforge repo
 - **Environment Variables**: Never commit `.env.local` to Git (already in `.gitignore`)
 - **Testing**: Always test locally with `pnpm dev` before deploying
 - **Database**: Use Supabase local development (`supabase start`) for testing migrations
