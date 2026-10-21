@@ -20,11 +20,11 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
   const t = await getTranslations({ locale, namespace: 'Admin' });
 
   return (
-    <div className="min-h-screen bg-roh-dust-white">
+    <div className="min-h-screen bg-stone-50">
       <header className="border-b border-border bg-white">
         <div className="max-w-6xl mx-auto flex flex-col gap-4 px-4 py-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-wide text-roh-military-olive font-semibold">
+            <p className="text-xs uppercase tracking-wide text-stone-600 font-semibold">
               {t('title')}
             </p>
             <h1 className="text-2xl font-bold text-foreground">{t('dashboardHeading')}</h1>
@@ -34,7 +34,7 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
               <Link
                 key={item.key}
                 href={`/${locale}/admin${item.path}`}
-                className="rounded-full border border-border px-4 py-1.5 hover:border-roh-flag-green hover:text-roh-flag-green transition-colors"
+                className="rounded-full border border-border px-4 py-1.5 hover:border-emerald-700 hover:text-emerald-700 transition-colors"
               >
                 {t(`nav.${item.key}`)}
               </Link>

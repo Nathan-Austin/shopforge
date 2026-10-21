@@ -16,7 +16,7 @@ export default async function BrandShowcase({ locale, brands }: BrandShowcasePro
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-roh-military-olive mb-2">
+            <div className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
               {t('eyebrow')}
             </div>
             <h2 className="font-display text-3xl font-bold text-foreground">
@@ -67,7 +67,7 @@ export default async function BrandShowcase({ locale, brands }: BrandShowcasePro
                   <h3 className="font-bold text-sm text-foreground">{brand.name}</h3>
                   <Link
                     href={`/${locale}/brands/${brand.slug}`}
-                    className="text-xs text-roh-flag-green underline hover:no-underline"
+                    className="text-xs text-emerald-700 underline hover:no-underline"
                     aria-label={`${t('seeMore')} ${brand.name}`}
                   >
                     {t('seeMore')}

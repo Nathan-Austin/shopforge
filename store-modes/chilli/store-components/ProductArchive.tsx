@@ -146,7 +146,7 @@ export default function ProductArchive({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
-                         focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                         focus:outline-none focus:ring-2 focus:ring-emerald-700"
               />
             </label>
 
@@ -162,8 +162,8 @@ export default function ProductArchive({
                     onClick={() => setSelectedHeatLevel(selectedHeatLevel === level ? '' : level)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors
                       ${selectedHeatLevel === level
-                        ? 'bg-roh-flag-green text-roh-dust-white border-roh-flag-green'
-                        : 'border-border bg-card text-foreground hover:border-roh-flag-green hover:bg-roh-flag-green/10'
+                        ? 'bg-emerald-700 text-stone-50 border-emerald-700'
+                        : 'border-border bg-card text-foreground hover:border-emerald-700 hover:bg-emerald-700/10'
                       }`}
                   >
                     {level}
@@ -179,7 +179,7 @@ export default function ProductArchive({
                 value={selectedChilliType}
                 onChange={(e) => setSelectedChilliType(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
-                         focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                         focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="">{t('search.filters.allChilliTypes')}</option>
                 {chilliTypes.map(chilliType => (
@@ -197,7 +197,7 @@ export default function ProductArchive({
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
-                         focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                         focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="">{t('search.filters.allCategories')}</option>
                 {categories.map(category => (
@@ -215,7 +215,7 @@ export default function ProductArchive({
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
-                         focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                         focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="recent">{t('search.filters.sortNewest')}</option>
                 <option value="popular">{t('search.filters.sortPopular')}</option>
@@ -242,7 +242,7 @@ export default function ProductArchive({
               {(activeFilters.length > 0 || selectedPepper) && (activeFilters.length + (selectedPepper ? 1 : 0)) > 1 && (
                 <button
                   onClick={clearAllFilters}
-                  className="text-xs font-medium text-foreground underline-offset-4 hover:text-roh-flag-green hover:underline"
+                  className="text-xs font-medium text-foreground underline-offset-4 hover:text-emerald-700 hover:underline"
                 >
                   {t('results.clearFilters')}
                 </button>
@@ -266,7 +266,7 @@ export default function ProductArchive({
             <button
               onClick={clearAllFilters}
               className="mt-4 px-4 py-2 rounded-lg border border-border bg-card text-foreground
-                       transition-colors hover:border-roh-flag-green hover:bg-roh-flag-green/10"
+                       transition-colors hover:border-emerald-700 hover:bg-emerald-700/10"
             >
               {t('results.clearFilters')}
             </button>
@@ -287,7 +287,7 @@ export default function ProductArchive({
             <button
               onClick={() => setDisplayCount(prev => prev + 12)}
               className="px-4 py-2 rounded-lg border border-border bg-card text-foreground
-                       transition-colors font-medium hover:border-roh-flag-green hover:bg-roh-flag-green/10"
+                       transition-colors font-medium hover:border-emerald-700 hover:bg-emerald-700/10"
             >
               {t('results.loadMore')}
             </button>

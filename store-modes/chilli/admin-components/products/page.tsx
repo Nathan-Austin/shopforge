@@ -59,7 +59,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
         </div>
         <Link
           href={`/${locale}/admin/products/new`}
-          className="inline-flex items-center rounded-full bg-roh-flag-green px-4 py-2 text-sm font-semibold text-white"
+          className="inline-flex items-center rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white"
         >
           {t('products.newProduct')}
         </Link>
@@ -67,7 +67,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
 
       <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-sm">
         <table className="min-w-full divide-y divide-border">
-          <thead className="bg-roh-dust-white text-left text-sm font-semibold text-text-secondary">
+          <thead className="bg-stone-50 text-left text-sm font-semibold text-text-secondary">
             <tr>
               <th className="px-4 py-3">{t('products.name')}</th>
               <th className="px-4 py-3">{t('products.category')}</th>
@@ -95,7 +95,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
                 <td className="px-4 py-3 text-right">
                   <Link
                     href={`/${locale}/admin/products/${product.id}`}
-                    className="text-sm font-semibold text-roh-flag-green hover:underline"
+                    className="text-sm font-semibold text-emerald-700 hover:underline"
                   >
                     {t('products.edit')}
                   </Link>

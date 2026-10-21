@@ -30,7 +30,7 @@ export default function BrandCard({
     <div className="card-governmental rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-200">
       <div className="p-6 border-b border-border">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-roh-accent-orange to-roh-flame-red rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden">
             {brand.logo_url ? (
               <Image
                 src={brand.logo_url}
@@ -48,7 +48,7 @@ export default function BrandCard({
 
           <div className="flex-1 min-w-0">
             <h3 className="heading-sm text-text-primary mb-1 line-clamp-1">
-              <Link href={brandHref} className="hover:text-roh-accent-orange transition-colors">
+              <Link href={brandHref} className="hover:text-orange-500 transition-colors">
                 {brand.name}
               </Link>
             </h3>
@@ -82,7 +82,7 @@ export default function BrandCard({
             <div className="grid grid-cols-3 gap-2 mb-4">
               {displayProducts.map((product) => (
                 <div key={product.id} className="relative">
-                  <div className="aspect-square bg-gradient-to-br from-roh-accent-orange to-roh-flame-red rounded-lg flex items-center justify-center relative overflow-hidden">
+                  <div className="aspect-square bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center relative overflow-hidden">
                     {product.image_url ? (
                       <Image
                         src={product.image_url}
@@ -115,7 +115,7 @@ export default function BrandCard({
                   <div key={product.id} className="flex items-center justify-between text-sm">
                     <Link
                       href={`/${locale}/products/${product.slug}`}
-                      className="text-text-secondary hover:text-roh-accent-orange transition-colors truncate"
+                      className="text-text-secondary hover:text-orange-500 transition-colors truncate"
                     >
                       {product.name}
                     </Link>
@@ -136,7 +136,7 @@ export default function BrandCard({
               href={websiteUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 bg-card hover:bg-roh-military-olive/20 text-text-secondary rounded transition-colors flex items-center gap-1"
+              className="px-4 py-2 bg-card hover:bg-stone-600/20 text-text-secondary rounded transition-colors flex items-center gap-1"
               title={t('actions.visitWebsite')}
             >
               🌐

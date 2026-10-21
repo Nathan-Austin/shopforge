@@ -59,7 +59,7 @@ export default function ProductArchive({ products, categories, locale }: Product
                 placeholder={t('search.placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-700"
               />
             </label>
 
@@ -68,7 +68,7 @@ export default function ProductArchive({ products, categories, locale }: Product
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="">{t('search.filters.allCategories')}</option>
                 {categories.map((category) => (
@@ -84,7 +84,7 @@ export default function ProductArchive({ products, categories, locale }: Product
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-roh-flag-green"
+                className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="recent">{t('search.filters.sortNewest')}</option>
                 <option value="popular">{t('search.filters.sortPopular')}</option>
@@ -99,7 +99,7 @@ export default function ProductArchive({ products, categories, locale }: Product
                     setSearchTerm('');
                     setSelectedCategory('');
                   }}
-                  className="text-sm font-semibold text-roh-flag-green underline"
+                  className="text-sm font-semibold text-emerald-700 underline"
                 >
                   {t('results.clearFilters')}
                 </button>
@@ -133,7 +133,7 @@ export default function ProductArchive({ products, categories, locale }: Product
             <button
               type="button"
               onClick={() => setDisplayCount((prev) => prev + 12)}
-              className="px-4 py-2 rounded-lg border border-border bg-card text-foreground transition-colors font-medium hover:border-roh-flag-green hover:bg-roh-flag-green/10"
+              className="px-4 py-2 rounded-lg border border-border bg-card text-foreground transition-colors font-medium hover:border-emerald-700 hover:bg-emerald-700/10"
             >
               {t('results.loadMore')}
             </button>
