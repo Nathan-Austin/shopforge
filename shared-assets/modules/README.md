@@ -53,6 +53,7 @@ The `shared-assets/lib` copies of `format.ts`, `stripe/server.ts`,
 | `SELLER_EMAIL` | `emails`, `checkout` | Where new-order notifications go |
 | `NEXT_PUBLIC_HOME_COUNTRIES` | `catalog` | ISO alpha-3 codes that get the faster delivery estimate in Product JSON-LD |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | `storefront-shell` | Google Analytics measurement ID |
+| `GOOGLE_PRODUCT_CATEGORY` | `catalog` | Optional Google product taxonomy category for the Merchant Center feed; omitted when unset |
 
 Placeholders to replace: `Your Store` (store name), `example.com` (site and
 social links), `hello@example.com` (contact address) and `YOUR_PROJECT_REF`

@@ -6,6 +6,11 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const supabase = await createClient();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+  // Optional Google product taxonomy ID or path, e.g. "Food, Beverages & Tobacco > Food Items".
+  // Left out of the feed when unset; Google then infers a category.
+  const googleCategory = process.env.GOOGLE_PRODUCT_CATEGORY?.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 
   const { data: products, error } = await supabase
     .from("products")
@@ -65,8 +70,7 @@ export async function GET() {
       <g:availability>${availability}</g:availability>
       <g:price>${price} ${product.currency}</g:price>
       <g:brand>${product.brand?.name || "Your Store"}</g:brand>
-      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items &gt; Condiments &amp; Sauces &gt; Hot Sauce</g:google_product_category>
-      <g:product_type>${product.category?.name || "Products"}</g:product_type>
+${googleCategory ? `      <g:google_product_category>${googleCategory}</g:google_product_category>\n` : ""}      <g:product_type>${product.category?.name || "Products"}</g:product_type>
       <g:identifier_exists>no</g:identifier_exists>
     </item>`;
     })

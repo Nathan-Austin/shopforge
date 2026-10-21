@@ -222,8 +222,7 @@ export function getOrderConfirmationHtml(order: OrderDetails): string {
         
         <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">
           Don't forget to follow us on Instagram<br>
-          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a><br>
-          <span style="font-size: 0.8em;">#youcanneverhavetoomuchhotsauce</span>
+          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a>
         </p>
 
         <a href="https://www.example.com" style="color: #666; font-size: 0.8em; text-decoration: none;">www.example.com</a>
@@ -408,8 +407,7 @@ export function getShippingConfirmationHtml(params: {
         <p style="font-weight: bold; margin-bottom: 5px;">Thank you for choosing Your Store!</p>
         <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">
           Don't forget to follow us on Instagram<br>
-          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a><br>
-          <span style="font-size: 0.8em;">#youcanneverhavetoomuchhotsauce</span>
+          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a>
         </p>
         <a href="https://www.example.com" style="color: #666; font-size: 0.8em; text-decoration: none;">www.example.com</a>
       </div>
@@ -472,8 +470,7 @@ export function getRefundConfirmationHtml(params: {
         <p style="font-weight: bold; margin-bottom: 5px;">Thank you for choosing Your Store!</p>
         <p style="font-size: 0.9em; color: #666; margin-bottom: 20px;">
           Don't forget to follow us on Instagram<br>
-          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a><br>
-          <span style="font-size: 0.8em;">#youcanneverhavetoomuchhotsauce</span>
+          <a href="https://www.instagram.com/example.com" style="color: #000; font-weight: bold; text-decoration: none;">#example.com</a>
         </p>
         <a href="https://www.example.com" style="color: #666; font-size: 0.8em; text-decoration: none;">www.example.com</a>
       </div>
