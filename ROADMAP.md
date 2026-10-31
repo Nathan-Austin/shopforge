@@ -23,6 +23,12 @@ Planned work for shopforge, roughly in order.
 
 ## 4. Generator
 
+- [ ] Fix the first `pnpm add` failing on pnpm 11 with `ERR_PNPM_IGNORED_BUILDS`
+      (new build scripts need approving in `allowBuilds`)
+- [ ] Fix the existing `tsc` errors in a generated `generic` store: missing
+      `createClient` export in `lib/supabase/client`, missing `@/types/supabase`,
+      `ProductForm` default import, `ProductCard` `locale` prop, joined `products`
+      typed as an array (admin product page, checkout route), `stripe` not installed
 - [ ] Node CLI replacing the heredocs in the shell scripts
 - [ ] Docker self-hosting path alongside Vercel
 - [ ] Payment adapters: Stripe, Mollie, PayPal
