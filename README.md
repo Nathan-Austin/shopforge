@@ -125,6 +125,10 @@ store-modes/<mode>/                    schema, seeds, storefront and admin compo
 shared-assets/lib/                     helpers copied into every shop
 ```
 
+## Roadmap
+
+Planned work is in [ROADMAP.md](ROADMAP.md).
+
 ## Tech stack
 
 Next.js 16 (App Router, React 19), TypeScript, Tailwind CSS 4, Supabase
