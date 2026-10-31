@@ -34,6 +34,8 @@ support for languages such as Arabic.
 - **Stripe:** `POST /api/checkout/session` creates a Checkout session from the
   cart, using database prices. There's no add-to-cart button, success page or
   webhook yet, so orders aren't recorded.
+- **Shipping:** one flat rate with a free-shipping threshold, set with
+  placeholder values in `src/lib/shipping/config.ts`.
 
 ## Requirements
 
@@ -121,7 +123,6 @@ create-next-commerce-template-ssr.sh   scaffolds a new shop
 extend-commerce-template.sh            adds checkout + profile API to a shop
 store-modes/<mode>/                    schema, seeds, storefront and admin components
 shared-assets/lib/                     helpers copied into every shop
-shared-assets/modules/                 experimental feature modules (not used by the scripts yet)
 ```
 
 ## Tech stack

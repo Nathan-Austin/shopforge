@@ -120,9 +120,8 @@ export async function POST(request: Request) {
       .select(`
         id,
         quantity,
-        selected_size,
         products (
-          id, name, slug, image_url, price_cents, currency, capacity_ml
+          id, name, slug, image_url, price_cents, currency
         )
       `)
       .eq('cart_session_id', payload.cartSessionId);
@@ -149,16 +148,13 @@ export async function POST(request: Request) {
       sum + (item.products.price_cents * item.quantity), 0
     );
 
-    // 3. Calculate shipping based on weight and destination
+    // 3. Calculate shipping (flat rate, see lib/shipping/config.ts)
     const shippingItems: OrderItem[] = cartItems.map((item: any) => ({
-      productName: item.products.name,
       quantity: item.quantity,
-      capacityMl: item.products.capacity_ml,
-      selectedSize: item.selected_size,
     }));
-    
+
     const packageWeight = calculatePackageWeight(shippingItems);
-    const shippingCostCents = calculateShippingCost(payload.country, packageWeight, subtotalCents);
+    const shippingCostCents = calculateShippingCost(subtotalCents);
 
     const headersList = await headers();
     const origin = process.env.NEXT_PUBLIC_SITE_URL || headersList.get('origin');
@@ -197,4 +193,4 @@ export async function POST(request: Request) {
 EOF
 
 echo "✨ All components and libraries updated to production-grade."
-echo "💡 Next steps: Update your .env.local with STRIPE_SECRET_KEY and DHL credentials if using shipping labels."
+echo "💡 Next steps: Update your .env.local with STRIPE_SECRET_KEY and set your rates in src/lib/shipping/config.ts."
