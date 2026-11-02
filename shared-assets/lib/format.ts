@@ -15,7 +15,7 @@ export function formatPrice(
       style: 'currency',
       currency: currency,
     });
-  } catch (error) {
+  } catch {
     // Fallback if locale or currency is invalid
     return `${(priceCents / 100).toFixed(2)} ${currency}`;
   }
