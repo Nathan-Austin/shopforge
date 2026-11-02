@@ -234,7 +234,7 @@ export default function ProductArchive({
                   {selectedPepper.heatLevel ? ` • ${selectedPepper.heatLevel}` : ''}
                 </Chip>
               )}
-              {activeFilters.map((filter, idx) => (
+              {activeFilters.map((filter) => (
                 <Chip key={filter.value} variant="filter" onRemove={filter.clear}>
                   {filter.label}
                 </Chip>

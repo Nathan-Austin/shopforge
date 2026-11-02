@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabase/client';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
