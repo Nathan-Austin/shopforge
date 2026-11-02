@@ -534,7 +534,7 @@ cat > src/messages/en.json <<'EOF'
     "badgeLabel": "Cart, {count} items",
     "addToCart": "Add to cart",
     "adding": "Adding...",
-    "added": "Added \u2713",
+    "added": "Added ✓",
     "addFailed": "Could not add this item.",
     "updateFailed": "Could not update your cart.",
     "outOfStock": "Out of stock",
@@ -610,6 +610,72 @@ cat > src/messages/en.json <<'EOF'
       "saved": "Saved successfully.",
       "notSet": "Not set"
     }
+  },
+  "UI": {
+    "product": {
+      "featuredSauces": "Featured products",
+      "sauce": "product",
+      "sauces": "products"
+    },
+    "actions": {
+      "viewProducer": "View brand",
+      "visitWebsite": "Visit website"
+    }
+  },
+  "SauceArchive": {
+    "search": {
+      "placeholder": "Search products",
+      "filters": {
+        "sauceType": "Category",
+        "allCategories": "All categories",
+        "sort": "Sort",
+        "sortNewest": "Newest",
+        "sortPopular": "Popular",
+        "heatLevel": "Heat level",
+        "pepper": "Chilli type",
+        "allChilliTypes": "All chilli types",
+        "sortMildToHot": "Mild to hot",
+        "sortHotToMild": "Hot to mild"
+      }
+    },
+    "results": {
+      "showing": "Showing",
+      "of": "of",
+      "sauces": "products",
+      "noResults": "No matches",
+      "adjustSearch": "Try a different search or filter.",
+      "loadMore": "Load more",
+      "clearFilters": "Clear filters"
+    }
+  },
+  "homepage": {
+    "producerShowcase": {
+      "eyebrow": "Brands",
+      "title": "Who makes it",
+      "viewAll": "View all",
+      "seeMore": "See more"
+    }
+  },
+  "Checkout": {
+    "title": "Checkout",
+    "subtotal": "Subtotal",
+    "shippingNote": "Shipping is added on the next step.",
+    "cartProblem": "Your cart is empty or contains items that are no longer available.",
+    "backToCart": "Back to cart",
+    "email": "Email",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "address": "Address",
+    "city": "City",
+    "postalCode": "Postcode",
+    "country": "Country (3-letter code)",
+    "payNow": "Pay now",
+    "redirecting": "Redirecting...",
+    "failed": "We could not start the payment. Please try again.",
+    "stockChanged": "Something in your cart sold out. Please check your cart.",
+    "successTitle": "Thank you for your order",
+    "keepShopping": "Keep shopping",
+    "successBody": "Your payment went through and we have emailed your receipt."
   }
 }
 EOF
@@ -638,18 +704,18 @@ cat > src/messages/de.json <<'EOF'
     "empty": "Ihr Warenkorb ist leer.",
     "badgeLabel": "Warenkorb, {count} Artikel",
     "addToCart": "In den Warenkorb",
-    "adding": "Wird hinzugef\u00fcgt...",
-    "added": "Hinzugef\u00fcgt \u2713",
-    "addFailed": "Artikel konnte nicht hinzugef\u00fcgt werden.",
+    "adding": "Wird hinzugefügt...",
+    "added": "Hinzugefügt ✓",
+    "addFailed": "Artikel konnte nicht hinzugefügt werden.",
     "updateFailed": "Warenkorb konnte nicht aktualisiert werden.",
     "outOfStock": "Ausverkauft",
-    "limitedToStock": "Es waren nur noch wenige verf\u00fcgbar, wir haben so viele wie m\u00f6glich hinzugef\u00fcgt.",
+    "limitedToStock": "Es waren nur noch wenige verfügbar, wir haben so viele wie möglich hinzugefügt.",
     "maxReached": "Maximum erreicht",
-    "noLongerAvailable": "Nicht mehr verf\u00fcgbar",
-    "removeUnavailable": "Entfernen Sie die nicht verf\u00fcgbaren Artikel, um fortzufahren.",
-    "size": "Gr\u00f6\u00dfe",
+    "noLongerAvailable": "Nicht mehr verfügbar",
+    "removeUnavailable": "Entfernen Sie die nicht verfügbaren Artikel, um fortzufahren.",
+    "size": "Größe",
     "colour": "Farbe",
-    "increase": "Menge erh\u00f6hen",
+    "increase": "Menge erhöhen",
     "decrease": "Menge verringern",
     "remove": "Entfernen",
     "clear": "Warenkorb leeren",
@@ -715,6 +781,72 @@ cat > src/messages/de.json <<'EOF'
       "saved": "Saved successfully.",
       "notSet": "Not set"
     }
+  },
+  "UI": {
+    "product": {
+      "featuredSauces": "Ausgewählte Produkte",
+      "sauce": "Produkt",
+      "sauces": "Produkte"
+    },
+    "actions": {
+      "viewProducer": "Marke ansehen",
+      "visitWebsite": "Website besuchen"
+    }
+  },
+  "SauceArchive": {
+    "search": {
+      "placeholder": "Produkte suchen",
+      "filters": {
+        "sauceType": "Kategorie",
+        "allCategories": "Alle Kategorien",
+        "sort": "Sortieren",
+        "sortNewest": "Neueste",
+        "sortPopular": "Beliebt",
+        "heatLevel": "Schärfegrad",
+        "pepper": "Chilisorte",
+        "allChilliTypes": "Alle Chilisorten",
+        "sortMildToHot": "Mild bis scharf",
+        "sortHotToMild": "Scharf bis mild"
+      }
+    },
+    "results": {
+      "showing": "Angezeigt",
+      "of": "von",
+      "sauces": "Produkte",
+      "noResults": "Keine Treffer",
+      "adjustSearch": "Versuchen Sie eine andere Suche oder einen anderen Filter.",
+      "loadMore": "Mehr laden",
+      "clearFilters": "Filter zurücksetzen"
+    }
+  },
+  "homepage": {
+    "producerShowcase": {
+      "eyebrow": "Marken",
+      "title": "Wer es herstellt",
+      "viewAll": "Alle ansehen",
+      "seeMore": "Mehr sehen"
+    }
+  },
+  "Checkout": {
+    "title": "Kasse",
+    "subtotal": "Zwischensumme",
+    "shippingNote": "Der Versand wird im nächsten Schritt hinzugefügt.",
+    "cartProblem": "Ihr Warenkorb ist leer oder enthält nicht mehr verfügbare Artikel.",
+    "backToCart": "Zurück zum Warenkorb",
+    "email": "E-Mail",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "address": "Adresse",
+    "city": "Stadt",
+    "postalCode": "Postleitzahl",
+    "country": "Land (3-stelliger Code)",
+    "payNow": "Jetzt bezahlen",
+    "redirecting": "Weiterleitung...",
+    "failed": "Die Zahlung konnte nicht gestartet werden. Bitte erneut versuchen.",
+    "stockChanged": "Ein Artikel ist ausverkauft. Bitte prüfen Sie Ihren Warenkorb.",
+    "successTitle": "Vielen Dank für Ihre Bestellung",
+    "keepShopping": "Weiter einkaufen",
+    "successBody": "Ihre Zahlung war erfolgreich, die Rechnung ist unterwegs."
   }
 }
 EOF
@@ -744,7 +876,7 @@ cat > src/messages/tr.json <<'EOF'
     "badgeLabel": "Sepet, {count} ürün",
     "addToCart": "Sepete ekle",
     "adding": "Ekleniyor...",
-    "added": "Eklendi \u2713",
+    "added": "Eklendi ✓",
     "addFailed": "Bu ürün eklenemedi.",
     "updateFailed": "Sepetiniz güncellenemedi.",
     "outOfStock": "Stokta yok",
@@ -820,6 +952,72 @@ cat > src/messages/tr.json <<'EOF'
       "saved": "Saved successfully.",
       "notSet": "Not set"
     }
+  },
+  "UI": {
+    "product": {
+      "featuredSauces": "Öne çıkan ürünler",
+      "sauce": "ürün",
+      "sauces": "ürün"
+    },
+    "actions": {
+      "viewProducer": "Markayı gör",
+      "visitWebsite": "Siteyi ziyaret et"
+    }
+  },
+  "SauceArchive": {
+    "search": {
+      "placeholder": "Ürün ara",
+      "filters": {
+        "sauceType": "Kategori",
+        "allCategories": "Tüm kategoriler",
+        "sort": "Sırala",
+        "sortNewest": "En yeni",
+        "sortPopular": "Popüler",
+        "heatLevel": "Acı seviyesi",
+        "pepper": "Biber türü",
+        "allChilliTypes": "Tüm biber türleri",
+        "sortMildToHot": "Hafiften acıya",
+        "sortHotToMild": "Acıdan hafife"
+      }
+    },
+    "results": {
+      "showing": "Gösterilen",
+      "of": "/",
+      "sauces": "ürün",
+      "noResults": "Sonuç yok",
+      "adjustSearch": "Farklı bir arama veya filtre deneyin.",
+      "loadMore": "Daha fazla yükle",
+      "clearFilters": "Filtreleri temizle"
+    }
+  },
+  "homepage": {
+    "producerShowcase": {
+      "eyebrow": "Markalar",
+      "title": "Üreticiler",
+      "viewAll": "Tümünü gör",
+      "seeMore": "Daha fazla"
+    }
+  },
+  "Checkout": {
+    "title": "Ödeme",
+    "subtotal": "Ara toplam",
+    "shippingNote": "Kargo bir sonraki adımda eklenir.",
+    "cartProblem": "Sepetiniz boş veya artık mevcut olmayan ürünler içeriyor.",
+    "backToCart": "Sepete dön",
+    "email": "E-posta",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "address": "Adres",
+    "city": "Şehir",
+    "postalCode": "Posta kodu",
+    "country": "Ülke (3 harfli kod)",
+    "payNow": "Şimdi öde",
+    "redirecting": "Yönlendiriliyor...",
+    "failed": "Ödeme başlatılamadı. Lütfen tekrar deneyin.",
+    "stockChanged": "Sepetinizdeki bir ürün tükendi. Lütfen sepetinizi kontrol edin.",
+    "successTitle": "Siparişiniz için teşekkürler",
+    "keepShopping": "Alışverişe devam et",
+    "successBody": "Ödemeniz alındı, makbuzunuzu e-posta ile gönderdik."
   }
 }
 EOF
@@ -849,7 +1047,7 @@ cat > src/messages/ar.json <<'EOF'
     "badgeLabel": "السلة، {count} منتج",
     "addToCart": "أضف إلى السلة",
     "adding": "جارٍ الإضافة...",
-    "added": "تمت الإضافة \u2713",
+    "added": "تمت الإضافة ✓",
     "addFailed": "تعذّرت إضافة هذا المنتج.",
     "updateFailed": "تعذّر تحديث سلتك.",
     "outOfStock": "غير متوفر",
@@ -925,6 +1123,72 @@ cat > src/messages/ar.json <<'EOF'
       "saved": "Saved successfully.",
       "notSet": "Not set"
     }
+  },
+  "UI": {
+    "product": {
+      "featuredSauces": "منتجات مختارة",
+      "sauce": "منتج",
+      "sauces": "منتجات"
+    },
+    "actions": {
+      "viewProducer": "عرض العلامة",
+      "visitWebsite": "زيارة الموقع"
+    }
+  },
+  "SauceArchive": {
+    "search": {
+      "placeholder": "ابحث عن المنتجات",
+      "filters": {
+        "sauceType": "الفئة",
+        "allCategories": "كل الفئات",
+        "sort": "ترتيب",
+        "sortNewest": "الأحدث",
+        "sortPopular": "الأكثر رواجًا",
+        "heatLevel": "درجة الحرارة",
+        "pepper": "نوع الفلفل",
+        "allChilliTypes": "كل أنواع الفلفل",
+        "sortMildToHot": "من الخفيف إلى الحار",
+        "sortHotToMild": "من الحار إلى الخفيف"
+      }
+    },
+    "results": {
+      "showing": "عرض",
+      "of": "من",
+      "sauces": "منتجات",
+      "noResults": "لا توجد نتائج",
+      "adjustSearch": "جرّب بحثًا أو عامل تصفية مختلفًا.",
+      "loadMore": "تحميل المزيد",
+      "clearFilters": "مسح عوامل التصفية"
+    }
+  },
+  "homepage": {
+    "producerShowcase": {
+      "eyebrow": "العلامات",
+      "title": "من يصنعها",
+      "viewAll": "عرض الكل",
+      "seeMore": "المزيد"
+    }
+  },
+  "Checkout": {
+    "title": "الدفع",
+    "subtotal": "المجموع الفرعي",
+    "shippingNote": "تُضاف تكلفة الشحن في الخطوة التالية.",
+    "cartProblem": "سلتك فارغة أو تحتوي على منتجات لم تعد متوفرة.",
+    "backToCart": "العودة إلى السلة",
+    "email": "البريد الإلكتروني",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "address": "العنوان",
+    "city": "المدينة",
+    "postalCode": "الرمز البريدي",
+    "country": "الدولة (رمز من 3 أحرف)",
+    "payNow": "ادفع الآن",
+    "redirecting": "جارٍ التحويل...",
+    "failed": "تعذّر بدء عملية الدفع. حاول مرة أخرى.",
+    "stockChanged": "نفد أحد المنتجات في سلتك. يرجى مراجعة السلة.",
+    "successTitle": "شكرًا لطلبك",
+    "keepShopping": "متابعة التسوق",
+    "successBody": "تمت عملية الدفع بنجاح وأرسلنا الإيصال إلى بريدك."
   }
 }
 EOF
@@ -1404,8 +1668,9 @@ cat > src/app/[locale]/shop/page.tsx <<'EOF'
 import { getTranslations } from 'next-intl/server';
 
 import AddToCartButton from '@/components/cart/AddToCartButton';
+import ProductCard from '@/components/store/ProductCard';
+import type { StoreProduct } from '@/components/store/types';
 import { createClient } from '@/lib/supabase/server';
-import { formatPrice } from '@/lib/format';
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
 
 export default async function ShopPage({
@@ -1417,15 +1682,13 @@ export default async function ShopPage({
   const t = await getTranslations({ locale, namespace: 'Shop' });
   const supabase = await createClient();
 
-  // Public read is allowed on products; archived and unpublished ones are
-  // filtered out here rather than relying on the client to hide them.
+  // products_public is the storefront view: it hides supplier fields and
+  // only contains published, unarchived rows.
   const { data: products } = await supabase
-    .from('products')
+    .from('products_public')
     .select(
-      'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options'
+      'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug'
     )
-    .neq('is_active', false)
-    .is('archived_at', null)
     .order('created_at', { ascending: false });
 
   return (
@@ -1436,40 +1699,48 @@ export default async function ShopPage({
         <p className="text-gray-600">{t('empty')}</p>
       ) : (
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => {
+          {products.map((row) => {
             const soldOut =
               maxAllowedQuantity({
-                stock: product.stock,
-                trackInventory: product.track_inventory,
-                allowBackorder: product.allow_backorder,
-                maxOrderQuantity: product.max_order_quantity
+                stock: row.stock,
+                trackInventory: row.track_inventory,
+                allowBackorder: row.allow_backorder,
+                maxOrderQuantity: row.max_order_quantity
               }) <= 0;
 
-            return (
-              <li
-                key={product.id}
-                className="flex flex-col rounded-xl border border-gray-200 p-4"
-              >
-                <h2 className="font-semibold">{product.name}</h2>
-                {product.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-gray-600">
-                    {product.description}
-                  </p>
-                )}
-                <p className="mt-2 font-bold">
-                  {formatPrice(product.price_cents, product.currency, locale)}
-                </p>
+            const product: StoreProduct = {
+              id: row.id,
+              name: row.name,
+              slug: row.slug,
+              description: row.description,
+              image_url: row.image_url,
+              price_cents: row.price_cents,
+              currency: row.currency,
+              category: row.category_id
+                ? {
+                    id: row.category_id,
+                    name: row.category_name ?? '',
+                    slug: row.category_slug ?? ''
+                  }
+                : null
+            };
 
-                <div className="mt-4">
-                  <AddToCartButton
-                    locale={locale}
-                    productId={product.id}
-                    sizeOptions={product.size_options}
-                    colorOptions={product.color_options}
-                    soldOut={soldOut}
-                    className="w-full"
-                  />
-                </div>
+            return (
+              <li key={row.id}>
+                <ProductCard
+                  product={product}
+                  locale={locale}
+                  action={
+                    <AddToCartButton
+                      locale={locale}
+                      productId={row.id}
+                      sizeOptions={row.size_options}
+                      colorOptions={row.color_options}
+                      soldOut={soldOut}
+                      className="w-full"
+                    />
+                  }
+                />
               </li>
             );
           })}
@@ -1873,6 +2144,7 @@ EOF
 echo "🧾 Ensuring .env.local defaults..."
 ensure_env_default "NEXT_PUBLIC_SITE_URL" "http://localhost:3000"
 ensure_env_default "STRIPE_SECRET_KEY" "sk_test_yourkey"
+ensure_env_default "STRIPE_WEBHOOK_SECRET" "whsec_yourwebhooksecret"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
