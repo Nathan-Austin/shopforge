@@ -32,6 +32,24 @@ echo "🚀 Applying production-grade enhancements (${STORE_MODE})..."
 echo "📦 Syncing shared libraries..."
 mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
+mkdir -p src/components
+cp -R "$SHARED_DIR/components/." src/components/
+
+# Shops generated before the product field catalogue existed have no config;
+# give them every field so nothing the admin form shows is silently dropped.
+if [ ! -f src/lib/products/config.ts ]; then
+  echo "🗂️  Writing default product field config (all fields)..."
+  if [ "$STORE_MODE" = "chilli" ]; then
+    HEAT_JSON='{"max": 10, "display": "both", "bands": [{"word": "Mild", "upTo": 3}, {"word": "Medium", "upTo": 6}, {"word": "Hot", "upTo": 8}, {"word": "Extra hot", "upTo": 9}, {"word": "Extreme", "upTo": 10}]}'
+  else
+    HEAT_JSON="null"
+  fi
+  FIELD_KEYS=$(python3 "$SCRIPT_DIR/lib/product-fields.py" resolve \
+    "$SHARED_DIR/lib/products/catalogue.ts" "$STORE_MODE" all)
+  python3 "$SCRIPT_DIR/lib/product-fields.py" config \
+    "$SHARED_DIR/lib/products/catalogue.ts" "$STORE_MODE" "$FIELD_KEYS" "$HEAT_JSON" \
+    src/lib/products/config.ts
+fi
 
 # Stores generated before stripe was added to the generator need it now
 if ! grep -q '"stripe"' package.json; then

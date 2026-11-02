@@ -234,10 +234,130 @@ pnpm add stripe
 # there is no postcss.config and no need for postcss/autoprefixer.
 pnpm add -D @types/node @types/react prettier
 
+FIELD_PICKER="$SCRIPT_DIR/lib/product-fields.py"
+FIELD_CATALOGUE="$SHARED_DIR/lib/products/catalogue.ts"
+HEAT_JSON="null"
+
+# Which product fields the admin panel manages. Every column exists in the
+# database either way, so this is only about what the admin form shows and
+# the server actions save; it can be changed later without a migration.
+ensure_product_fields() {
+  local existing answer
+  existing=$(get_env_var "SHOPFORGE_PRODUCT_FIELDS")
+  if [ -z "$existing" ] && [ -n "${SHOPFORGE_PRODUCT_FIELDS:-}" ]; then
+    existing="$SHOPFORGE_PRODUCT_FIELDS"
+  fi
+  if [ -z "$existing" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    existing="all"
+  fi
+  if [ -z "$existing" ]; then
+    python3 "$FIELD_PICKER" menu "$FIELD_CATALOGUE" "$STORE_MODE"
+    read -r -p "Fields: " answer
+    existing="$answer"
+  fi
+  existing=$(python3 "$FIELD_PICKER" resolve "$FIELD_CATALOGUE" "$STORE_MODE" "$existing")
+  set_env_var "SHOPFORGE_PRODUCT_FIELDS" "$existing"
+  export SHOPFORGE_PRODUCT_FIELDS="$existing"
+  echo "   Product fields: $existing"
+}
+
+# Chilli shops store heat as a number and choose how it reads to customers.
+# Every word is optional: a shop that only says mild/medium/hot has three
+# bands, and one that wants numbers only has none.
+ensure_heat_scale() {
+  if [ "$STORE_MODE" != "chilli" ]; then
+    HEAT_JSON="null"
+    return
+  fi
+
+  local max bands display answer word bound
+  max=$(get_env_var "SHOPFORGE_HEAT_MAX")
+  bands=$(get_env_var "SHOPFORGE_HEAT_BANDS")
+  display=$(get_env_var "SHOPFORGE_HEAT_DISPLAY")
+  [ -z "$max" ] && max="${SHOPFORGE_HEAT_MAX:-}"
+  [ -z "$bands" ] && bands="${SHOPFORGE_HEAT_BANDS:-}"
+  [ -z "$display" ] && display="${SHOPFORGE_HEAT_DISPLAY:-}"
+
+  if [ -z "$max" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    max="10"
+    bands="Mild:3,Medium:6,Hot:8,Extra hot:9,Extreme:10"
+    display="both"
+  fi
+
+  if [ -z "$max" ]; then
+    echo ""
+    echo "🌶️  Heat scale"
+    echo "   Heat is stored as a number, so you can change the wording later."
+    read -r -p "   Scale maximum (5, 10 or 20) [10]: " answer
+    case "$answer" in
+      5|10|20) max="$answer" ;;
+      "") max="10" ;;
+      *) max="$answer" ;;
+    esac
+    if ! [ "$max" -gt 0 ] 2>/dev/null; then
+      echo "   Not a number, using 10."
+      max="10"
+    fi
+
+    read -r -p "   Use words (mild, hot, ...) as well as numbers? [Y/n]: " answer
+    if [[ $answer =~ ^[Nn]$ ]]; then
+      bands=""
+      display="number"
+    else
+      echo "   For each word, give the highest level it covers (0-$max)."
+      echo "   Press Enter to skip a word you do not use."
+      bands=""
+      for word in "Mild" "Medium" "Hot" "Extra hot" "Extreme"; do
+        read -r -p "     $word, up to: " bound
+        if [ -n "$bound" ] && [ "$bound" -ge 0 ] 2>/dev/null; then
+          if [ -n "$bands" ]; then bands="$bands,"; fi
+          bands="$bands$word:$bound"
+        fi
+      done
+      echo "   How should heat appear in the shop?"
+      echo "     1) Word and number, e.g. Hot (7/$max)"
+      echo "     2) Word only, e.g. Hot"
+      echo "     3) Number only, e.g. 7/$max"
+      echo "     4) Chilli icons"
+      read -r -p "   Choice [1]: " answer
+      case "$answer" in
+        2) display="word" ;;
+        3) display="number" ;;
+        4) display="peppers" ;;
+        *) display="both" ;;
+      esac
+    fi
+  fi
+
+  [ -z "$display" ] && display="both"
+
+  set_env_var "SHOPFORGE_HEAT_MAX" "$max"
+  set_env_var "SHOPFORGE_HEAT_BANDS" "$bands"
+  set_env_var "SHOPFORGE_HEAT_DISPLAY" "$display"
+
+  HEAT_JSON=$(HEAT_MAX="$max" HEAT_BANDS="$bands" HEAT_DISPLAY="$display" python3 <<'PYHEAT'
+import json, os
+max_level = int(os.environ['HEAT_MAX'])
+bands = []
+for part in os.environ['HEAT_BANDS'].split(','):
+    part = part.strip()
+    if not part or ':' not in part:
+        continue
+    word, _, bound = part.rpartition(':')
+    bands.append({'word': word.strip(), 'upTo': min(int(bound), max_level)})
+bands.sort(key=lambda band: band['upTo'])
+print(json.dumps({'max': max_level, 'display': os.environ['HEAT_DISPLAY'], 'bands': bands}))
+PYHEAT
+)
+  export SHOPFORGE_HEAT_MAX="$max"
+}
+
 # 2.5) Copy shared-assets/lib (production-grade)
 echo "📦 Copying production-grade shared libraries..."
 mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
+mkdir -p src/components
+cp -R "$SHARED_DIR/components/." src/components/
 
 # 3) Initialize Supabase (creates /supabase/)
 if [ "$SKIP_SUPABASE" = "true" ]; then
@@ -254,6 +374,16 @@ prompt_env_var "NEXT_PUBLIC_SUPABASE_ANON_KEY" "Supabase anon key" true "placeho
 prompt_env_var "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key" true "placeholder-service-role-key"
 prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" false "placeholder"
 ensure_store_mode
+
+echo "🧱 Choosing product fields..."
+ensure_product_fields
+ensure_heat_scale
+
+echo "🗂️  Writing product field config..."
+mkdir -p src/lib/products
+python3 "$FIELD_PICKER" config \
+  "$FIELD_CATALOGUE" "$STORE_MODE" "$SHOPFORGE_PRODUCT_FIELDS" "$HEAT_JSON" \
+  src/lib/products/config.ts
 
 if [ "$SKIP_SUPABASE" = "true" ]; then
   echo "🔗 Skipping Supabase link (--skip-supabase)."
@@ -291,6 +421,20 @@ cp "$MODE_DIR/schema.sql" supabase/migrations/0001_init.sql
 # 2. Seed Data
 if [ -f "$MODE_DIR/seeds.sql" ]; then
   cp "$MODE_DIR/seeds.sql" supabase/migrations/0002_seeds.sql
+  # Seed heat values are written on a 0-10 basis as __HEAT_n__ and rescaled
+  # to whatever heat scale this shop chose.
+  HEAT_MAX="${SHOPFORGE_HEAT_MAX:-10}" python3 <<'PYSEED'
+import os, pathlib, re
+path = pathlib.Path('supabase/migrations/0002_seeds.sql')
+text = path.read_text()
+max_level = int(os.environ['HEAT_MAX'])
+text = re.sub(
+    r'__HEAT_(\d+)__',
+    lambda m: str(round(int(m.group(1)) / 10 * max_level)),
+    text,
+)
+path.write_text(text)
+PYSEED
 fi
 
 # 3. Single Store Brand
