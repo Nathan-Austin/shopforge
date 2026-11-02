@@ -4,7 +4,9 @@ Planned work for shopforge, roughly in order.
 
 ## 1. Storefront and orders
 
-- [ ] Cart and add-to-cart
+- [x] Cart and add-to-cart — done 2026-11-02 on `feat/cart`: httpOnly
+      `shop_cart_session` cookie, server actions, /shop and /cart pages,
+      header count, guest-cart merge on sign-in, cookie-based checkout
 - [ ] Product detail page
 - [ ] Orders tables and Stripe webhook, so paid checkouts are recorded
 - [ ] Order confirmation email
@@ -89,14 +91,31 @@ Decided on 2026-11-02:
   'force-dynamic'` removed first. Revisit once the real storefront pages
   exist and there is something worth caching.
 
+**Decide: `cost_price_cents` is readable by anyone.**
+
+`products` has `for select using (true)` and the anon key is public, so the
+Data API will return the new `cost_price_cents` (and `sku`, `barcode`) to
+anyone, even though the field is labelled "admin only, never shown to
+customers". Options, cheapest first: move cost price to an owner-only table;
+or `revoke select (cost_price_cents) on public.products from anon` (works
+today because the storefront selects explicit columns and only the shop
+owner's authenticated role uses `select('*')`, but it breaks the moment any
+anon query uses `select('*')`); or a `products_public` view with direct
+select revoked, which is the tidiest and the most work. Not done: it changes
+the schema contract, so it is your call.
+
 **Known gaps in the generated store (not build failures):**
 
 - The storefront doesn't read most of the new product fields yet: `/shop` and
   the product page are still placeholders, so headline, gallery, tags, stock
   and the rest are saved but only visible in the admin. Wire them in with the
   storefront work in section 1.
-- `track_inventory` and `allow_backorder` are stored but nothing enforces
-  them: checkout doesn't check stock before creating a Stripe session.
+- Stock is checked when adding to the cart and again at checkout, but it is
+  never reserved, so two customers can both pay for the last unit. Decrementing
+  stock belongs with the Stripe webhook and the orders work.
+- The cart is not merged on sign-*up*, only on sign-in.
+- `/checkout` is still a placeholder: the API route works from the cookie but
+  nothing posts to it yet.
 - Money is entered in major units and stored as cents everywhere, but the
   currency is per product and free text. A store-level currency belongs with
   the store settings work above.
