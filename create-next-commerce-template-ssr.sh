@@ -227,6 +227,8 @@ approve_build_scripts '@parcel/watcher' '@swc/core' sharp unrs-resolver
 # 2) Install deps
 echo "📦 Installing dependencies..."
 pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx tailwind-merge class-variance-authority lucide-react @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select
+# stripe is imported by src/lib/stripe/server.ts (copied from shared-assets)
+pnpm add stripe
 # tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
 pnpm add -D @types/node @types/react autoprefixer postcss prettier
 
@@ -234,9 +236,6 @@ pnpm add -D @types/node @types/react autoprefixer postcss prettier
 echo "📦 Copying production-grade shared libraries..."
 mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
-
-# Optional: add Stripe now (commented)
-# pnpm add stripe
 
 # 3) Initialize Supabase (creates /supabase/)
 if [ "$SKIP_SUPABASE" = "true" ]; then

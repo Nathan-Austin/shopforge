@@ -10,9 +10,10 @@ export function getStripeServerClient() {
       throw new Error('STRIPE_SECRET_KEY is not configured');
     }
 
+    // No apiVersion: the SDK pins the API version it was built for, so
+    // upgrading the stripe package keeps the types and the API in step.
     stripe = new Stripe(secretKey, {
       typescript: true,
-      apiVersion: '2025-01-27.acacia', // Or latest
     });
   }
 
