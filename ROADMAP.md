@@ -15,6 +15,12 @@ Planned work for shopforge, roughly in order.
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
       hardcoded `src/lib/shipping/config.ts`
+- [ ] Admin UI for `src/lib/products/config.ts`: tick which product fields the
+      shop manages, without editing the file. The columns already all exist,
+      so this needs no migration
+- [ ] Admin UI for the heat scale: rename or drop the word bands and switch
+      how heat appears in the shop (word and number, word only, number only,
+      chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
 - [ ] Theme tokens instead of hardcoded colours
 
 ## 3. Languages
@@ -53,6 +59,16 @@ Planned work for shopforge, roughly in order.
 
 Decided on 2026-11-02:
 
+- Product fields are chosen at generation time but **every column always
+  exists** in the schema. `src/lib/products/config.ts` only says which ones
+  the admin uses, so switching one on later never needs a migration. The same
+  file holds the heat scale, which is why the planned admin UI for both is
+  cheap to build.
+- Heat is stored as a **number**, never a word. Words are display bands in
+  `HEAT_SCALE.bands` and every one is optional, so a shop can use three words
+  or none. Seed heat values live in `seeds.sql` as `__HEAT_n__` on a 0-10
+  basis and the generator rescales them.
+
 - `middleware.ts` renamed to `src/proxy.ts` for Next 16. **With `--src-dir`
   the file must be in `src/`**: a `proxy.ts` in the project root is ignored
   silently, with no build warning, which leaves the store with no locale
@@ -68,15 +84,15 @@ Decided on 2026-11-02:
 
 **Known gaps in the generated store (not build failures):**
 
-- The admin server actions only persist name, slug, price, currency,
-  description, image and category/brand (plus heat level and chilli types in
-  `chilli`). `details`, `capacity_ml`, `ingredients`, `nutrition_info`,
-  `is_active`, `size_options` and `color_options` are collected by the form
-  but dropped by `createProduct`/`updateProduct`. Worth doing before building
-  features on top of the admin.
-- The chilli `ProductForm` renders heat level as a number input (0-10) while
-  `heat_level` is a free-text column and `BrandCard.heatColor` matches on the
-  words mild/medium/hot. Pick one representation.
+- The storefront doesn't read most of the new product fields yet: `/shop` and
+  the product page are still placeholders, so headline, gallery, tags, stock
+  and the rest are saved but only visible in the admin. Wire them in with the
+  storefront work in section 1.
+- `track_inventory` and `allow_backorder` are stored but nothing enforces
+  them: checkout doesn't check stock before creating a Stripe session.
+- Money is entered in major units and stored as cents everywhere, but the
+  currency is per product and free text. A store-level currency belongs with
+  the store settings work above.
 - `pnpm build` only warns, not fails, when Tailwind isn't wired in. Check the
   build log for "Unknown at rule: @theme" if styles ever disappear again.
 - Next 16 does not run ESLint during `next build`; `pnpm lint` is a separate

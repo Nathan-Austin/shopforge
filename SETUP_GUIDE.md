@@ -62,8 +62,10 @@ From `~/projects`:
 The script will:
 
 1. Create the Next.js app and install dependencies
-2. Ask for the four Supabase values from step 2, and whether the shop sells a
-   **single** brand or is a **multi**-brand marketplace
+2. Ask for the four Supabase values from step 2, whether the shop sells a
+   **single** brand or is a **multi**-brand marketplace, which product fields
+   the admin panel should manage, and — for `chilli` — the heat scale and how
+   heat should read to customers
 3. Log in to the Supabase CLI if needed and link the project
 4. Push the schema, seed data and storage policies as migrations
 5. Copy in the store and admin components for the chosen mode

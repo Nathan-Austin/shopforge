@@ -19,9 +19,16 @@ support for languages such as Arabic.
 - **Database:** profiles, addresses, brands, categories, products and cart
   items, with row-level security and seed data
 - **Languages:** any set of locales via `next-intl`, with RTL layout for Arabic
+- **Product fields you choose:** pick from ~32 fields at generation time
+  (headline, SKU, stock, compare-at price, net content, allergens, nutrition,
+  tags, SEO and more). Every column exists in the database either way, so
+  turning one on later is a config change, not a migration
 - **Two store modes:**
   - `generic`: products, brands and categories
-  - `chilli`: adds heat levels and chilli types, for hot-sauce shops
+  - `chilli`: adds heat levels and chilli types, for hot-sauce shops. Heat is
+    stored as a number on a scale you choose (0-5, 0-10, 0-20 or your own),
+    and the words for it — mild, medium, hot, and any others you want — are
+    display bands over that number, all optional
 - **Security defaults:** customers can't change their own role, carts are
   server-only, and nobody becomes an admin automatically
 
@@ -97,9 +104,21 @@ create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=g
 | `--mode` | `chilli` | Store mode from `store-modes/` |
 | `--skip-supabase` | off | Don't run the Supabase CLI or ask for keys; write placeholder values to `.env.local` and leave the migrations in `supabase/migrations/` for a later `supabase db push`. For tests and CI |
 
-The script also asks whether the shop sells a **single** brand or is a
-**multi**-brand marketplace, which decides whether the admin product form shows
-a brand selector.
+The script also asks:
+
+- whether the shop sells a **single** brand or is a **multi**-brand
+  marketplace, which decides whether the admin product form shows a brand
+  selector
+- **which product fields** the admin panel should manage, as a grouped list
+  where `0` selects everything and Enter takes the recommended set
+- for `chilli` shops, the **heat scale**: its maximum, which words to use and
+  how heat should appear in the shop (word and number, word only, number only
+  or chilli icons)
+
+To skip the questions, preset `SHOPFORGE_PRODUCT_FIELDS` (`all`,
+`recommended`, or a comma-separated list of field keys), `SHOPFORGE_HEAT_MAX`,
+`SHOPFORGE_HEAT_BANDS` (`Mild:3,Hot:10`) and `SHOPFORGE_HEAT_DISPLAY`. The
+answers end up in `src/lib/products/config.ts`, which you can edit afterwards.
 
 `extend-commerce-template.sh [--mode=…]` runs inside an existing generated shop
 and adds the profile API and Stripe checkout session route, plus the latest
@@ -124,6 +143,8 @@ create-next-commerce-template-ssr.sh   scaffolds a new shop
 extend-commerce-template.sh            adds checkout + profile API to a shop
 store-modes/<mode>/                    schema, seeds, storefront and admin components
 shared-assets/lib/                     helpers copied into every shop
+shared-assets/components/              components copied into every shop
+lib/product-fields.py                  reads the catalogue for the field picker
 test/generate-and-check.sh             generates a store and runs install, tsc, lint, build
 ```
 
