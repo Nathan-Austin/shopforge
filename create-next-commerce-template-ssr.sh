@@ -683,13 +683,28 @@ export default getRequestConfig(async ({ requestLocale }) => {
 EOF
 
 # 6b) Wire next-intl plugin into next.config.ts
+# This replaces the file create-next-app wrote. Keep its Tailwind 4 Turbopack
+# loader, otherwise `@import "tailwindcss"` / `@theme` are never processed
+# and the store ships without styles (the build only warns about it).
+# create-next-app also enables `cacheComponents` and `partialPrefetching`;
+# those are left off because the generated pages read cookies/session on
+# every request and would need Suspense boundaries first.
 cat > next.config.ts <<'EOF'
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
+      },
+    },
+  },
+};
 
 export default withNextIntl(nextConfig);
 EOF
