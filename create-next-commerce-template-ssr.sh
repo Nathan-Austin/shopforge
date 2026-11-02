@@ -18,17 +18,19 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! npx --yes supabase --help >/dev/null 2>&1; then
-  echo "❌ Supabase CLI not found. Install via npm: npm i -g supabase." >&2
-  exit 1
-fi
-
 STORE_MODE="chilli"
+# --skip-supabase: don't touch the Supabase CLI (no init/link/push) and fill
+# .env.local with placeholder values. Used for tests and CI; the migrations
+# are still written so they can be pushed later with `npx supabase db push`.
+SKIP_SUPABASE="${SHOPFORGE_SKIP_SUPABASE:-false}"
 POSITIONAL=()
 for arg in "$@"; do
   case $arg in
     --mode=*)
       STORE_MODE="${arg#--mode=}"
+      ;;
+    --skip-supabase)
+      SKIP_SUPABASE="true"
       ;;
     *)
       POSITIONAL+=("$arg")
@@ -36,6 +38,11 @@ for arg in "$@"; do
   esac
 done
 set -- "${POSITIONAL[@]}"
+
+if [ "$SKIP_SUPABASE" != "true" ] && ! npx --yes supabase --help >/dev/null 2>&1; then
+  echo "❌ Supabase CLI not found. Install via npm: npm i -g supabase." >&2
+  exit 1
+fi
 
 APP_NAME=${1:-next-commerce-template}
 DEFAULT_LOCALE=${2:-en}
@@ -106,8 +113,18 @@ prompt_env_var() {
   local var="$1"
   local prompt="$2"
   local silent="$3"
+  local placeholder="$4"
   local existing
   existing=$(get_env_var "$var")
+  # Already exported in the environment (e.g. CI) takes precedence over prompting
+  if [ -z "$existing" ] && [ -n "${!var:-}" ]; then
+    existing="${!var}"
+    set_env_var "$var" "$existing"
+  fi
+  if [ -z "$existing" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    existing="$placeholder"
+    set_env_var "$var" "$existing"
+  fi
   if [ -n "$existing" ]; then
     export "$var=$existing"
     return
@@ -131,6 +148,14 @@ prompt_env_var() {
 ensure_store_mode() {
   local existing
   existing=$(get_env_var "NEXT_PUBLIC_STORE_MODE")
+  if [ -z "$existing" ] && [ -n "${NEXT_PUBLIC_STORE_MODE:-}" ]; then
+    existing="$NEXT_PUBLIC_STORE_MODE"
+    set_env_var "NEXT_PUBLIC_STORE_MODE" "$existing"
+  fi
+  if [ -z "$existing" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    existing="single"
+    set_env_var "NEXT_PUBLIC_STORE_MODE" "$existing"
+  fi
   if [ -z "$existing" ]; then
     read -r -p "Store mode (single/multi) [single]: " mode
     if [ -z "$mode" ]; then
@@ -160,16 +185,24 @@ cp -R "$SHARED_DIR/lib/." src/lib/
 # pnpm add stripe
 
 # 3) Initialize Supabase (creates /supabase/)
-echo "🧩 Initializing Supabase..."
-npx supabase init
+if [ "$SKIP_SUPABASE" = "true" ]; then
+  echo "🧩 Skipping Supabase CLI (--skip-supabase); writing placeholder credentials..."
+  mkdir -p supabase
+else
+  echo "🧩 Initializing Supabase..."
+  npx supabase init
+fi
 
 echo "🔐 Configuring Supabase credentials..."
-prompt_env_var "NEXT_PUBLIC_SUPABASE_URL" "Supabase project URL (https://....supabase.co)" false
-prompt_env_var "NEXT_PUBLIC_SUPABASE_ANON_KEY" "Supabase anon key" true
-prompt_env_var "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key" true
-prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" false
+prompt_env_var "NEXT_PUBLIC_SUPABASE_URL" "Supabase project URL (https://....supabase.co)" false "https://placeholder.supabase.co"
+prompt_env_var "NEXT_PUBLIC_SUPABASE_ANON_KEY" "Supabase anon key" true "placeholder-anon-key"
+prompt_env_var "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key" true "placeholder-service-role-key"
+prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" false "placeholder"
 ensure_store_mode
 
+if [ "$SKIP_SUPABASE" = "true" ]; then
+  echo "🔗 Skipping Supabase link (--skip-supabase)."
+else
 echo "🔗 Linking Supabase project..."
 # Attempt to list projects to check login status
 if ! npx supabase projects list >/dev/null 2>&1; then
@@ -192,6 +225,7 @@ fi
 
 # Link the project (will prompt for database password)
 npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
+fi
 
 echo "📝 Preparing database migrations (${STORE_MODE})..."
 mkdir -p supabase/migrations
@@ -229,8 +263,13 @@ on storage.objects for delete
 using (bucket_id = 'product-images' AND (auth.role() = 'authenticated'));
 SQL
 
-echo "🗄️ Pushing all migrations to Supabase..."
-npx supabase db push --yes
+if [ "$SKIP_SUPABASE" = "true" ]; then
+  echo "🗄️ Migrations written to supabase/migrations (not pushed: --skip-supabase)."
+  echo "   Later: fill in .env.local, then 'npx supabase init && npx supabase link --project-ref <ref> && npx supabase db push'."
+else
+  echo "🗄️ Pushing all migrations to Supabase..."
+  npx supabase db push --yes
+fi
 
 # Note: Buckets and Storage RLS are difficult to manage via CLI for remote projects.
 echo ""
