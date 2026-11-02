@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import type { StoreProduct, ChilliType, Category } from './types';
+import { formatHeat, heatScale, heatWord } from '@/lib/products/heat';
 import ProductCard from './ProductCard';
 import Chip from './Chip';
 
@@ -15,20 +16,13 @@ interface ProductArchiveProps {
 
 type SortOption = 'recent' | 'popular' | 'mild-first' | 'hot-first';
 
-const HEAT_ORDER: Record<string, number> = {
-  mild: 1,
-  medium: 2,
-  hot: 3,
-  extreme: 4
-};
+// Heat is stored as a number; the words come from the shop's heat scale.
+const HEAT_WORDS = heatScale?.bands.map((band) => band.word) ?? [];
 
 const resolveHeatRank = (value?: string | number | null): number | null => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === 'number') return value;
+  if (value === null || value === undefined || value === '') return null;
   const numeric = Number(value);
-  if (!Number.isNaN(numeric)) return numeric;
-  const normalized = value.toLowerCase();
-  return HEAT_ORDER[normalized] ?? null;
+  return Number.isFinite(numeric) ? numeric : null;
 };
 
 export default function ProductArchive({
@@ -52,15 +46,8 @@ export default function ProductArchive({
         product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const productHeatLabel =
-        typeof product.heatLevel === 'string'
-          ? product.heatLevel
-          : product.heatLevel !== null && product.heatLevel !== undefined
-            ? String(product.heatLevel)
-            : '';
       const matchesHeatLevel =
-        !selectedHeatLevel ||
-        (productHeatLabel && productHeatLabel.toLowerCase() === selectedHeatLevel.toLowerCase());
+        !selectedHeatLevel || heatWord(product.heatLevel) === selectedHeatLevel;
 
       const matchesChilliType = !selectedChilliType || (
         Array.isArray(product.chilliTypes) &&
@@ -156,7 +143,7 @@ export default function ProductArchive({
                 {t('search.filters.heatLevel')}
               </legend>
               <div className="mt-1 flex flex-wrap gap-2 items-center">
-                {['Mild', 'Medium', 'Hot'].map((level) => (
+                {HEAT_WORDS.map((level) => (
                   <button
                     key={level}
                     onClick={() => setSelectedHeatLevel(selectedHeatLevel === level ? '' : level)}
@@ -231,7 +218,7 @@ export default function ProductArchive({
               {selectedPepper && (
                 <Chip variant="filter" onRemove={() => setSelectedChilliType('')}>
                   {selectedPepper.name}
-                  {selectedPepper.heatLevel ? ` • ${selectedPepper.heatLevel}` : ''}
+                  {selectedPepper.heatLevel ? ` • ${formatHeat(selectedPepper.heatLevel)}` : ''}
                 </Chip>
               )}
               {activeFilters.map((filter) => (

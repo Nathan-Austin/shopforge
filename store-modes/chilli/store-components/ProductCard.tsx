@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import type { StoreProduct } from './types';
+import { formatHeat } from '@/lib/products/heat';
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -51,9 +52,9 @@ export default function ProductCard({ product, specialPrice, locale: propLocale 
                   {product.category.name}
                 </Badge>
               )}
-              {product.heatLevel && (
+              {product.heatLevel !== null && product.heatLevel !== undefined && (
                 <span className="text-xs font-bold text-orange-600 uppercase">
-                  Level {product.heatLevel}
+                  {formatHeat(product.heatLevel)}
                 </span>
               )}
             </div>

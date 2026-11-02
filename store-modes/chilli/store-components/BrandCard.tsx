@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { StoreBrand, StoreProduct } from './types';
+import { formatHeat, heatFraction } from '@/lib/products/heat';
 
 interface BrandCardProps {
   brand: StoreBrand;
@@ -12,14 +13,13 @@ interface BrandCardProps {
   websiteUrl?: string;
 }
 
-// heat_level is free text in the schema, and StoreProduct widens it to
-// string | number for shops that store a 0-10 scale instead.
+// Heat is a number on the shop's own scale, so colour by where it sits
+// rather than by matching words.
 const heatColor = (heatLevel?: string | number | null) => {
-  if (!heatLevel) return 'bg-red-500';
-  const normalized = String(heatLevel).toLowerCase();
-  if (normalized.includes('mild')) return 'bg-green-400';
-  if (normalized.includes('medium')) return 'bg-yellow-400';
-  if (normalized.includes('hot')) return 'bg-orange-400';
+  const fraction = heatFraction(heatLevel);
+  if (fraction <= 0.3) return 'bg-green-400';
+  if (fraction <= 0.6) return 'bg-yellow-400';
+  if (fraction <= 0.8) return 'bg-orange-400';
   return 'bg-red-500';
 };
 
@@ -138,7 +138,9 @@ export default function BrandCard({
                     {product.heatLevel && (
                       <div className="flex items-center gap-1 ml-2">
                         <div className={`w-2 h-2 rounded-full ${heatColor(product.heatLevel)}`} />
-                        <span className="text-xs text-text-muted">{product.heatLevel}</span>
+                        <span className="text-xs text-text-muted">
+                          {formatHeat(product.heatLevel)}
+                        </span>
                       </div>
                     )}
                   </div>
