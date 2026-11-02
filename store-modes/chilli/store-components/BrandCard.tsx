@@ -12,9 +12,11 @@ interface BrandCardProps {
   websiteUrl?: string;
 }
 
-const heatColor = (heatLevel?: string) => {
+// heat_level is free text in the schema, and StoreProduct widens it to
+// string | number for shops that store a 0-10 scale instead.
+const heatColor = (heatLevel?: string | number | null) => {
   if (!heatLevel) return 'bg-red-500';
-  const normalized = heatLevel.toLowerCase();
+  const normalized = String(heatLevel).toLowerCase();
   if (normalized.includes('mild')) return 'bg-green-400';
   if (normalized.includes('medium')) return 'bg-yellow-400';
   if (normalized.includes('hot')) return 'bg-orange-400';
