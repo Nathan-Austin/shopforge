@@ -33,6 +33,12 @@ echo "📦 Syncing shared libraries..."
 mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
 
+# Stores generated before stripe was added to the generator need it now
+if ! grep -q '"stripe"' package.json; then
+  echo "📦 Adding stripe..."
+  pnpm add stripe
+fi
+
 echo "🧱 Syncing store components (${STORE_MODE})..."
 mkdir -p src/components/store
 cp -R "$MODE_DIR/store-components/." src/components/store/
@@ -91,6 +97,7 @@ import { z } from 'zod';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { one } from '@/lib/supabase/relations';
 import { calculateShippingCost, SHIPPING_RATE_LABEL } from '@/lib/checkout/pricing';
 import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
 
@@ -105,6 +112,20 @@ const checkoutSchema = z.object({
   locale: z.string().min(2),
   cartSessionId: z.string().uuid(),
 });
+
+interface CartProduct {
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  price_cents: number;
+  currency: string;
+}
+
+interface CartLine {
+  quantity: number;
+  product: CartProduct;
+}
 
 export async function POST(request: Request) {
   try {
@@ -130,28 +151,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cart is empty or invalid' }, { status: 400 });
     }
 
+    // supabase-js types the embedded product as an array without generated
+    // database types; `one()` unwraps it either way.
+    const lines: CartLine[] = cartItems.flatMap((item) => {
+      const product = one<CartProduct>(item.products);
+      return product ? [{ quantity: Number(item.quantity), product }] : [];
+    });
+
+    if (!lines.length) {
+      return NextResponse.json({ error: 'Cart is empty or invalid' }, { status: 400 });
+    }
+
     // 2. Prepare line items for Stripe
-    const lineItems = cartItems.map((item: any) => ({
-      quantity: item.quantity,
+    const lineItems = lines.map(({ quantity, product }) => ({
+      quantity,
       price_data: {
-        currency: item.products.currency.toLowerCase(),
-        unit_amount: item.products.price_cents,
+        currency: product.currency.toLowerCase(),
+        unit_amount: product.price_cents,
         product_data: {
-          name: item.products.name,
-          images: item.products.image_url ? [item.products.image_url] : [],
-          metadata: { product_id: item.products.id }
+          name: product.name,
+          images: product.image_url ? [product.image_url] : [],
+          metadata: { product_id: product.id }
         },
       },
     }));
 
-    const subtotalCents = cartItems.reduce((sum: number, item: any) => 
-      sum + (item.products.price_cents * item.quantity), 0
+    const subtotalCents = lines.reduce(
+      (sum, { quantity, product }) => sum + product.price_cents * quantity,
+      0
     );
 
     // 3. Calculate shipping (flat rate, see lib/shipping/config.ts)
-    const shippingItems: OrderItem[] = cartItems.map((item: any) => ({
-      quantity: item.quantity,
-    }));
+    const shippingItems: OrderItem[] = lines.map(({ quantity }) => ({ quantity }));
 
     const packageWeight = calculatePackageWeight(shippingItems);
     const shippingCostCents = calculateShippingCost(subtotalCents);
@@ -170,7 +201,7 @@ export async function POST(request: Request) {
           type: 'fixed_amount',
           fixed_amount: {
             amount: shippingCostCents,
-            currency: cartItems[0].products.currency.toLowerCase(),
+            currency: lines[0].product.currency.toLowerCase(),
           },
         },
       }],
