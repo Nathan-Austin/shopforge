@@ -97,7 +97,7 @@ already applied in step 3. The admin panel stores product images here.
 
 ## 6. Configure environment variables
 
-`.env.local` was written in step 3. Add your Stripe test key:
+`.env.local` was written in step 3. Add your Stripe keys:
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://abcd1234xyz.supabase.co
@@ -107,10 +107,28 @@ SUPABASE_PROJECT_REF=abcd1234xyz
 NEXT_PUBLIC_STORE_MODE=single        # or multi
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_…          # from dashboard.stripe.com → Developers → API keys
+STRIPE_WEBHOOK_SECRET=whsec_…        # from the webhook you create below
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 ```
 
 `.env.local` is gitignored. Never commit it.
+
+### The Stripe webhook
+
+Payment only counts when Stripe says so, so stock is decremented and the cart
+is emptied by the webhook, not by the browser returning from checkout. Without
+it, payments still succeed but nothing is deducted and carts stay full.
+
+In the Stripe dashboard, add an endpoint at
+`https://your-site/api/webhooks/stripe` subscribed to
+`checkout.session.completed`, and copy its signing secret into
+`STRIPE_WEBHOOK_SECRET`.
+
+Locally, forward events instead:
+
+```bash
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
 
 ## 7. Run locally and become the shop owner
 

@@ -29,8 +29,13 @@ support for languages such as Arabic.
     stored as a number on a scale you choose (0-5, 0-10, 0-20 or your own),
     and the words for it — mild, medium, hot, and any others you want — are
     display bands over that number, all optional
+- **Cart and checkout:** add to cart with size/colour variants, stock limits
+  enforced server-side, a `/cart` page and a live header count. Checkout
+  creates a Stripe session and the webhook decrements stock and empties the
+  cart once payment is confirmed
 - **Security defaults:** customers can't change their own role, carts are
-  server-only, and nobody becomes an admin automatically
+  server-only, supplier fields aren't published, and nobody becomes an admin
+  automatically
 
 **Starting points you finish yourself**
 
@@ -129,9 +134,18 @@ for keys.
 
 - **Roles:** a database trigger rejects any attempt by a customer to set or
   change `profiles.role`. Owners are promoted from the SQL editor.
-- **Carts:** `cart_items` has no public access. Checkout reads it on the server
-  with the service-role key, and prices always come from the database, never
-  from the browser.
+- **Carts:** the cart id lives in an httpOnly `shop_cart_session` cookie and is
+  read on the server by every action, so it is never accepted from a request
+  body and nobody can act on someone else's cart. `cart_items` has no public
+  access; all reads go through the service-role key. Prices, stock and variants
+  always come from the database, never from the browser. Signing out clears the
+  cookie, so a cart doesn't carry over on a shared machine.
+- **Products:** the table isn't world-readable. The storefront reads the
+  `products_public` view, which excludes supplier fields (`cost_price_cents`,
+  `sku`, `barcode`) and unpublished rows; only the shop owner reads the table.
+- **Payments:** the Stripe webhook verifies the signature before acting, and
+  records each event id so a retry can't decrement stock twice. Stock is only
+  decremented once Stripe reports the payment as paid.
 - **Secrets:** the generator creates a random `NEXTAUTH_SECRET`. Keep
   `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_SECRET_KEY` server-side only;
   `.env.local` is already gitignored.

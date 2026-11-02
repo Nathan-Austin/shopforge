@@ -8,7 +8,9 @@ Planned work for shopforge, roughly in order.
       `shop_cart_session` cookie, server actions, /shop and /cart pages,
       header count, guest-cart merge on sign-in, cookie-based checkout
 - [ ] Product detail page
-- [ ] Orders tables and Stripe webhook, so paid checkouts are recorded
+- [ ] Orders tables, so paid checkouts are recorded. The webhook exists and is
+      verified, idempotent and decrements stock — it just has nowhere to write
+      the order itself yet
 - [ ] Order confirmation email
 - [ ] Admin orders view
 
@@ -91,18 +93,16 @@ Decided on 2026-11-02:
   'force-dynamic'` removed first. Revisit once the real storefront pages
   exist and there is something worth caching.
 
-**Decide: `cost_price_cents` is readable by anyone.**
+**Where to pick up next:**
 
-`products` has `for select using (true)` and the anon key is public, so the
-Data API will return the new `cost_price_cents` (and `sku`, `barcode`) to
-anyone, even though the field is labelled "admin only, never shown to
-customers". Options, cheapest first: move cost price to an owner-only table;
-or `revoke select (cost_price_cents) on public.products from anon` (works
-today because the storefront selects explicit columns and only the shop
-owner's authenticated role uses `select('*')`, but it breaks the moment any
-anon query uses `select('*')`); or a `products_public` view with direct
-select revoked, which is the tidiest and the most work. Not done: it changes
-the schema contract, so it is your call.
+- The storefront still only has `/shop` and `/cart`. There is no product
+  detail page, so `ProductCard` links to `/shop/<slug>`, which 404s. That is
+  the next obvious piece.
+- `ProductArchive` (search, filters, sorting) and `BrandShowcase` are copied
+  into every store and now have all their message keys, but nothing renders
+  them yet. Wiring `ProductArchive` into `/shop` would replace the plain grid.
+- Orders: the webhook decrements stock and clears the cart but writes no
+  order row, so there is no history, no confirmation email and no admin view.
 
 **Known gaps in the generated store (not build failures):**
 
@@ -110,9 +110,11 @@ the schema contract, so it is your call.
   the product page are still placeholders, so headline, gallery, tags, stock
   and the rest are saved but only visible in the admin. Wire them in with the
   storefront work in section 1.
-- Stock is checked when adding to the cart and again at checkout, but it is
-  never reserved, so two customers can both pay for the last unit. Decrementing
-  stock belongs with the Stripe webhook and the orders work.
+- Stock is decremented when Stripe confirms payment, but it is never
+  *reserved* during checkout, so two customers can still both pay for the last
+  unit. The decrement is atomic and floors at zero, so the count stays sane,
+  but one of them gets an apology. Reserving at session creation with a
+  timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
 - `/checkout` is still a placeholder: the API route works from the cookie but
   nothing posts to it yet.
