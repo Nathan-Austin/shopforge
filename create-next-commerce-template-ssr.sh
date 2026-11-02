@@ -1012,10 +1012,15 @@ EOF
 cat > src/lib/supabase/client.ts <<'EOF'
 import { createBrowserClient } from '@supabase/ssr';
 
-export const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Browser-side Supabase client. `createClient()` matches the server helper's
+// name; `supabase` is a shared instance for client components.
+export const createClient = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+export const supabase = createClient();
 EOF
 
 # 8) Locale-aware root layout with RTL/LTR handling
