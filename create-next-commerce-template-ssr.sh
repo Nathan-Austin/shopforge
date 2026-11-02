@@ -230,7 +230,9 @@ pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx 
 # stripe is imported by src/lib/stripe/server.ts (copied from shared-assets)
 pnpm add stripe
 # tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
-pnpm add -D @types/node @types/react autoprefixer postcss prettier
+# Tailwind 4 runs through @tailwindcss/turbopack (see next.config.ts), so
+# there is no postcss.config and no need for postcss/autoprefixer.
+pnpm add -D @types/node @types/react prettier
 
 # 2.5) Copy shared-assets/lib (production-grade)
 echo "📦 Copying production-grade shared libraries..."
