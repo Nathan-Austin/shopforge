@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import type { StoreProduct, Category, StoreBrand } from '@/components/store/types';
+import type { Category, StoreBrand } from '@/components/store/types';
 import { requireShopOwner } from '../../lib/auth';
-import ProductForm from '../../components/ProductForm';
+import ProductForm, { type ProductFormProduct } from '../../components/ProductForm';
 import { updateProduct } from '../../actions/updateProduct';
 import { deleteProduct } from '../../actions/deleteProduct';
 
@@ -25,11 +25,16 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       price_cents,
       currency,
       description,
+      details,
       image_url,
       category_id,
       brand_id,
-      brand:brands ( id, name, slug ),
-      category:categories ( id, name, slug )
+      capacity_ml,
+      ingredients,
+      nutrition_info,
+      is_active,
+      size_options,
+      color_options
     `
     )
     .eq('id', id)
@@ -57,28 +62,23 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       slug: brand.slug
     })) ?? [];
 
-  const product: StoreProduct & { id: string } = {
+  const product: ProductFormProduct = {
     id: productRow.id,
     name: productRow.name,
     slug: productRow.slug,
     price_cents: productRow.price_cents,
     currency: productRow.currency,
     description: productRow.description,
+    details: productRow.details,
     image_url: productRow.image_url,
-    brand: productRow.brand
-      ? {
-          id: productRow.brand.id,
-          name: productRow.brand.name,
-          slug: productRow.brand.slug || ''
-        }
-      : null,
-    category: productRow.category
-      ? {
-          id: productRow.category.id,
-          name: productRow.category.name,
-          slug: productRow.category.slug || ''
-        }
-      : null
+    category_id: productRow.category_id,
+    brand_id: productRow.brand_id,
+    capacity_ml: productRow.capacity_ml,
+    ingredients: productRow.ingredients,
+    nutrition_info: productRow.nutrition_info,
+    is_active: productRow.is_active,
+    size_options: productRow.size_options,
+    color_options: productRow.color_options
   };
 
   const defaultBrandId = brands[0]?.id;
