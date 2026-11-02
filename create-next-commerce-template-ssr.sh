@@ -1641,10 +1641,16 @@ mkdir -p src/app/api/auth/sign-out
 cat > src/app/api/auth/sign-out/route.ts <<'EOF'
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { clearCartSession } from '@/lib/cart/session';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   await supabase.auth.signOut();
+
+  // Drop the cart cookie too. It is a bearer token for a cart: left behind
+  // on a shared machine, the next person to use the browser would see the
+  // previous customer's cart and could take it through checkout.
+  await clearCartSession();
 
   const referer = request.headers.get('referer') ?? '/';
   return NextResponse.redirect(referer, { status: 303 });

@@ -345,11 +345,8 @@ export async function mergeGuestCart(
     .neq('cart_session_id', sessionId);
 
   if (!previous?.length) {
-    // Nothing to merge; just stamp this cart with the account.
-    await supabase
-      .from('cart_items')
-      .update({ user_id: userId })
-      .eq('cart_session_id', sessionId);
+    // Nothing to merge; just claim this cart for the account.
+    await claimCart(sessionId, userId);
     return;
   }
 
@@ -389,8 +386,21 @@ export async function mergeGuestCart(
     .eq('user_id', userId)
     .neq('cart_session_id', sessionId);
 
+  await claimCart(sessionId, userId);
+}
+
+/**
+ * Marks the cookie's cart as belonging to this account.
+ *
+ * Only unclaimed lines are taken. If the cookie still points at a cart left
+ * behind by someone else who was signed in on this browser, their lines are
+ * not quietly transferred to the new account.
+ */
+async function claimCart(sessionId: string, userId: string): Promise<void> {
+  const supabase = createAdminClient();
   await supabase
     .from('cart_items')
     .update({ user_id: userId })
-    .eq('cart_session_id', sessionId);
+    .eq('cart_session_id', sessionId)
+    .is('user_id', null);
 }
