@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -11,11 +11,13 @@ import type { StoreProduct } from './types';
 interface ProductCardProps {
   product: StoreProduct;
   specialPrice?: number | null;
+  /** Overrides the locale from next-intl (ProductArchive passes it through). */
+  locale?: string;
 }
 
-export default function ProductCard({ product, specialPrice }: ProductCardProps) {
-  const locale = useLocale();
-  const t = useTranslations('UI');
+export default function ProductCard({ product, specialPrice, locale: propLocale }: ProductCardProps) {
+  const hookLocale = useLocale();
+  const locale = propLocale || hookLocale;
 
   const displayPrice = specialPrice ?? product.price_cents;
   const hasDiscount = specialPrice && specialPrice < product.price_cents;
