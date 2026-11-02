@@ -326,11 +326,118 @@ create policy "Chilli types manage"
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
 
+-- The products table is no longer world-readable. It holds supplier-only
+-- columns (cost_price_cents, sku, barcode) and unpublished rows, and the anon
+-- key is public, so a `using (true)` select policy would hand a competitor
+-- every margin through the Data API. Only the shop owner reads the table
+-- directly, via the "Products manage" policy below; the storefront reads the
+-- products_public view instead.
 drop policy if exists "Products select all" on public.products;
-create policy "Products select all"
-  on public.products
-  for select
-  using (true);
+
+-- Storefront view: published, unarchived rows and no supplier fields.
+-- The view runs with its owner's rights, so it is readable without granting
+-- access to the underlying table. Category name and slug are joined in
+-- because PostgREST cannot embed a relation through a view.
+drop view if exists public.products_public;
+create view public.products_public as
+select
+  p.id,
+  p.name,
+  p.slug,
+  p.headline,
+  p.description,
+  p.details,
+  p.image_url,
+  p.gallery_urls,
+  p.video_url,
+  p.price_cents,
+  p.compare_at_price_cents,
+  p.currency,
+  p.tax_rate_percent,
+  p.category_id,
+  p.brand_id,
+  p.stock,
+  p.track_inventory,
+  p.allow_backorder,
+  p.max_order_quantity,
+  p.size_options,
+  p.color_options,
+  p.net_content,
+  p.net_content_unit,
+  p.weight_grams,
+  p.dimensions_mm,
+  p.ingredients,
+  p.allergens,
+  p.nutrition_info,
+  p.dietary_flags,
+  p.storage_instructions,
+  p.best_before_text,
+  p.tags,
+  p.country_of_origin,
+  p.meta_title,
+  p.meta_description,
+  p.heat_level,
+  p.scoville_shu,
+  p.is_featured,
+  p.created_at,
+  p.updated_at,
+  c.name as category_name,
+  c.slug as category_slug,
+  b.name as brand_name,
+  b.slug as brand_slug
+from public.products p
+left join public.categories c on c.id = p.category_id
+left join public.brands b on b.id = p.brand_id
+where p.is_active is not false
+  and p.archived_at is null;
+
+grant select on public.products_public to anon, authenticated;
+
+-- Stripe webhook bookkeeping -------------------------------------------------
+
+-- Stripe retries deliveries and can send the same event more than once, so
+-- every event id is recorded before it is acted on. Without this a retry
+-- would decrement stock twice for one order.
+create table if not exists public.stripe_events (
+  id text primary key,
+  type text not null,
+  processed_at timestamptz not null default now()
+);
+
+alter table public.stripe_events enable row level security;
+
+-- Written only by the webhook, which uses the service-role key.
+drop policy if exists "No public access to stripe_events" on public.stripe_events;
+create policy "No public access to stripe_events"
+  on public.stripe_events
+  for all
+  using (false)
+  with check (false);
+
+revoke all on public.stripe_events from anon, authenticated;
+
+-- Decrement stock in one statement so two orders landing together cannot both
+-- read the old value and oversell. Shops that don't track inventory are left
+-- alone, and stock never goes below zero.
+create or replace function public.decrement_product_stock(
+  p_product_id uuid,
+  p_quantity integer
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update public.products
+     set stock = greatest(0, coalesce(stock, 0) - greatest(0, p_quantity)),
+         updated_at = now()
+   where id = p_product_id
+     and track_inventory is true;
+end;
+$$;
+
+revoke all on function public.decrement_product_stock(uuid, integer) from anon, authenticated;
 
 drop policy if exists "Products manage" on public.products;
 create policy "Products manage"
