@@ -474,9 +474,17 @@ function list(formData: FormData, name: string): string[] | null {
  * Core columns are handled by the caller, which validates them.
  */
 export function parseProductFields(formData: FormData): Record<string, unknown> {
+  return parseProductFieldsFor(enabledProductFields(), formData);
+}
+
+/** The same parse against an explicit field list, which is what tests use. */
+export function parseProductFieldsFor(
+  fields: ProductField[],
+  formData: FormData
+): Record<string, unknown> {
   const row: Record<string, unknown> = {};
 
-  for (const field of enabledProductFields()) {
+  for (const field of fields) {
     switch (field.type) {
       case 'text':
       case 'textarea':

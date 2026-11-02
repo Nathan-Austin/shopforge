@@ -32,6 +32,12 @@ export interface HeatScale {
 
 export const heatScale: HeatScale | null = HEAT_SCALE;
 
+/*
+ * The `*On` functions take the scale explicitly so they can be reasoned
+ * about (and tested) for any shop's settings. The exported wrappers below
+ * use this shop's configured scale, which is what components should call.
+ */
+
 /** True for shops that track heat at all (the chilli store mode). */
 export function hasHeatScale(): boolean {
   return heatScale !== null;
@@ -39,8 +45,12 @@ export function hasHeatScale(): boolean {
 
 /** Every selectable level, for admin dropdowns. */
 export function heatLevels(): number[] {
-  if (!heatScale) return [];
-  return Array.from({ length: heatScale.max + 1 }, (_, index) => index);
+  return heatLevelsOn(heatScale);
+}
+
+export function heatLevelsOn(scale: HeatScale | null): number[] {
+  if (!scale || scale.max < 0) return [];
+  return Array.from({ length: scale.max + 1 }, (_, index) => index);
 }
 
 function toLevel(level: number | string | null | undefined): number | null {
@@ -51,12 +61,20 @@ function toLevel(level: number | string | null | undefined): number | null {
 
 /** The word covering this level, or null when the shop uses no words. */
 export function heatWord(level: number | string | null | undefined): string | null {
-  const value = toLevel(level);
-  if (value === null || !heatScale || heatScale.bands.length === 0) return null;
+  return heatWordOn(heatScale, level);
+}
 
+export function heatWordOn(
+  scale: HeatScale | null,
+  level: number | string | null | undefined
+): string | null {
+  const value = toLevel(level);
+  if (value === null || !scale || scale.bands.length === 0) return null;
+
+  // Bands are ascending, so the first one the level fits inside wins.
   const band =
-    heatScale.bands.find((candidate) => value <= candidate.upTo) ??
-    heatScale.bands[heatScale.bands.length - 1];
+    scale.bands.find((candidate) => value <= candidate.upTo) ??
+    scale.bands[scale.bands.length - 1];
 
   return band ? band.word : null;
 }
@@ -69,11 +87,19 @@ export function formatHeat(
   level: number | string | null | undefined,
   display: HeatDisplay = heatScale?.display ?? 'number'
 ): string {
-  const value = toLevel(level);
-  if (value === null || !heatScale) return '';
+  return formatHeatOn(heatScale, level, display);
+}
 
-  const word = heatWord(value);
-  const numeric = `${value}/${heatScale.max}`;
+export function formatHeatOn(
+  scale: HeatScale | null,
+  level: number | string | null | undefined,
+  display: HeatDisplay = scale?.display ?? 'number'
+): string {
+  const value = toLevel(level);
+  if (value === null || !scale) return '';
+
+  const word = heatWordOn(scale, value);
+  const numeric = `${value}/${scale.max}`;
 
   switch (display) {
     case 'number':
@@ -81,7 +107,7 @@ export function formatHeat(
     case 'word':
       return word ?? numeric;
     case 'peppers':
-      return heatPeppers(value);
+      return heatPeppersOn(scale, value);
     case 'both':
     default:
       return word ? `${word} (${numeric})` : numeric;
@@ -93,18 +119,35 @@ export function formatHeat(
  * stays a sensible width whatever the scale is.
  */
 export function heatPeppers(level: number | string | null | undefined, outOf = 5): string {
+  return heatPeppersOn(heatScale, level, outOf);
+}
+
+export function heatPeppersOn(
+  scale: HeatScale | null,
+  level: number | string | null | undefined,
+  outOf = 5
+): string {
   const value = toLevel(level);
-  if (value === null || !heatScale || heatScale.max <= 0) return '';
+  if (value === null || !scale || scale.max <= 0) return '';
+  // Anything above zero gets at least one pepper, so a 1/20 sauce still
+  // reads as mildly hot rather than as no heat at all.
   const filled = Math.max(
     value > 0 ? 1 : 0,
-    Math.round((value / heatScale.max) * outOf)
+    Math.round((value / scale.max) * outOf)
   );
   return '🌶️'.repeat(filled);
 }
 
 /** Fraction of the scale, for progress bars. 0 to 1. */
 export function heatFraction(level: number | string | null | undefined): number {
+  return heatFractionOn(heatScale, level);
+}
+
+export function heatFractionOn(
+  scale: HeatScale | null,
+  level: number | string | null | undefined
+): number {
   const value = toLevel(level);
-  if (value === null || !heatScale || heatScale.max <= 0) return 0;
-  return Math.min(1, Math.max(0, value / heatScale.max));
+  if (value === null || !scale || scale.max <= 0) return 0;
+  return Math.min(1, Math.max(0, value / scale.max));
 }
