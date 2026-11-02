@@ -32,52 +32,54 @@ Planned work for shopforge, roughly in order.
       — done 2026-11-02; a fresh generic store passes install, `tsc`, `lint` and `build`
 - [x] `--skip-supabase` flag and `test/generate-and-check.sh` to generate and
       build a store without a Supabase project — done 2026-11-02
-- [ ] Make a fresh `chilli` store pass the same checks. Known `tsc` errors
-      (`test/generate-and-check.sh --mode=chilli`): the chilli `ProductForm` has
-      the same props mismatch the generic one had (apply the generic form's
-      FormData-based `onSubmit`/`onDelete`/`successRedirectPath` shape, and
-      type `categories`/`brands`/`chilliTypes` with the `DbId` store types);
-      the edit page reads joined `brand`/`category` as objects (use `one()` from
-      `lib/supabase/relations`); `ProductArchive` imports a missing `./Chip`
-      component and passes `locale` to `ProductCard`; `BrandCard` passes `DbId`
-      where a string is expected
+- [x] Make a fresh `chilli` store pass the same checks — done 2026-11-02;
+      `tsc`, `lint` and `build` are all clean. Fixed: the ProductForm props
+      mismatch (now FormData-based like generic), the missing `Chip`
+      component, `ProductCard`'s `locale` prop, `BrandCard`'s `heatColor`
+      signature, joined rows read via `one()`, and the chilli types
+      multi-select, whose absence made `updateProduct` wipe a product's
+      chilli types on every save
 - [ ] Node CLI replacing the heredocs in the shell scripts
 - [ ] Docker self-hosting path alongside Vercel
 - [ ] Payment adapters: Stripe, Mollie, PayPal
 
 ## 5. CI
 
-- [ ] CI that generates a store and builds it (`test/generate-and-check.sh
-      --mode=generic` is the command to run; it needs Node, pnpm and python3)
+- [ ] CI that generates a store and builds it: run
+      `test/generate-and-check.sh --mode=generic` and `--mode=chilli` (needs
+      Node, pnpm and python3; no Supabase project required)
 
 ## Notes for future turns
 
-Found on 2026-11-02 while fixing the generic build; not yet acted on.
+Decided on 2026-11-02:
 
-**Decisions to make (change the generated stack, so ask first):**
-
-- `middleware.ts` is deprecated in Next 16 in favour of `proxy.ts`
-  (`npx @next/codemod@canary middleware-to-proxy`). The build still picks the
-  file up at the project root, so this is a warning-free deprecation for now.
-- create-next-app enables `cacheComponents: true` and `partialPrefetching: true`
-  in `next.config.ts`; the generator overwrites that file and leaves them off,
-  because the generated pages read cookies/session on every request and would
-  need Suspense boundaries (and `export const dynamic = 'force-dynamic'`
-  removed) before they could build with `cacheComponents` on.
-- The generator still installs `autoprefixer` and `postcss` as dev
-  dependencies. Tailwind 4 runs through `@tailwindcss/turbopack`, so they are
-  unused; removing them is a dependency change.
-- create-next-app pins `@types/node@^20` and the eslint 9 line (deprecated
-  upstream); both are create-next-app's choices and harmless today.
+- `middleware.ts` renamed to `src/proxy.ts` for Next 16. **With `--src-dir`
+  the file must be in `src/`**: a `proxy.ts` in the project root is ignored
+  silently, with no build warning, which leaves the store with no locale
+  routing (`middleware.ts` did work at the root). `test/generate-and-check.sh`
+  now fails if the build output has no `Proxy (Middleware)` line.
+- `autoprefixer` and `postcss` dropped from the dev dependencies: Tailwind 4
+  goes through `@tailwindcss/turbopack` and there is no `postcss.config`.
+- `cacheComponents` and `partialPrefetching` stay **off**. create-next-app
+  enables both, but every generated page reads cookies or the Supabase
+  session, so each needs a Suspense boundary and `export const dynamic =
+  'force-dynamic'` removed first. Revisit once the real storefront pages
+  exist and there is something worth caching.
 
 **Known gaps in the generated store (not build failures):**
 
 - The admin server actions only persist name, slug, price, currency,
-  description, image and category/brand. `details`, `capacity_ml`,
-  `ingredients`, `nutrition_info`, `is_active`, `size_options` and
-  `color_options` are collected by the form but dropped by
-  `createProduct`/`updateProduct`.
+  description, image and category/brand (plus heat level and chilli types in
+  `chilli`). `details`, `capacity_ml`, `ingredients`, `nutrition_info`,
+  `is_active`, `size_options` and `color_options` are collected by the form
+  but dropped by `createProduct`/`updateProduct`. Worth doing before building
+  features on top of the admin.
+- The chilli `ProductForm` renders heat level as a number input (0-10) while
+  `heat_level` is a free-text column and `BrandCard.heatColor` matches on the
+  words mild/medium/hot. Pick one representation.
 - `pnpm build` only warns, not fails, when Tailwind isn't wired in. Check the
   build log for "Unknown at rule: @theme" if styles ever disappear again.
 - Next 16 does not run ESLint during `next build`; `pnpm lint` is a separate
   step (the test script runs it).
+- create-next-app pins `@types/node@^20` and the eslint 9 line (deprecated
+  upstream); both are its own choices and harmless today.
