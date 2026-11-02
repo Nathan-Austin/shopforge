@@ -93,14 +93,29 @@ create table if not exists public.products (
 -- New table for server-side cart management
 create table if not exists public.cart_items (
   id uuid primary key default gen_random_uuid(),
+  -- Guest carts are keyed by the id in the shop_cart_session cookie. Once
+  -- someone signs in their lines are also stamped with user_id, so the cart
+  -- follows them to another device.
   cart_session_id uuid not null,
+  user_id uuid references public.profiles(id) on delete cascade,
   product_id uuid not null references public.products(id) on delete cascade,
-  quantity integer not null default 1,
+  quantity integer not null default 1 check (quantity > 0),
   selected_size text,
   selected_color text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- One line per product variant per cart. selected_size and selected_color are
+-- nullable and Postgres treats nulls as distinct, so coalesce them to '' or
+-- the same variant could be added twice.
+create unique index if not exists idx_cart_items_unique_line
+  on public.cart_items (
+    cart_session_id,
+    product_id,
+    coalesce(selected_size, ''),
+    coalesce(selected_color, '')
+  );
 
 create index if not exists idx_products_brand on public.products(brand_id);
 create index if not exists idx_products_category on public.products(category_id);
@@ -109,6 +124,7 @@ create index if not exists idx_products_slug on public.products(slug);
 create index if not exists idx_categories_slug on public.categories(slug);
 create index if not exists idx_brands_slug on public.brands(slug);
 create index if not exists idx_cart_items_session on public.cart_items(cart_session_id);
+create index if not exists idx_cart_items_user on public.cart_items(user_id);
 
 create or replace function public.touch_updated_at()
 returns trigger
