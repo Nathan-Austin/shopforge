@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import type { StoreProduct, Category, ChilliType, StoreBrand } from '@/components/store/types';
+import type { Category, ChilliType, StoreBrand } from '@/components/store/types';
 import { requireShopOwner } from '../../lib/auth';
-import ProductForm from '../../components/ProductForm';
+import ProductForm, { type ProductFormProduct } from '../../components/ProductForm';
 import { updateProduct } from '../../actions/updateProduct';
 import { deleteProduct } from '../../actions/deleteProduct';
 
@@ -25,16 +25,18 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       price_cents,
       currency,
       description,
+      details,
       image_url,
       heat_level,
       category_id,
       brand_id,
-      brand:brands ( id, name, slug ),
-      category:categories ( id, name, slug ),
-      products_chilli_types (
-        chilli_type_id,
-        chilli_types ( id, name, slug, heat_level )
-      )
+      capacity_ml,
+      ingredients,
+      nutrition_info,
+      is_active,
+      size_options,
+      color_options,
+      products_chilli_types ( chilli_type_id )
     `
     )
     .eq('id', id)
@@ -70,35 +72,27 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       slug: brand.slug
     })) ?? [];
 
-  const product: StoreProduct & { id: string } = {
+  const product: ProductFormProduct = {
     id: productRow.id,
     name: productRow.name,
     slug: productRow.slug,
     price_cents: productRow.price_cents,
     currency: productRow.currency,
     description: productRow.description,
+    details: productRow.details,
     image_url: productRow.image_url,
-    heatLevel: productRow.heat_level,
-    brand: productRow.brand
-      ? {
-          id: productRow.brand.id,
-          name: productRow.brand.name,
-          slug: productRow.brand.slug || ''
-        }
-      : null,
-    category: productRow.category
-      ? {
-          id: productRow.category.id,
-          name: productRow.category.name,
-          slug: productRow.category.slug || ''
-        }
-      : null,
+    heat_level: productRow.heat_level,
+    category_id: productRow.category_id,
+    brand_id: productRow.brand_id,
+    capacity_ml: productRow.capacity_ml,
+    ingredients: productRow.ingredients,
+    nutrition_info: productRow.nutrition_info,
+    is_active: productRow.is_active,
+    size_options: productRow.size_options,
+    color_options: productRow.color_options,
     chilliTypes:
-      productRow.products_chilli_types?.map((ct: any) => ({
-        id: ct.chilli_type_id,
-        name: ct.chilli_types?.name || '',
-        slug: ct.chilli_types?.slug || '',
-        heatLevel: ct.chilli_types?.heat_level
+      productRow.products_chilli_types?.map((link) => ({
+        id: link.chilli_type_id
       })) ?? []
   };
 

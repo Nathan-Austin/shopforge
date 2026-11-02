@@ -15,36 +15,57 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImageUploader } from './ImageUploader';
-interface Product {
-  id: string;
+import type { DbId } from '@/components/store/types';
+
+/** Product fields the form can edit; mirrors the `products` table columns. */
+export interface ProductFormProduct {
+  id: DbId;
   name: string;
   slug: string;
   description?: string | null;
   details?: string | null;
   price_cents: number;
   currency: string;
-  category_id?: string | null;
-  brand_id?: string | null;
+  category_id?: DbId | null;
+  brand_id?: DbId | null;
   capacity_ml?: number | null;
-  heat_level?: string | null;
+  heat_level?: string | number | null;
   image_url?: string | null;
   ingredients?: string | null;
   nutrition_info?: Record<string, number> | null;
-  is_active?: boolean;
+  is_active?: boolean | null;
   size_options?: string[] | null;
   color_options?: string[] | null;
+  /** Chilli types currently linked to this product. */
+  chilliTypes?: { id: DbId }[];
 }
 
-interface Category { id: string; name: string; slug: string; }
-interface Brand { id: string; name: string; slug?: string; }
+interface SelectOption {
+  id: DbId;
+  name: string;
+  slug?: string;
+}
+
+export interface ProductFormResult {
+  error?: string;
+  success?: string;
+}
 
 interface ProductFormProps {
-  product?: Product;
-  categories: Category[];
-  brands: Brand[];
-  chilliTypes?: { id: string; name: string }[];
-  onSubmit: (data: any) => Promise<void>;
-  onDelete?: () => Promise<void>;
+  product?: ProductFormProduct;
+  categories: SelectOption[];
+  brands: SelectOption[];
+  /** Every chilli type available to pick from. */
+  chilliTypes?: SelectOption[];
+  /**
+   * Server action (see ../actions). Receives every named form field plus
+   * `product_id`, `category_id`, `brand_id`, `image_url` and the selected
+   * `chilliTypeIds`.
+   */
+  onSubmit: (formData: FormData) => Promise<ProductFormResult>;
+  /** Server action receiving `product_id`. */
+  onDelete?: (formData: FormData) => Promise<ProductFormResult>;
+  /** Where to go after a successful save or delete. */
   successRedirectPath?: string;
 }
 
@@ -52,100 +73,83 @@ export default function ProductForm({
   product,
   categories,
   brands,
+  chilliTypes = [],
   onSubmit,
   onDelete,
+  successRedirectPath,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [categoryValue, setCategoryValue] = useState(
-    product?.category_id || 'none'
+    product?.category_id ? String(product.category_id) : 'none'
   );
   const [brandValue, setBrandValue] = useState(
-    product?.brand_id || 'none'
+    product?.brand_id ? String(product.brand_id) : 'none'
   );
   const [imageUrl, setImageUrl] = useState<string | null>(
     product?.image_url || null
   );
 
-  const selectedCategory = categories.find(
-    (cat) => cat.id === categoryValue
-  );
-  // Example logic for variants (adjust as needed for specific store)
-  const isMerchCategory = selectedCategory?.slug === 'merch' || selectedCategory?.slug?.includes('clothing');
+  const selectedChilliTypeIds =
+    product?.chilliTypes?.map((chilliType) => String(chilliType.id)) ?? [];
+
+  const finish = (result: ProductFormResult) => {
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+    if (successRedirectPath) {
+      router.push(successRedirectPath);
+      router.refresh();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
+    // Named inputs (including the chilliTypeIds multi-select) are picked up
+    // automatically; add the controlled values.
     const formData = new FormData(e.currentTarget);
-
-    // Parse nutrition info from individual fields
-    const nutritionInfo = {
-      energy_kj: parseFloat(formData.get('energy_kj') as string) || undefined,
-      energy_kcal: parseFloat(formData.get('energy_kcal') as string) || undefined,
-      fat_g: parseFloat(formData.get('fat_g') as string) || undefined,
-      saturated_fat_g: parseFloat(formData.get('saturated_fat_g') as string) || undefined,
-      carbohydrate_g: parseFloat(formData.get('carbohydrate_g') as string) || undefined,
-      sugar_g: parseFloat(formData.get('sugar_g') as string) || undefined,
-      protein_g: parseFloat(formData.get('protein_g') as string) || undefined,
-      salt_g: parseFloat(formData.get('salt_g') as string) || undefined,
-    };
-
-    // Remove undefined values
-    const cleanedNutrition = Object.fromEntries(
-      Object.entries(nutritionInfo).filter(([, value]) => value !== undefined)
-    );
-
-    const sizeOptionsRaw = (formData.get('size_options') as string) || '';
-    const colorOptionsRaw = (formData.get('color_options') as string) || '';
-
-    const sizeOptions = sizeOptionsRaw
-      .split(',')
-      .map((option) => option.trim())
-      .filter(Boolean);
-    const colorOptions = colorOptionsRaw
-      .split(',')
-      .map((option) => option.trim())
-      .filter(Boolean);
-
-    const capacityMl = formData.get('capacity_ml') as string;
-    const heatLevel = formData.get('heat_level') as string;
-
-    const data = {
-      name: formData.get('name') as string,
-      slug: formData.get('slug') as string,
-      description: formData.get('description') as string || null,
-      details: formData.get('details') as string || null,
-      price_cents: parseInt(formData.get('price_cents') as string),
-      currency: formData.get('currency') as string,
-      category_id: categoryValue === 'none' ? null : categoryValue,
-      brand_id: brandValue === 'none' ? null : brandValue,
-      capacity_ml: capacityMl ? parseInt(capacityMl) : null,
-      heat_level: heatLevel === 'none' ? null : heatLevel,
-      image_url: imageUrl,
-      ingredients: formData.get('ingredients') as string || null,
-      nutrition_info: Object.keys(cleanedNutrition).length > 0 ? cleanedNutrition : null,
-      is_active: formData.get('is_active') === 'true',
-      size_options:
-        sizeOptions.length > 0 ? sizeOptions : null,
-      color_options:
-        colorOptions.length > 0 ? colorOptions : null,
-    };
+    if (product) formData.set('product_id', String(product.id));
+    formData.set('category_id', categoryValue === 'none' ? '' : categoryValue);
+    formData.set('brand_id', brandValue === 'none' ? '' : brandValue);
+    formData.set('image_url', imageUrl ?? '');
 
     try {
-      await onSubmit(data);
+      finish(await onSubmit(formData));
     } finally {
       setLoading(false);
     }
   };
 
-  const nutritionInfo = product?.nutrition_info as
-    | Record<string, number>
-    | null
-    | undefined;
+  const handleDelete = async () => {
+    if (!onDelete || !product) return;
+    if (!window.confirm('Delete this product?')) return;
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.set('product_id', String(product.id));
+
+    try {
+      finish(await onDelete(formData));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const nutritionInfo = product?.nutrition_info;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
           {product ? 'Edit Product' : 'New Product'}
@@ -155,7 +159,7 @@ export default function ProductForm({
             <Button
               type="button"
               variant="destructive"
-              onClick={onDelete}
+              onClick={handleDelete}
               disabled={loading}
             >
               Delete
@@ -271,7 +275,7 @@ export default function ProductForm({
                     <SelectContent>
                       <SelectItem value="none">No Category</SelectItem>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
+                        <SelectItem key={cat.id} value={String(cat.id)}>
                           {cat.name}
                         </SelectItem>
                       ))}
@@ -291,7 +295,7 @@ export default function ProductForm({
                     <SelectContent>
                       <SelectItem value="none">No Brand</SelectItem>
                       {brands.map((brand) => (
-                        <SelectItem key={brand.id} value={brand.id}>
+                        <SelectItem key={brand.id} value={String(brand.id)}>
                           {brand.name}
                         </SelectItem>
                       ))}
@@ -330,6 +334,26 @@ export default function ProductForm({
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="chilliTypeIds">Chilli types</Label>
+                <select
+                  id="chilliTypeIds"
+                  name="chilliTypeIds"
+                  multiple
+                  defaultValue={selectedChilliTypeIds}
+                  className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {chilliTypes.map((chilliType) => (
+                    <option key={chilliType.id} value={String(chilliType.id)}>
+                      {chilliType.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Hold Cmd/Ctrl to select more than one pepper.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="ingredients">Ingredients</Label>
                 <Textarea
