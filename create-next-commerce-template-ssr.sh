@@ -170,6 +170,60 @@ ensure_store_mode() {
   export NEXT_PUBLIC_STORE_MODE="$existing"
 }
 
+# 1.5) Approve dependency build scripts up front.
+# create-next-app pins pnpm 11 via "packageManager", and pnpm 11 fails
+# `pnpm add` with ERR_PNPM_IGNORED_BUILDS when a new dependency has a build
+# script that hasn't been approved. next-intl pulls in @parcel/watcher and
+# @swc/core; both ship prebuilt binaries, so their scripts can stay off.
+# Entries are written to pnpm-workspace.yaml so the store (and Vercel)
+# installs without prompting.
+approve_build_scripts() {
+  WORKSPACE_FILE="pnpm-workspace.yaml" PACKAGES="$*" python3 <<'PY'
+import os, pathlib, re
+path = pathlib.Path(os.environ['WORKSPACE_FILE'])
+text = path.read_text() if path.exists() else ""
+packages = os.environ['PACKAGES'].split()
+
+# Drop pnpm's "set this to true or false" placeholders for packages we handle
+for pkg in packages:
+    text = re.sub(rf"^\s+'?{re.escape(pkg)}'?:\s*set this to true or false\s*\n", "", text, flags=re.MULTILINE)
+
+if not re.search(r"^allowBuilds:\s*$", text, re.MULTILINE):
+    if text and not text.endswith("\n"):
+        text += "\n"
+    text += "allowBuilds:\n"
+
+lines = text.splitlines(keepends=True)
+out, in_block, present = [], False, set()
+for line in lines:
+    if re.match(r"^allowBuilds:\s*$", line):
+        in_block = True
+        out.append(line)
+        continue
+    if in_block:
+        m = re.match(r"^\s+'?([^':]+)'?:", line)
+        if m and line.startswith((" ", "\t")):
+            present.add(m.group(1))
+            out.append(line)
+            continue
+        if line.strip() == "":
+            out.append(line)
+            continue
+        for pkg in packages:
+            if pkg not in present:
+                out.append(f"  '{pkg}': false\n")
+                present.add(pkg)
+        in_block = False
+    out.append(line)
+if in_block:
+    for pkg in packages:
+        if pkg not in present:
+            out.append(f"  '{pkg}': false\n")
+path.write_text("".join(out))
+PY
+}
+approve_build_scripts '@parcel/watcher' '@swc/core' sharp unrs-resolver
+
 # 2) Install deps
 echo "📦 Installing dependencies..."
 pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx tailwind-merge class-variance-authority lucide-react @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select
