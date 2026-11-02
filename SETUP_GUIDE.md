@@ -166,9 +166,11 @@ git push -u origin main
 Supabase account that can't see this project. Run `npx supabase login` with the
 account that owns it, then re-run the script.
 
-**pnpm stops with "Ignored build scripts".** Newer pnpm versions ask before
-running dependency build scripts (e.g. `sharp`). Run `pnpm approve-builds`,
-approve them, and run `pnpm install` again.
+**pnpm stops with "Ignored build scripts" (`ERR_PNPM_IGNORED_BUILDS`).** The
+generator already approves the build scripts it knows about in the shop's
+`pnpm-workspace.yaml` (`allowBuilds`). If a dependency you add later triggers
+this, run `pnpm approve-builds` in the shop, or add the package to
+`allowBuilds` yourself, then run `pnpm install` again.
 
 **Image uploads fail.** Check that the `product-images` bucket from step 5
 exists and is public, and that you're signed in as the shop owner.

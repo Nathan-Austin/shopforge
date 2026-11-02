@@ -86,7 +86,7 @@ The admin panel is then available at `/en/admin`.
 ## Script options
 
 ```
-create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=generic|chilli]
+create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=generic|chilli] [--skip-supabase]
 ```
 
 | Argument | Default | Meaning |
@@ -95,6 +95,7 @@ create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=g
 | `default-locale` | `en` | Language used at `/` |
 | `locales` | `en,de,tr,ar` | Comma-separated supported languages |
 | `--mode` | `chilli` | Store mode from `store-modes/` |
+| `--skip-supabase` | off | Don't run the Supabase CLI or ask for keys; write placeholder values to `.env.local` and leave the migrations in `supabase/migrations/` for a later `supabase db push`. For tests and CI |
 
 The script also asks whether the shop sells a **single** brand or is a
 **multi**-brand marketplace, which decides whether the admin product form shows
@@ -123,7 +124,19 @@ create-next-commerce-template-ssr.sh   scaffolds a new shop
 extend-commerce-template.sh            adds checkout + profile API to a shop
 store-modes/<mode>/                    schema, seeds, storefront and admin components
 shared-assets/lib/                     helpers copied into every shop
+test/generate-and-check.sh             generates a store and runs install, tsc, lint, build
 ```
+
+## Testing the generator
+
+```bash
+test/generate-and-check.sh --mode=generic
+```
+
+This generates `test-generic/` with placeholder keys (no Supabase project
+needed), then runs `pnpm install --frozen-lockfile`, `tsc --noEmit`,
+`pnpm lint` and `pnpm build`, the same checks a Vercel deploy performs.
+Add `--keep` to inspect the generated store afterwards.
 
 ## Roadmap
 
