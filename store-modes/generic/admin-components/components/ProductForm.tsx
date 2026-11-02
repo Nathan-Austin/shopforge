@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -14,27 +13,25 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ImageUploader } from './ImageUploader';
+import ProductFieldInput from '@/components/admin/ProductFieldInput';
+import { enabledProductFieldGroups } from '@/lib/products/catalogue';
 import type { DbId } from '@/components/store/types';
+import { ImageUploader } from './ImageUploader';
 
-/** Product fields the form can edit; mirrors the `products` table columns. */
-export interface ProductFormProduct {
+/**
+ * A product row as loaded for editing. Beyond the core columns the shape
+ * depends on which fields the shop enabled, so the rest is read by column
+ * name through the catalogue.
+ */
+export interface ProductFormProduct extends Record<string, unknown> {
   id: DbId;
   name: string;
   slug: string;
-  description?: string | null;
-  details?: string | null;
   price_cents: number;
   currency: string;
+  image_url?: string | null;
   category_id?: DbId | null;
   brand_id?: DbId | null;
-  capacity_ml?: number | null;
-  image_url?: string | null;
-  ingredients?: string | null;
-  nutrition_info?: Record<string, number> | null;
-  is_active?: boolean | null;
-  size_options?: string[] | null;
-  color_options?: string[] | null;
 }
 
 interface SelectOption {
@@ -53,8 +50,9 @@ interface ProductFormProps {
   categories: SelectOption[];
   brands: SelectOption[];
   /**
-   * Server action (see ../actions). Receives every named form field plus
-   * `product_id`, `category_id`, `brand_id` and `image_url`.
+   * Server action (see ../actions). Receives every enabled field by its
+   * catalogue key, plus `product_id`, `category_id`, `brand_id` and
+   * `image_url`.
    */
   onSubmit: (formData: FormData) => Promise<ProductFormResult>;
   /** Server action receiving `product_id`. */
@@ -83,6 +81,8 @@ export default function ProductForm({
   const [imageUrl, setImageUrl] = useState<string | null>(
     product?.image_url || null
   );
+
+  const fieldGroups = enabledProductFieldGroups();
 
   const finish = (result: ProductFormResult) => {
     if (result?.error) {
@@ -130,8 +130,6 @@ export default function ProductForm({
     }
   };
 
-  const nutritionInfo = product?.nutrition_info;
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
@@ -139,9 +137,10 @@ export default function ProductForm({
           {error}
         </p>
       )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">
-          {product ? 'Edit Product' : 'New Product'}
+          {product ? 'Edit product' : 'New product'}
         </h1>
         <div className="flex gap-2">
           {onDelete && (
@@ -155,7 +154,7 @@ export default function ProductForm({
             </Button>
           )}
           <Button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Product'}
+            {loading ? 'Saving...' : 'Save product'}
           </Button>
         </div>
       </div>
@@ -164,20 +163,14 @@ export default function ProductForm({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Basics</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={product?.name}
-                    required
-                  />
+                  <Input id="name" name="name" defaultValue={product?.name} required />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="slug">Slug *</Label>
                   <Input
@@ -190,40 +183,19 @@ export default function ProductForm({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Short Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  defaultValue={product?.description || ''}
-                  rows={2}
-                  placeholder="Short tagline shown below product name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="details">Full Details (Tabs)</Label>
-                <Textarea
-                  id="details"
-                  name="details"
-                  defaultValue={product?.details || ''}
-                  rows={4}
-                  placeholder="Detailed product information for the Details tab"
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="price_cents">Price (cents) *</Label>
+                  <Label htmlFor="price">Price *</Label>
                   <Input
-                    id="price_cents"
-                    name="price_cents"
+                    id="price"
+                    name="price"
                     type="number"
-                    defaultValue={product?.price_cents}
+                    step="0.01"
+                    min="0"
+                    defaultValue={product ? (product.price_cents / 100).toFixed(2) : ''}
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="currency">Currency *</Label>
                   <Input
@@ -233,56 +205,33 @@ export default function ProductForm({
                     required
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="is_active">Status *</Label>
-                  <Select
-                    name="is_active"
-                    defaultValue={product?.is_active === false ? 'false' : 'true'}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Active</SelectItem>
-                      <SelectItem value="false">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select
-                    value={categoryValue}
-                    onValueChange={setCategoryValue}
-                  >
+                  <Select value={categoryValue} onValueChange={setCategoryValue}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Category</SelectItem>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={String(cat.id)}>
-                          {cat.name}
+                      <SelectItem value="none">No category</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={String(category.id)}>
+                          {category.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <Label>Brand</Label>
-                  <Select
-                    value={brandValue}
-                    onValueChange={setBrandValue}
-                  >
+                  <Select value={brandValue} onValueChange={setBrandValue}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select brand" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">No Brand</SelectItem>
+                      <SelectItem value="none">No brand</SelectItem>
                       {brands.map((brand) => (
                         <SelectItem key={brand.id} value={String(brand.id)}>
                           {brand.name}
@@ -295,38 +244,24 @@ export default function ProductForm({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Product Particulars</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="capacity_ml">Capacity (ml / g)</Label>
-                <Input
-                  id="capacity_ml"
-                  name="capacity_ml"
-                  type="number"
-                  defaultValue={product?.capacity_ml || ''}
-                  placeholder="e.g. 500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ingredients">Ingredients / Materials</Label>
-                <Textarea
-                  id="ingredients"
-                  name="ingredients"
-                  defaultValue={product?.ingredients || ''}
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          {fieldGroups.map(({ group, fields }) => (
+            <Card key={group.key}>
+              <CardHeader>
+                <CardTitle>{group.label}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fields.map((field) => (
+                  <ProductFieldInput key={field.key} field={field} values={product} />
+                ))}
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Media</CardTitle>
+              <CardTitle>Main image</CardTitle>
             </CardHeader>
             <CardContent>
               <ImageUploader
@@ -334,122 +269,6 @@ export default function ProductForm({
                 onUpload={(url) => setImageUrl(url)}
                 onRemove={() => setImageUrl(null)}
               />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Variants</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="size_options">Size Options (comma separated)</Label>
-                <Input
-                  id="size_options"
-                  name="size_options"
-                  defaultValue={product?.size_options?.join(', ') || ''}
-                  placeholder="S, M, L, XL"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="color_options">Color Options (comma separated)</Label>
-                <Input
-                  id="color_options"
-                  name="color_options"
-                  defaultValue={product?.color_options?.join(', ') || ''}
-                  placeholder="Red, Blue, Black"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Nutrition Information (per 100g/ml)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="energy_kj">Energy (kJ)</Label>
-                  <Input
-                    id="energy_kj"
-                    name="energy_kj"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.energy_kj}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="energy_kcal">Energy (kcal)</Label>
-                  <Input
-                    id="energy_kcal"
-                    name="energy_kcal"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.energy_kcal}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="fat_g">Fat (g)</Label>
-                  <Input
-                    id="fat_g"
-                    name="fat_g"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.fat_g}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="saturated_fat_g">Saturated Fat (g)</Label>
-                  <Input
-                    id="saturated_fat_g"
-                    name="saturated_fat_g"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.saturated_fat_g}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="carbohydrate_g">Carbohydrate (g)</Label>
-                  <Input
-                    id="carbohydrate_g"
-                    name="carbohydrate_g"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.carbohydrate_g}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sugar_g">Sugar (g)</Label>
-                  <Input
-                    id="sugar_g"
-                    name="sugar_g"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.sugar_g}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="protein_g">Protein (g)</Label>
-                  <Input
-                    id="protein_g"
-                    name="protein_g"
-                    type="number"
-                    step="0.1"
-                    defaultValue={nutritionInfo?.protein_g}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salt_g">Salt (g)</Label>
-                  <Input
-                    id="salt_g"
-                    name="salt_g"
-                    type="number"
-                    step="0.01"
-                    defaultValue={nutritionInfo?.salt_g}
-                  />
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

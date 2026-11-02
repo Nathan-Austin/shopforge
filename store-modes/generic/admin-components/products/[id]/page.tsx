@@ -15,28 +15,11 @@ export default async function EditProductPage({ params }: ProductPageProps) {
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 
+  // Every column, because which ones the form shows is decided by
+  // src/lib/products/config.ts rather than by this query.
   const { data: productRow, error: productError } = await supabase
     .from('products')
-    .select(
-      `
-      id,
-      name,
-      slug,
-      price_cents,
-      currency,
-      description,
-      details,
-      image_url,
-      category_id,
-      brand_id,
-      capacity_ml,
-      ingredients,
-      nutrition_info,
-      is_active,
-      size_options,
-      color_options
-    `
-    )
+    .select('*')
     .eq('id', id)
     .maybeSingle();
 
@@ -62,24 +45,7 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       slug: brand.slug
     })) ?? [];
 
-  const product: ProductFormProduct = {
-    id: productRow.id,
-    name: productRow.name,
-    slug: productRow.slug,
-    price_cents: productRow.price_cents,
-    currency: productRow.currency,
-    description: productRow.description,
-    details: productRow.details,
-    image_url: productRow.image_url,
-    category_id: productRow.category_id,
-    brand_id: productRow.brand_id,
-    capacity_ml: productRow.capacity_ml,
-    ingredients: productRow.ingredients,
-    nutrition_info: productRow.nutrition_info,
-    is_active: productRow.is_active,
-    size_options: productRow.size_options,
-    color_options: productRow.color_options
-  };
+  const product = productRow as ProductFormProduct;
 
   const defaultBrandId = brands[0]?.id;
   const updateAction = updateProduct.bind(null, { locale, defaultBrandId });

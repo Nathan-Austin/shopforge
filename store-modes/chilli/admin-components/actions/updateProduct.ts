@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { parseProductFields } from '@/lib/products/catalogue';
 import { ensureShopOwner } from '../lib/auth';
 
 interface UpdateProductContext {
@@ -25,18 +26,19 @@ export async function updateProduct(
 
   const name = formData.get('name')?.toString().trim();
   const slug = formData.get('slug')?.toString().trim();
-  const priceCents = Number(formData.get('price_cents'));
-  const currency = formData.get('currency')?.toString() || 'GBP';
-  const description = formData.get('description')?.toString() || '';
-  const heatLevel = formData.get('heat_level')?.toString() || null;
+  const price = Number(formData.get('price'));
+  const currency = formData.get('currency')?.toString().trim() || 'EUR';
   const categoryId = formData.get('category_id')?.toString() || null;
   const brandId =
     formData.get('brand_id')?.toString() ||
     (context.defaultBrandId ? String(context.defaultBrandId) : null);
   const imageUrl = formData.get('image_url')?.toString() || null;
-  const chilliTypeIds = formData.getAll('chilliTypeIds').map((id) => id.toString()).filter(Boolean);
+  const chilliTypeIds = formData
+    .getAll('chilliTypeIds')
+    .map((id) => id.toString())
+    .filter(Boolean);
 
-  if (!name || !slug || Number.isNaN(priceCents)) {
+  if (!name || !slug || !Number.isFinite(price)) {
     return { error: 'Missing required fields' };
   }
 
@@ -44,18 +46,21 @@ export async function updateProduct(
     return { error: 'Brand is required in multi-store mode' };
   }
 
+  // Everything the shop enabled in src/lib/products/config.ts.
+  const fields = parseProductFields(formData);
+
   const { error: updateError } = await supabase
     .from('products')
     .update({
+      ...fields,
       name,
       slug,
-      price_cents: priceCents,
+      price_cents: Math.round(price * 100),
       currency,
-      description,
       image_url: imageUrl,
-      heat_level: heatLevel,
       category_id: categoryId,
-      brand_id: brandId
+      brand_id: brandId,
+      updated_at: new Date().toISOString()
     })
     .eq('id', productId);
 
@@ -63,6 +68,7 @@ export async function updateProduct(
     return { error: updateError.message };
   }
 
+  // The form always submits the full selection, so replace the links.
   await supabase.from('products_chilli_types').delete().eq('product_id', productId);
 
   if (chilliTypeIds.length > 0) {
@@ -70,7 +76,9 @@ export async function updateProduct(
       product_id: productId,
       chilli_type_id: chilliId
     }));
-    const { error: insertError } = await supabase.from('products_chilli_types').insert(rows);
+    const { error: insertError } = await supabase
+      .from('products_chilli_types')
+      .insert(rows);
     if (insertError) {
       return { error: insertError.message };
     }
