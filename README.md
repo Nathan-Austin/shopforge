@@ -156,8 +156,13 @@ test/generate-and-check.sh --mode=generic
 
 This generates `test-generic/` with placeholder keys (no Supabase project
 needed), then runs `pnpm install --frozen-lockfile`, `tsc --noEmit`,
-`pnpm lint` and `pnpm build`, the same checks a Vercel deploy performs.
-Add `--keep` to inspect the generated store afterwards.
+`pnpm lint`, `pnpm test` and `pnpm build`, the same checks a Vercel deploy
+performs. Add `--keep` to inspect the generated store afterwards.
+
+Generated shops come with [Vitest](https://vitest.dev) and unit tests for
+the logic that ships with them — the heat scale, product field parsing,
+shipping and price formatting. Run them in your shop with `pnpm test`, or
+`pnpm test:watch` while you work.
 
 ## Roadmap
 

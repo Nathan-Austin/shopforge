@@ -51,6 +51,8 @@ Planned work for shopforge, roughly in order.
 
 ## 5. CI
 
+- [x] Vitest in generated stores, with unit tests for the heat scale,
+      product field parsing, shipping and formatting — done 2026-11-02
 - [ ] CI that generates a store and builds it: run
       `test/generate-and-check.sh --mode=generic` and `--mode=chilli` (needs
       Node, pnpm and python3; no Supabase project required)
@@ -58,6 +60,11 @@ Planned work for shopforge, roughly in order.
 ## Notes for future turns
 
 Decided on 2026-11-02:
+
+- Generated stores ship with Vitest (dev dependency, Node environment, no
+  jsdom) and the tests live beside the code in `shared-assets`. The pure
+  helpers have `*On` variants taking the scale or field list as an argument
+  so they can be tested for any shop's settings, not just the generated one.
 
 - Product fields are chosen at generation time but **every column always
   exists** in the schema. `src/lib/products/config.ts` only says which ones
