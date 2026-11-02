@@ -42,6 +42,9 @@ pnpm exec tsc --noEmit
 step "Lint"
 pnpm lint
 
+step "Unit tests"
+pnpm test
+
 step "Build"
 pnpm build 2>&1 | tee /tmp/shopforge-build-$MODE.log
 

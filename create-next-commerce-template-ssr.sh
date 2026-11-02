@@ -232,7 +232,7 @@ pnpm add stripe
 # tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
 # Tailwind 4 runs through @tailwindcss/turbopack (see next.config.ts), so
 # there is no postcss.config and no need for postcss/autoprefixer.
-pnpm add -D @types/node @types/react prettier
+pnpm add -D @types/node @types/react prettier vitest
 
 FIELD_PICKER="$SCRIPT_DIR/lib/product-fields.py"
 FIELD_CATALOGUE="$SHARED_DIR/lib/products/catalogue.ts"
@@ -860,6 +860,38 @@ const nextConfig: NextConfig = {
 
 export default withNextIntl(nextConfig);
 EOF
+
+# 6b2) Vitest, for the pure logic that ships with the store (heat scale,
+# product field parsing, shipping maths). Node environment only: these are
+# plain functions, so there is no need for jsdom. The config is .mts so it
+# loads as ESM without adding "type": "module" to package.json, which would
+# change how Next loads its own config.
+cat > vitest.config.mts <<'EOF'
+import { fileURLToPath } from 'node:url';
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
+});
+EOF
+
+python3 <<'PYPKG'
+import json, pathlib
+path = pathlib.Path('package.json')
+pkg = json.loads(path.read_text())
+scripts = pkg.setdefault('scripts', {})
+scripts['test'] = 'vitest run'
+scripts['test:watch'] = 'vitest'
+path.write_text(json.dumps(pkg, indent=2) + "\n")
+PYPKG
 
 # 6c) Stub message files for any locale that doesn't have one yet
 for loc in $(echo "$LOCALES_CSV" | tr ',' ' '); do
