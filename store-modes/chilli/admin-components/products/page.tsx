@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import type { StoreProduct } from '@/components/store/types';
+import { one } from '@/lib/supabase/relations';
 import { requireShopOwner } from '../lib/auth';
 
 export default async function ProductsPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -26,29 +27,34 @@ export default async function ProductsPage({ params }: { params: Promise<{ local
     .order('created_at', { ascending: false });
 
   const products: StoreProduct[] =
-    data?.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      price_cents: row.price_cents,
-      currency: row.currency,
-      heatLevel: row.heat_level,
-      image_url: row.image_url,
-      brand: row.brand
-        ? {
-            id: row.brand.id,
-            name: row.brand.name,
-            slug: row.brand.slug || ''
-          }
-        : null,
-      category: row.category
-        ? {
-            id: row.category.id,
-            name: row.category.name,
-            slug: row.category.slug || ''
-          }
-        : null
-    })) ?? [];
+    data?.map((row) => {
+      // Joined rows come back typed as arrays without generated database types
+      const brand = one(row.brand);
+      const category = one(row.category);
+      return {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        price_cents: row.price_cents,
+        currency: row.currency,
+        heatLevel: row.heat_level,
+        image_url: row.image_url,
+        brand: brand
+          ? {
+              id: brand.id,
+              name: brand.name,
+              slug: brand.slug || ''
+            }
+          : null,
+        category: category
+          ? {
+              id: category.id,
+              name: category.name,
+              slug: category.slug || ''
+            }
+          : null
+      };
+    }) ?? [];
 
   return (
     <div className="space-y-6">
