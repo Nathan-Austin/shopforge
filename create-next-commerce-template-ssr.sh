@@ -227,6 +227,9 @@ approve_build_scripts '@parcel/watcher' '@swc/core' sharp unrs-resolver
 # 2) Install deps
 echo "📦 Installing dependencies..."
 pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx tailwind-merge class-variance-authority lucide-react @radix-ui/react-slot @radix-ui/react-label @radix-ui/react-select
+# server-only turns importing a server module (the cart service holds the
+# service-role key) from a client component into a build error.
+pnpm add server-only
 # stripe is imported by src/lib/stripe/server.ts (copied from shared-assets)
 pnpm add stripe
 # tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
@@ -521,6 +524,35 @@ cat > src/messages/en.json <<'EOF'
     "Checkout": "Checkout",
     "Account": "Account"
   },
+  "Shop": {
+    "title": "Shop",
+    "empty": "No products yet."
+  },
+  "Cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "badgeLabel": "Cart, {count} items",
+    "addToCart": "Add to cart",
+    "adding": "Adding...",
+    "added": "Added \u2713",
+    "addFailed": "Could not add this item.",
+    "updateFailed": "Could not update your cart.",
+    "outOfStock": "Out of stock",
+    "limitedToStock": "We only had a few left, so we added what we could.",
+    "maxReached": "Maximum reached",
+    "noLongerAvailable": "No longer available",
+    "removeUnavailable": "Remove the unavailable items to continue.",
+    "size": "Size",
+    "colour": "Colour",
+    "increase": "Increase quantity",
+    "decrease": "Decrease quantity",
+    "remove": "Remove",
+    "clear": "Empty cart",
+    "subtotal": "Subtotal",
+    "shippingAtCheckout": "Shipping is calculated at checkout.",
+    "checkout": "Checkout",
+    "continueShopping": "Continue shopping"
+  },
   "Admin": {
     "title": "Store admin",
     "dashboardHeading": "Manage your catalogue",
@@ -596,6 +628,35 @@ cat > src/messages/de.json <<'EOF'
     "Cart": "Warenkorb",
     "Checkout": "Kasse",
     "Account": "Konto"
+  },
+  "Shop": {
+    "title": "Shop",
+    "empty": "Noch keine Produkte."
+  },
+  "Cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer.",
+    "badgeLabel": "Warenkorb, {count} Artikel",
+    "addToCart": "In den Warenkorb",
+    "adding": "Wird hinzugef\u00fcgt...",
+    "added": "Hinzugef\u00fcgt \u2713",
+    "addFailed": "Artikel konnte nicht hinzugef\u00fcgt werden.",
+    "updateFailed": "Warenkorb konnte nicht aktualisiert werden.",
+    "outOfStock": "Ausverkauft",
+    "limitedToStock": "Es waren nur noch wenige verf\u00fcgbar, wir haben so viele wie m\u00f6glich hinzugef\u00fcgt.",
+    "maxReached": "Maximum erreicht",
+    "noLongerAvailable": "Nicht mehr verf\u00fcgbar",
+    "removeUnavailable": "Entfernen Sie die nicht verf\u00fcgbaren Artikel, um fortzufahren.",
+    "size": "Gr\u00f6\u00dfe",
+    "colour": "Farbe",
+    "increase": "Menge erh\u00f6hen",
+    "decrease": "Menge verringern",
+    "remove": "Entfernen",
+    "clear": "Warenkorb leeren",
+    "subtotal": "Zwischensumme",
+    "shippingAtCheckout": "Versandkosten werden an der Kasse berechnet.",
+    "checkout": "Zur Kasse",
+    "continueShopping": "Weiter einkaufen"
   },
   "Admin": {
     "title": "Store admin",
@@ -673,6 +734,35 @@ cat > src/messages/tr.json <<'EOF'
     "Checkout": "Ödeme",
     "Account": "Hesap"
   },
+  "Shop": {
+    "title": "Mağaza",
+    "empty": "Henüz ürün yok."
+  },
+  "Cart": {
+    "title": "Sepet",
+    "empty": "Sepetiniz boş.",
+    "badgeLabel": "Sepet, {count} ürün",
+    "addToCart": "Sepete ekle",
+    "adding": "Ekleniyor...",
+    "added": "Eklendi \u2713",
+    "addFailed": "Bu ürün eklenemedi.",
+    "updateFailed": "Sepetiniz güncellenemedi.",
+    "outOfStock": "Stokta yok",
+    "limitedToStock": "Stokta az kalmıştı, ekleyebildiğimiz kadarını ekledik.",
+    "maxReached": "Üst sınıra ulaşıldı",
+    "noLongerAvailable": "Artık mevcut değil",
+    "removeUnavailable": "Devam etmek için mevcut olmayan ürünleri kaldırın.",
+    "size": "Beden",
+    "colour": "Renk",
+    "increase": "Adedi artır",
+    "decrease": "Adedi azalt",
+    "remove": "Kaldır",
+    "clear": "Sepeti boşalt",
+    "subtotal": "Ara toplam",
+    "shippingAtCheckout": "Kargo ücreti ödeme adımında hesaplanır.",
+    "checkout": "Ödemeye geç",
+    "continueShopping": "Alışverişe devam et"
+  },
   "Admin": {
     "title": "Store admin",
     "dashboardHeading": "Manage your catalogue",
@@ -748,6 +838,35 @@ cat > src/messages/ar.json <<'EOF'
     "Cart": "السلة",
     "Checkout": "الدفع",
     "Account": "الحساب"
+  },
+  "Shop": {
+    "title": "المتجر",
+    "empty": "لا توجد منتجات بعد."
+  },
+  "Cart": {
+    "title": "السلة",
+    "empty": "سلتك فارغة.",
+    "badgeLabel": "السلة، {count} منتج",
+    "addToCart": "أضف إلى السلة",
+    "adding": "جارٍ الإضافة...",
+    "added": "تمت الإضافة \u2713",
+    "addFailed": "تعذّرت إضافة هذا المنتج.",
+    "updateFailed": "تعذّر تحديث سلتك.",
+    "outOfStock": "غير متوفر",
+    "limitedToStock": "لم يتبقَّ سوى القليل، فأضفنا ما أمكن.",
+    "maxReached": "تم بلوغ الحد الأقصى",
+    "noLongerAvailable": "لم يعد متوفرًا",
+    "removeUnavailable": "أزل المنتجات غير المتوفرة للمتابعة.",
+    "size": "المقاس",
+    "colour": "اللون",
+    "increase": "زيادة الكمية",
+    "decrease": "تقليل الكمية",
+    "remove": "إزالة",
+    "clear": "إفراغ السلة",
+    "subtotal": "المجموع الفرعي",
+    "shippingAtCheckout": "يتم احتساب الشحن عند الدفع.",
+    "checkout": "إتمام الشراء",
+    "continueShopping": "متابعة التسوق"
   },
   "Admin": {
     "title": "Store admin",
@@ -1282,13 +1401,156 @@ EOF
 # 10) Minimal shop/cart/checkout pages; checkout protected server-side
 mkdir -p src/app/[locale]/shop src/app/[locale]/cart src/app/[locale]/checkout
 cat > src/app/[locale]/shop/page.tsx <<'EOF'
-export default function ShopPage() {
-  return <div className="p-6"><h1 className="text-2xl font-bold">Shop</h1></div>;
+import { getTranslations } from 'next-intl/server';
+
+import AddToCartButton from '@/components/cart/AddToCartButton';
+import { createClient } from '@/lib/supabase/server';
+import { formatPrice } from '@/lib/format';
+import { maxAllowedQuantity } from '@/lib/cart/pricing';
+
+export default async function ShopPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Shop' });
+  const supabase = await createClient();
+
+  // Public read is allowed on products; archived and unpublished ones are
+  // filtered out here rather than relying on the client to hide them.
+  const { data: products } = await supabase
+    .from('products')
+    .select(
+      'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options'
+    )
+    .neq('is_active', false)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false });
+
+  return (
+    <main className="mx-auto max-w-6xl p-6">
+      <h1 className="mb-6 text-2xl font-bold">{t('title')}</h1>
+
+      {!products?.length ? (
+        <p className="text-gray-600">{t('empty')}</p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((product) => {
+            const soldOut =
+              maxAllowedQuantity({
+                stock: product.stock,
+                trackInventory: product.track_inventory,
+                allowBackorder: product.allow_backorder,
+                maxOrderQuantity: product.max_order_quantity
+              }) <= 0;
+
+            return (
+              <li
+                key={product.id}
+                className="flex flex-col rounded-xl border border-gray-200 p-4"
+              >
+                <h2 className="font-semibold">{product.name}</h2>
+                {product.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-600">
+                    {product.description}
+                  </p>
+                )}
+                <p className="mt-2 font-bold">
+                  {formatPrice(product.price_cents, product.currency, locale)}
+                </p>
+
+                <div className="mt-4">
+                  <AddToCartButton
+                    locale={locale}
+                    productId={product.id}
+                    sizeOptions={product.size_options}
+                    colorOptions={product.color_options}
+                    soldOut={soldOut}
+                    className="w-full"
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </main>
+  );
 }
 EOF
 cat > src/app/[locale]/cart/page.tsx <<'EOF'
-export default function CartPage() {
-  return <div className="p-6"><h1 className="text-2xl font-bold">Cart</h1></div>;
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+
+import CartLines from '@/components/cart/CartLines';
+import { getCart } from '@/lib/cart/service';
+import { formatPrice } from '@/lib/format';
+
+export default async function CartPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Cart' });
+  const cart = await getCart();
+  const blocked = cart.lines.some((line) => !line.available);
+
+  if (cart.lines.length === 0) {
+    return (
+      <main className="mx-auto max-w-3xl p-6">
+        <h1 className="mb-4 text-2xl font-bold">{t('title')}</h1>
+        <p className="text-gray-600">{t('empty')}</p>
+        <Link href={`/${locale}/shop`} className="mt-4 inline-block underline">
+          {t('continueShopping')}
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-4 text-2xl font-bold">{t('title')}</h1>
+
+      <CartLines locale={locale} lines={cart.lines} />
+
+      <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+        <span className="text-lg font-semibold">{t('subtotal')}</span>
+        <span className="text-lg font-bold">
+          {formatPrice(cart.totals.subtotalCents, cart.currency, locale)}
+        </span>
+      </div>
+      <p className="mt-1 text-sm text-gray-500">{t('shippingAtCheckout')}</p>
+      {blocked && (
+        <p className="mt-2 text-sm text-red-700">{t('removeUnavailable')}</p>
+      )}
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {blocked ? (
+          <span
+            className="cursor-not-allowed rounded-md bg-gray-300 px-5 py-2.5 font-semibold text-gray-600"
+            aria-disabled="true"
+          >
+            {t('checkout')}
+          </span>
+        ) : (
+          <Link
+            href={`/${locale}/checkout`}
+            className="rounded-md bg-black px-5 py-2.5 font-semibold text-white hover:bg-gray-800"
+          >
+            {t('checkout')}
+          </Link>
+        )}
+        <Link
+          href={`/${locale}/shop`}
+          className="rounded-md border border-gray-300 px-5 py-2.5 font-semibold hover:bg-gray-50"
+        >
+          {t('continueShopping')}
+        </Link>
+      </div>
+    </main>
+  );
 }
 EOF
 cat > src/app/[locale]/checkout/page.tsx <<'EOF'
@@ -1314,6 +1576,7 @@ cp -R "$MODE_DIR/store-components/." src/components/store
 cat > src/components/Header.tsx <<'EOF'
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import CartBadge from '@/components/cart/CartBadge';
 
 export default async function Header({ locale }: { locale: string }) {
   const supabase = await createClient();
@@ -1338,7 +1601,7 @@ export default async function Header({ locale }: { locale: string }) {
 
         <nav className="flex items-center gap-5 text-sm">
           <Link href={`/${locale}/shop`} className="text-gray-600 hover:text-gray-900">Shop</Link>
-          <Link href={`/${locale}/cart`} className="text-gray-600 hover:text-gray-900">Cart</Link>
+          <CartBadge locale={locale} />
 
           {isShopOwner && (
             <Link
@@ -1402,6 +1665,7 @@ cat > src/app/[locale]/auth/sign-in/page.tsx <<'EOF'
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
+import { mergeGuestCartAction } from '@/lib/cart/actions';
 
 export default function SignInPage() {
   const { locale } = useParams() as { locale: string };
@@ -1414,8 +1678,16 @@ export default function SignInPage() {
     e.preventDefault();
     setErr(null);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setErr(error.message);
-    else router.push(`/${locale}`);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+
+    // Keep anything added before signing in, and pull back a cart left on
+    // another device.
+    await mergeGuestCartAction(locale);
+    router.push(`/${locale}`);
+    router.refresh();
   }
 
   return (
