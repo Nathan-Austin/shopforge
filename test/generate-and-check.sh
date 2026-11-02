@@ -43,7 +43,16 @@ step "Lint"
 pnpm lint
 
 step "Build"
-pnpm build
+pnpm build 2>&1 | tee /tmp/shopforge-build-$MODE.log
+
+# The proxy (locale routing) is registered by file convention, and a
+# misplaced src/proxy.ts is ignored without any warning, so assert the
+# build actually picked it up.
+if ! grep -q "Proxy (Middleware)" "/tmp/shopforge-build-$MODE.log"; then
+  echo "❌ Build output has no proxy: locale routing would not run." >&2
+  echo "   Expected src/proxy.ts to be picked up by Next." >&2
+  exit 1
+fi
 
 cd "$ROOT"
 if [ "$KEEP" != "true" ]; then

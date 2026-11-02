@@ -335,8 +335,14 @@ echo "  3. The security policies (0004) are already pushed and will apply automa
 
 
 
-# 4) i18n middleware with next-intl
-cat > middleware.ts <<'EOF'
+# 4) i18n proxy with next-intl
+# Next 16 renamed the `middleware` file convention to `proxy`; a default
+# export is still what the convention expects. next-intl itself has no
+# ./proxy entrypoint yet, so the import path stays next-intl/middleware.
+# NOTE: with --src-dir this must be src/proxy.ts. Unlike middleware.ts,
+# a proxy.ts in the project root is ignored silently (no build warning),
+# which would leave the store with no locale routing at all.
+cat > src/proxy.ts <<'EOF'
 import createMiddleware from 'next-intl/middleware';
 
 export default createMiddleware({
@@ -349,9 +355,9 @@ export const config = {
 };
 EOF
 # inject locales/default
-sed -i "s|__DEFAULT__|$DEFAULT_LOCALE|g" middleware.ts
+sed -i "s|__DEFAULT__|$DEFAULT_LOCALE|g" src/proxy.ts
 SED_LOCALES=$(echo "$LOCALES_CSV" | sed "s|,|', '|g")
-sed -i "s|'__LOCALES__'|'$SED_LOCALES'|g" middleware.ts
+sed -i "s|'__LOCALES__'|'$SED_LOCALES'|g" src/proxy.ts
 
 # 5) Messages (minimal) for next-intl
 mkdir -p src/messages
