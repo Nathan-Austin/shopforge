@@ -55,9 +55,11 @@ support for languages such as Arabic.
 
 **Starting points you finish yourself**
 
-- **Storefront pages:** `/shop` is a plain grid. Storefront components
-  (product listing with filters, product card, brand showcase) are copied
-  into `src/components/store/` for you to wire in.
+- **Storefront pages:** `/shop` is a plain grid; `/shop/<slug>` is a full
+  product page (gallery, price, stock, variants, quantity, product facts,
+  and heat in chilli mode). Storefront components (product listing with
+  filters, brand showcase) are copied into `src/components/store/` for you
+  to wire in.
 - **Orders after the sale:** "refunded" is a status label only; the money is
   refunded in the Stripe dashboard. Status changes don't notify the customer.
 - **Shipping:** one flat rate with a free-shipping threshold, set with

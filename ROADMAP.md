@@ -8,24 +8,21 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Product detail page (`/shop/[slug]`)** (section 1). `ProductCard` links
-   to `/shop/<slug>`, which 404s. It is the only broken link in the
-   storefront, and the other storefront work depends on it.
-2. **Render `ProductArchive` on `/shop`** (section 1). The component (search,
+1. **Render `ProductArchive` on `/shop`** (section 1). The component (search,
    category filters, sorting) is built and translated but not rendered yet.
    Small effort, large visible improvement.
-3. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
+2. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
    `refunded` changes only the label today. Add full and partial refunds
    through the Stripe API.
-4. **Shipping notification email** (section 1). Email the customer via Resend
+3. **Shipping notification email** (section 1). Email the customer via Resend
    when the owner marks an order fulfilled or otherwise changes its status.
    The template and transport exist already; what's missing is the hook on
    status change.
-5. **Discount codes, then the email marketing builder** (section 2). Discount
+4. **Discount codes, then the email marketing builder** (section 2). Discount
    codes backed by Stripe coupons/promotion codes and applied at checkout,
    then the block-based campaign editor with an opt-in/unsubscribe
    subscriber list.
-6. **Translate the auth pages** (section 2b). Move the hardcoded English on
+5. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -34,7 +31,13 @@ details for each item are in the numbered sections below.
 - [x] Cart and add-to-cart — done 2026-11-02 on `feat/cart`: httpOnly
       `shop_cart_session` cookie, server actions, /shop and /cart pages,
       header count, guest-cart merge on sign-in, cookie-based checkout
-- [ ] Product detail page
+- [x] Product detail page — done 2026-11-03: `/shop/[slug]` reads
+      `products_public` by slug (unknown, unpublished and archived slugs
+      404), with gallery, headline, compare-at price, stock status, brand
+      and category, size/colour variants, a quantity picker on add to cart,
+      long copy, ingredients, net content, weight, dimensions, allergens,
+      dietary flags, nutrition, storage, tags and SEO metadata. Chilli shops
+      add a heat meter, Scoville and chilli-type chips via `ProductExtras`
 - [ ] Render `ProductArchive` (search, filters, sorting) on `/shop` in place
       of the plain grid
 - [x] Orders tables, so paid checkouts are recorded — done 2026-11-03:
@@ -175,7 +178,7 @@ Decided on 2026-11-02:
 
 **Where things stand** (the priority order is under "Next up" at the top):
 
-- The storefront still only has `/shop` and `/cart`.
+- The storefront has `/shop`, `/shop/[slug]` and `/cart`.
 - `ProductArchive` and `BrandShowcase` are copied into every store and have
   all their message keys, but nothing renders them yet.
 - The buying loop is closed end to end: pay, order recorded, receipt
@@ -185,10 +188,14 @@ Decided on 2026-11-02:
 
 **Known gaps in the generated store (not build failures):**
 
-- The storefront doesn't read most of the new product fields yet: `/shop` and
-  the product page are still placeholders, so headline, gallery, tags, stock
-  and the rest are saved but only visible in the admin. Wire them in with the
-  storefront work in section 1.
+- `/shop` is still a plain grid that reads only the card fields; the product
+  page shows every public field except `video_url`, and brand and category
+  are plain text because there are no brand or category pages to link to
+  yet.
+- Only `size_options` and `color_options` are cart-selectable variants
+  (`cart_items.selected_size` / `selected_color`). Weight and volume are
+  display facts (`net_content`, `weight_grams`), not variants; a product
+  sold in two sizes is two options on one row, or two products.
 - Stock is decremented when Stripe confirms payment, but it is never
   *reserved* during checkout, so two customers can still both pay for the last
   unit. The decrement is atomic and floors at zero, so the count stays sane,
