@@ -2680,9 +2680,16 @@ echo ""
 echo "✅ Done! Next steps:"
 echo "  cd $APP_NAME"
 echo "  pnpm dev"
-echo "  Open http://localhost:3000/$DEFAULT_LOCALE/auth/sign-in and create your account."
+echo "  Open http://localhost:3000/$DEFAULT_LOCALE/auth/sign-up and create your account (with a password)."
 echo "  Then promote it in the Supabase SQL editor:"
 echo "    update public.profiles set role = 'shop_owner' where id = (select id from auth.users where email = 'you@example.com');"
+if [ "$SHOPFORGE_ADMIN_MFA" = "required" ]; then
+  echo "  Your first visit to /admin asks you to set up an authenticator app."
+fi
+if [ "$SHOPFORGE_CUSTOMER_AUTH" = "otp" ]; then
+  echo "  Customers sign in with an email code: in Supabase, edit the Magic Link email template"
+  echo "  to use {{ .Token }} instead of {{ .ConfirmationURL }}, or they will get a link."
+fi
 echo ""
 echo "📋 Supabase summary:"
 echo "  • Project: $NEXT_PUBLIC_SUPABASE_URL (ref: $SUPABASE_PROJECT_REF)"

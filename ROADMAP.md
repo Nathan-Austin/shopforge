@@ -14,10 +14,11 @@ Planned work for shopforge, roughly in order.
       checkout with sign-up prompt and `claim_guest_orders()` on confirmed
       email; success page shows the order and polls until the webhook lands;
       cancel page; `--shipping=form|stripe` for who collects the address
-- [ ] Customer order history page (`/account/orders`), reading via RLS
+- [x] Customer order history page (`/account/orders`), reading via RLS —
+      done 2026-11-03
 - [ ] Order confirmation email
-- [ ] Admin orders view, with status changes (fulfilled, cancelled, refunded)
-      recorded in the database only
+- [x] Admin orders view, with status changes (fulfilled, cancelled, refunded)
+      recorded in the database only — done 2026-11-03 via `set_order_status()`
 - [ ] Refunds from the admin: a "refund" action that calls Stripe for the
       full order or for chosen order items (partial refund), then records
       the status. Today the status is only a label; the money has to be
@@ -36,6 +37,18 @@ Planned work for shopforge, roughly in order.
       how heat appears in the shop (word and number, word only, number only,
       chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
 - [ ] Theme tokens instead of hardcoded colours
+
+## 2b. Accounts and sign-in
+
+- [x] Customer sign-in by password or six-digit email code, chosen at
+      generation; admin always by password — done 2026-11-03
+- [x] Authenticator-app second factor for the admin, required by default —
+      done 2026-11-03
+- [ ] Translate the auth pages (sign-in, sign-up, email code, MFA, reset);
+      they are English-only today
+- [ ] Recovery codes for admin MFA, so a lost phone does not lock the owner
+      out (today: unenrol the factor from the Supabase dashboard)
+- [ ] Account page beyond orders: addresses, email change, delete account
 
 ## 3. Languages
 

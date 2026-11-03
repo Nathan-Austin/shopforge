@@ -65,6 +65,20 @@ From `~/projects`:
 - `--mode`: `generic`, or `chilli` for hot-sauce shops (adds heat levels and
   chilli types); `chilli` is the default if you leave it out
 
+The script then asks a few questions, two of which affect Supabase settings:
+
+- **Customer sign-in.** *Password* is the familiar flow. *Email code* sends a
+  six-digit code instead; there is no password and the first code creates the
+  account. If you pick it, open **Authentication → Email Templates → Magic
+  Link** in Supabase and replace `{{ .ConfirmationURL }}` with
+  `{{ .Token }}`, so the email carries the code rather than a link. Links are
+  deliberately avoided: Microsoft and other mail scanners open them before the
+  customer does, and a used link stops working.
+- **Admin two-factor.** On by default. The owner needs a code from an
+  authenticator app to use `/admin`. This uses Supabase's TOTP factor, which
+  is enabled under **Authentication → Multi-Factor** for new projects; check
+  it is on.
+
 The script will:
 
 1. Create the Next.js app and install dependencies
@@ -154,7 +168,10 @@ stripe listen --forward-to localhost:3000/api/webhooks/stripe
 pnpm dev
 ```
 
-1. Open `http://localhost:3000/en/auth/sign-up` and create your account.
+1. Open `http://localhost:3000/en/auth/sign-up` and create your account with
+   a password. If customers sign in with email codes, use
+   `http://localhost:3000/en/auth/sign-in?method=password` from then on: the
+   owner always has a password.
 2. Promote yourself in the Supabase **SQL editor**:
 
    ```sql
@@ -162,7 +179,11 @@ pnpm dev
     where id = (select id from auth.users where email = 'you@example.com');
    ```
 
-3. Open `http://localhost:3000/en/admin` and add your first product.
+3. Open `http://localhost:3000/en/admin`. With admin two-factor on you are
+   sent to `/en/auth/mfa` first: scan the QR code with an authenticator app
+   and enter the code it shows. Each new session asks for a code again.
+4. Add your first product. Paid orders appear under **Orders** in the admin,
+   where you can mark them shipped, cancelled or refunded.
 
 New accounts are always customers, and customers can't change their own role,
 so only the SQL editor (or the service-role key) can create a shop owner.
@@ -191,7 +212,10 @@ git push -u origin main
 ## 10. Check the deployment
 
 - [ ] Sign-up works and creates a row in `public.profiles` with role `customer`
-- [ ] After promotion, `/en/admin` opens; for other accounts it redirects away
+- [ ] After promotion, `/en/admin` asks for an authenticator code (if on),
+      then opens; for other accounts it redirects away
+- [ ] `/en/account/orders` lists the signed-in customer's orders and nothing
+      else; `/en/admin/orders` lists every order and the status can be changed
 - [ ] Creating a product with an image works, and the image loads
 - [ ] `/en/checkout` opens signed out (guest checkout) and prefills your email
       when signed in

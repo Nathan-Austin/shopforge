@@ -12,10 +12,14 @@ support for languages such as Arabic.
 
 **Ready to use**
 
-- **Accounts:** email and password sign-up, sign-in and password reset
-  (Supabase Auth); a profile row is created for every new user
+- **Accounts:** customers sign in with email and password, or with a
+  six-digit code emailed to them, your choice at generation time. No sign-in
+  links, which mail scanners open and burn. A profile row is created for
+  every new user, and `/account/orders` lists their orders
 - **Admin panel** at `/<locale>/admin`, for the shop owner only: list, create,
-  edit and delete products, with image uploads to Supabase Storage
+  edit and delete products with image uploads to Supabase Storage, and an
+  orders view where each order's status can be changed. The owner always
+  signs in with a password and, by default, a code from an authenticator app
 - **Database:** profiles, addresses, brands, categories, products, cart
   items and orders, with row-level security and seed data
 - **Languages:** any set of locales via `next-intl`, with RTL layout for Arabic
@@ -51,8 +55,8 @@ support for languages such as Arabic.
 - **Storefront pages:** `/shop` is a plain grid. Storefront components
   (product listing with filters, product card, brand showcase) are copied
   into `src/components/store/` for you to wire in.
-- **Orders after the sale:** there is no customer order history page, admin
-  orders view or confirmation email yet. The data is all there in `orders`.
+- **Orders after the sale:** no confirmation email yet, and "refunded" is a
+  status label only: the money is refunded in the Stripe dashboard.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
   placeholder values in `src/lib/shipping/config.ts`. The countries you
   deliver to are a placeholder list in `src/lib/checkout/config.ts`; the
@@ -128,11 +132,20 @@ The script also asks:
 - for `chilli` shops, the **heat scale**: its maximum, which words to use and
   how heat should appear in the shop (word and number, word only, number only
   or chilli icons)
+- how **customers sign in**: with a password, or with a six-digit code sent
+  to their email. The code option has nothing to forget and nothing to reset,
+  and the first code creates the account. It needs one change in Supabase,
+  described in the setup guide. The shop owner always uses a password
+- whether the **admin needs an authenticator app** as a second factor
+  (default yes). The owner scans a QR code on their first visit to `/admin`
+  and enters a code from the app on each new session
 
 To skip the questions, preset `SHOPFORGE_PRODUCT_FIELDS` (`all`,
 `recommended`, or a comma-separated list of field keys), `SHOPFORGE_HEAT_MAX`,
-`SHOPFORGE_HEAT_BANDS` (`Mild:3,Hot:10`) and `SHOPFORGE_HEAT_DISPLAY`. The
-answers end up in `src/lib/products/config.ts`, which you can edit afterwards.
+`SHOPFORGE_HEAT_BANDS` (`Mild:3,Hot:10`), `SHOPFORGE_HEAT_DISPLAY`,
+`SHOPFORGE_CUSTOMER_AUTH` (`password` or `otp`) and `SHOPFORGE_ADMIN_MFA`
+(`required` or `off`). The answers end up in `src/lib/products/config.ts` and
+`src/lib/auth/config.ts`, which you can edit afterwards.
 
 `extend-commerce-template.sh [--mode=…] [--shipping=form|stripe]` runs inside
 an existing generated shop and adds the profile API, the Stripe checkout
@@ -167,10 +180,14 @@ written to `src/lib/checkout/config.ts`, which you can edit later.
   decremented once Stripe reports the payment as paid.
 - **Orders:** written only by the webhook with the service-role key; the Data
   API can't insert or change them. Customers read their own, the owner reads
-  all. A guest order has no `user_id` and is attached to an account only when
+  all. The only write path is `set_order_status()`, which re-checks the
+  caller is the shop owner. A guest order has no `user_id` and is attached to an account only when
   that account's email is confirmed, so registering with someone else's
   address reveals nothing. The success page finds the order by the Stripe
   session id, which only the paying browser is given.
+- **Admin access:** needs the `shop_owner` role and, unless turned off at
+  generation, a verified authenticator code in the current session. Server
+  actions check both, not just the pages.
 - **Secrets:** the generator creates a random `NEXTAUTH_SECRET`. Keep
   `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_SECRET_KEY` server-side only;
   `.env.local` is already gitignored.
