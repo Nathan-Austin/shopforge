@@ -804,17 +804,17 @@ cat > src/messages/en.json <<'EOF'
         "sortPopular": "Popular",
         "heatLevel": "Heat level",
         "pepper": "Chilli type",
+        "heatChip": "Heat: {value}",
+        "categoryChip": "Category: {value}",
         "allChilliTypes": "All chilli types",
         "sortMildToHot": "Mild to hot",
         "sortHotToMild": "Hot to mild"
       }
     },
     "results": {
-      "showing": "Showing",
-      "of": "of",
-      "sauces": "products",
       "noResults": "No matches",
       "adjustSearch": "Try a different search or filter.",
+      "showingCount": "Showing {shown} of {total} products",
       "loadMore": "Load more",
       "clearFilters": "Clear filters"
     }
@@ -1067,17 +1067,17 @@ cat > src/messages/de.json <<'EOF'
         "sortPopular": "Beliebt",
         "heatLevel": "Schärfegrad",
         "pepper": "Chilisorte",
+        "heatChip": "Schärfe: {value}",
+        "categoryChip": "Kategorie: {value}",
         "allChilliTypes": "Alle Chilisorten",
         "sortMildToHot": "Mild bis scharf",
         "sortHotToMild": "Scharf bis mild"
       }
     },
     "results": {
-      "showing": "Angezeigt",
-      "of": "von",
-      "sauces": "Produkte",
       "noResults": "Keine Treffer",
       "adjustSearch": "Versuchen Sie eine andere Suche oder einen anderen Filter.",
+      "showingCount": "{shown} von {total} Produkten angezeigt",
       "loadMore": "Mehr laden",
       "clearFilters": "Filter zurücksetzen"
     }
@@ -1330,17 +1330,17 @@ cat > src/messages/tr.json <<'EOF'
         "sortPopular": "Popüler",
         "heatLevel": "Acı seviyesi",
         "pepper": "Biber türü",
+        "heatChip": "Acılık: {value}",
+        "categoryChip": "Kategori: {value}",
         "allChilliTypes": "Tüm biber türleri",
         "sortMildToHot": "Hafiften acıya",
         "sortHotToMild": "Acıdan hafife"
       }
     },
     "results": {
-      "showing": "Gösterilen",
-      "of": "/",
-      "sauces": "ürün",
       "noResults": "Sonuç yok",
       "adjustSearch": "Farklı bir arama veya filtre deneyin.",
+      "showingCount": "{total} üründen {shown} tanesi gösteriliyor",
       "loadMore": "Daha fazla yükle",
       "clearFilters": "Filtreleri temizle"
     }
@@ -1593,17 +1593,17 @@ cat > src/messages/ar.json <<'EOF'
         "sortPopular": "الأكثر رواجًا",
         "heatLevel": "درجة الحرارة",
         "pepper": "نوع الفلفل",
+        "heatChip": "الحرارة: {value}",
+        "categoryChip": "الفئة: {value}",
         "allChilliTypes": "كل أنواع الفلفل",
         "sortMildToHot": "من الخفيف إلى الحار",
         "sortHotToMild": "من الحار إلى الخفيف"
       }
     },
     "results": {
-      "showing": "عرض",
-      "of": "من",
-      "sauces": "منتجات",
       "noResults": "لا توجد نتائج",
       "adjustSearch": "جرّب بحثًا أو عامل تصفية مختلفًا.",
+      "showingCount": "عرض {shown} من أصل {total} منتجًا",
       "loadMore": "تحميل المزيد",
       "clearFilters": "مسح عوامل التصفية"
     }
