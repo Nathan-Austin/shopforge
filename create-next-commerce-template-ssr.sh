@@ -2645,6 +2645,12 @@ echo "🧾 Ensuring .env.local defaults..."
 ensure_env_default "NEXT_PUBLIC_SITE_URL" "http://localhost:3000"
 ensure_env_default "STRIPE_SECRET_KEY" "sk_test_yourkey"
 ensure_env_default "STRIPE_WEBHOOK_SECRET" "whsec_yourwebhooksecret"
+# Email is optional: with no key the shop sends nothing and works as before.
+ensure_env_default "RESEND_API_KEY" ""
+ensure_env_default "EMAIL_FROM" ""
+ensure_env_default "EMAIL_REPLY_TO" ""
+ensure_env_default "SHOP_OWNER_EMAIL" ""
+ensure_env_default "NEXT_PUBLIC_SHOP_NAME" "$APP_NAME"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README

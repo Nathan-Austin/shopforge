@@ -319,6 +319,7 @@ export async function POST(request: Request) {
       metadata: {
         cart_session_id: cartSessionId,
         user_id: user?.id ?? '',
+        locale: payload.locale,
         package_weight_kg: packageWeight.toString(),
         ...(address
           ? {
@@ -351,6 +352,9 @@ import type Stripe from 'stripe';
 import { getStripeServerClient } from '@/lib/stripe/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { one } from '@/lib/supabase/relations';
+import { sendEmail } from '@/lib/email/send';
+import { getEmailConfig } from '@/lib/email/config';
+import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
 
 /**
  * Stripe webhook.
@@ -546,7 +550,71 @@ export async function POST(request: Request) {
       console.error(`Order ${order.id} was paid but its cart ${cartSessionId} was empty`);
     }
 
-    // 3. Stock.
+    // 3. The confirmation email. Best effort: a shop with no provider
+    //    configured sends nothing, and a provider outage must not fail the
+    //    webhook, because the payment and the order are already real.
+    const orderItems = (lines ?? []).map((line) => {
+      const product = one(line.products);
+      return {
+        productName: product?.name ?? 'Unknown product',
+        unitPriceCents: product?.price_cents ?? 0,
+        quantity: line.quantity,
+        selectedSize: line.selected_size,
+        selectedColor: line.selected_color
+      };
+    });
+
+    const customerEmail = session.customer_details?.email ?? session.customer_email ?? '';
+    if (customerEmail) {
+      const shipping = shippingSnapshot(session);
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
+      const locale = session.metadata?.locale || 'en';
+
+      const email = renderOrderConfirmation(
+        {
+          // Same short reference the success page and the admin show.
+          reference: order.id.slice(0, 8).toUpperCase(),
+          currency: (session.currency ?? 'eur').toUpperCase(),
+          subtotalCents: session.amount_subtotal ?? 0,
+          shippingCents: session.shipping_cost?.amount_total ?? 0,
+          totalCents: session.amount_total ?? 0,
+          items: orderItems,
+          shipping: {
+            name: shipping.shipping_name,
+            line1: shipping.shipping_line1,
+            line2: shipping.shipping_line2,
+            city: shipping.shipping_city,
+            postalCode: shipping.shipping_postal_code,
+            region: shipping.shipping_region,
+            country: shipping.shipping_country
+          },
+          orderUrl: siteUrl ? `${siteUrl}/${locale}/account/orders` : null,
+          shopName: process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop'
+        },
+        locale
+      );
+
+      const result = await sendEmail({
+        to: customerEmail,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        bcc: getEmailConfig().ownerNotificationEmail
+      });
+
+      if (result.sent) {
+        await supabase
+          .from('orders')
+          .update({ confirmation_sent_at: new Date().toISOString() })
+          .eq('id', order.id);
+      } else if (result.reason === 'failed') {
+        // The order stands; confirmation_sent_at stays null so the shop
+        // owner can see it was never confirmed.
+        console.error(`Could not email the confirmation for ${order.id}:`, result.error);
+      }
+    }
+
+    // 4. Stock.
     for (const line of lines ?? []) {
       const { error: stockError } = await supabase.rpc('decrement_product_stock', {
         p_product_id: line.product_id,
@@ -562,7 +630,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // 4. The cart.
+    // 5. The cart.
     const { error: clearError } = await supabase
       .from('cart_items')
       .delete()
@@ -1069,5 +1137,6 @@ EOF
 echo "✨ All components and libraries updated to production-grade."
 echo "💡 Next steps:"
 echo "   • Put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in .env.local"
+echo "   • For order confirmation emails, set RESEND_API_KEY and EMAIL_FROM (optional)"
 echo "   • Point a Stripe webhook at /api/webhooks/stripe for checkout.session.completed"
 echo "   • Set your rates in src/lib/shipping/config.ts"

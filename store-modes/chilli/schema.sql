@@ -676,3 +676,9 @@ $$;
 
 revoke all on function public.set_order_status(uuid, text) from public, anon;
 grant execute on function public.set_order_status(uuid, text) to authenticated;
+
+-- Set by the webhook once the confirmation email is away, so a retried
+-- delivery does not email the customer a second time, and so the shop
+-- owner can see which orders were never confirmed.
+alter table public.orders
+  add column if not exists confirmation_sent_at timestamptz;
