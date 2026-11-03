@@ -2,7 +2,7 @@
 # Generates a store without touching Supabase, then runs the checks a first
 # deploy on Vercel would: install, type-check, lint and build.
 #
-#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--keep]
+#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--keep]
 #
 # The store is written to test-<mode>/ in the repository root (gitignored)
 # and removed afterwards unless --keep is given. Needs Node, pnpm and python3.
@@ -11,11 +11,13 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MODE="generic"
 SHIPPING="form"
+AUTH="password"
 KEEP="false"
 for arg in "$@"; do
   case $arg in
     --mode=*) MODE="${arg#--mode=}" ;;
     --shipping=*) SHIPPING="${arg#--shipping=}" ;;
+    --auth=*) AUTH="${arg#--auth=}" ;;
     --keep) KEEP="true" ;;
     *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
@@ -27,8 +29,8 @@ rm -rf "$APP"
 
 step() { echo; echo "=== $*"; }
 
-step "Generate ($MODE)"
-./create-next-commerce-template-ssr.sh "$APP" en "en,de,ar" --mode="$MODE" --skip-supabase
+step "Generate ($MODE, customer sign-in: $AUTH)"
+SHOPFORGE_CUSTOMER_AUTH="$AUTH" ./create-next-commerce-template-ssr.sh "$APP" en "en,de,ar" --mode="$MODE" --skip-supabase
 
 cd "$APP"
 

@@ -170,6 +170,39 @@ ensure_store_mode() {
   export NEXT_PUBLIC_STORE_MODE="$existing"
 }
 
+# How customers sign in. Admins always use a password (see ensure_admin_mfa
+# in a later step for their second factor).
+ensure_customer_auth() {
+  local existing answer
+  existing=$(get_env_var "SHOPFORGE_CUSTOMER_AUTH")
+  [ -z "$existing" ] && existing="${SHOPFORGE_CUSTOMER_AUTH:-}"
+  if [ -z "$existing" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    existing="password"
+  fi
+  if [ -z "$existing" ]; then
+    echo ""
+    echo "🔐 Customer sign-in"
+    echo "   1) Password   Customers choose a password at sign-up and can reset"
+    echo "                 it by email. Familiar, works with password managers."
+    echo "   2) Email code Customers type their email and receive a six-digit"
+    echo "                 code to enter. Nothing to remember and nothing to"
+    echo "                 reset. (No sign-in links: mail scanners open those"
+    echo "                 before the customer does and they stop working.)"
+    echo "   The shop owner always signs in with a password."
+    read -r -p "   Choice [1]: " answer
+    case "$answer" in
+      2|otp|code) existing="otp" ;;
+      *) existing="password" ;;
+    esac
+  fi
+  case "$existing" in
+    password|otp) ;;
+    *) echo "⚠️  Unknown SHOPFORGE_CUSTOMER_AUTH '$existing', using password."; existing="password" ;;
+  esac
+  set_env_var "SHOPFORGE_CUSTOMER_AUTH" "$existing"
+  export SHOPFORGE_CUSTOMER_AUTH="$existing"
+}
+
 # 1.5) Approve dependency build scripts up front.
 # create-next-app pins pnpm 11 via "packageManager", and pnpm 11 fails
 # `pnpm add` with ERR_PNPM_IGNORED_BUILDS when a new dependency has a build
@@ -377,6 +410,7 @@ prompt_env_var "NEXT_PUBLIC_SUPABASE_ANON_KEY" "Supabase anon key" true "placeho
 prompt_env_var "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key" true "placeholder-service-role-key"
 prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" false "placeholder"
 ensure_store_mode
+ensure_customer_auth
 
 echo "🧱 Choosing product fields..."
 ensure_product_fields
@@ -387,6 +421,28 @@ mkdir -p src/lib/products
 python3 "$FIELD_PICKER" config \
   "$FIELD_CATALOGUE" "$STORE_MODE" "$SHOPFORGE_PRODUCT_FIELDS" "$HEAT_JSON" \
   src/lib/products/config.ts
+
+echo "🔐 Writing auth config (customer sign-in: $SHOPFORGE_CUSTOMER_AUTH)..."
+mkdir -p src/lib/auth
+cat > src/lib/auth/config.ts <<EOF
+/**
+ * Authentication configuration.
+ *
+ * Written by create-next-commerce-template-ssr.sh from the answers given at
+ * generation time. Edit by hand to change it.
+ */
+export const AUTH_CONFIG = {
+  /**
+   * How customers sign in.
+   * 'password': email and password, with reset by email.
+   * 'otp':      email and a six-digit code sent to it; no password exists.
+   *             Needs the Supabase "Magic Link" email template to include
+   *             {{ .Token }} (see SETUP_GUIDE.md).
+   * The shop owner always signs in with a password.
+   */
+  customerSignIn: '${SHOPFORGE_CUSTOMER_AUTH}' as 'password' | 'otp',
+} as const;
+EOF
 
 if [ "$SKIP_SUPABASE" = "true" ]; then
   echo "🔗 Skipping Supabase link (--skip-supabase)."
@@ -2098,13 +2154,54 @@ mkdir -p src/app/[locale]/auth/sign-in src/app/[locale]/auth/sign-up src/app/[lo
 cat > src/app/[locale]/auth/sign-in/page.tsx <<'EOF'
 'use client';
 
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import { useRouter, useParams } from 'next/navigation';
-import { mergeGuestCartAction } from '@/lib/cart/actions';
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 
+import { supabase } from '@/lib/supabase/client';
+import { mergeGuestCartAction } from '@/lib/cart/actions';
+import { AUTH_CONFIG } from '@/lib/auth/config';
+import OtpSignIn from '@/components/auth/OtpSignIn';
+
+// useSearchParams needs a Suspense boundary so the page can be prerendered.
 export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignIn />
+    </Suspense>
+  );
+}
+
+function SignIn() {
   const { locale } = useParams() as { locale: string };
+  const searchParams = useSearchParams();
+  // The shop owner always has a password, so even an email-code shop keeps
+  // the password form reachable at ?method=password.
+  const usePassword =
+    AUTH_CONFIG.customerSignIn === 'password' || searchParams.get('method') === 'password';
+
+  return (
+    <main className="mx-auto max-w-sm p-6">
+      <h1 className="text-2xl font-bold mb-4">Sign in</h1>
+      {usePassword ? <PasswordSignIn locale={locale} /> : <OtpSignIn locale={locale} />}
+      {AUTH_CONFIG.customerSignIn === 'otp' && (
+        <p className="mt-4 text-center text-sm text-gray-500">
+          {usePassword ? (
+            <Link href={`/${locale}/auth/sign-in`} className="underline">
+              Sign in with an email code instead
+            </Link>
+          ) : (
+            <Link href={`/${locale}/auth/sign-in?method=password`} className="underline">
+              Shop owner? Sign in with your password
+            </Link>
+          )}
+        </p>
+      )}
+    </main>
+  );
+}
+
+function PasswordSignIn({ locale }: { locale: string }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -2127,15 +2224,12 @@ export default function SignInPage() {
   }
 
   return (
-    <main className="mx-auto max-w-sm p-6">
-      <h1 className="text-2xl font-bold mb-4">Sign in</h1>
-      <form onSubmit={onSubmit} className="space-y-3">
-        <input className="w-full border p-2 rounded" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-        <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
-        {err && <p className="text-red-600 text-sm">{err}</p>}
-        <button className="w-full rounded bg-black text-white p-2">Sign in</button>
-      </form>
-    </main>
+    <form onSubmit={onSubmit} className="space-y-3">
+      <input className="w-full border p-2 rounded" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
+      <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+      {err && <p className="text-red-600 text-sm">{err}</p>}
+      <button className="w-full rounded bg-black text-white p-2">Sign in</button>
+    </form>
   );
 }
 EOF
@@ -2144,8 +2238,10 @@ cat > src/app/[locale]/auth/sign-up/page.tsx <<'EOF'
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { AUTH_CONFIG } from '@/lib/auth/config';
+import OtpSignIn from '@/components/auth/OtpSignIn';
 
 // useSearchParams needs a Suspense boundary so the page can still be
 // prerendered; the form below is the actual page.
@@ -2158,6 +2254,7 @@ export default function SignUpPage() {
 }
 
 function SignUpForm() {
+  const { locale } = useParams() as { locale: string };
   const searchParams = useSearchParams();
   // Where to land after the confirmation link. The success page sends
   // guests here with their checkout email and itself as `next`, so that
@@ -2174,6 +2271,17 @@ function SignUpForm() {
   const [confirm, setConfirm] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  // With email codes there is no separate sign-up: the first code creates
+  // the account and confirms the address in one step.
+  if (AUTH_CONFIG.customerSignIn === 'otp') {
+    return (
+      <main className="mx-auto max-w-sm p-6">
+        <h1 className="text-2xl font-bold mb-4">Create account</h1>
+        <OtpSignIn locale={locale} initialEmail={email} next={next} />
+      </main>
+    );
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
