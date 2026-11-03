@@ -678,7 +678,13 @@ cat > src/messages/en.json <<'EOF'
     "successBody": "Your payment went through and we have emailed your receipt.",
     "cancelTitle": "Payment cancelled",
     "cancelBody": "You were not charged. Your cart is just as you left it, so you can pick up where you stopped whenever you like.",
-    "tryAgain": "Back to checkout"
+    "tryAgain": "Back to checkout",
+    "processing": "We are confirming your payment. This page will update by itself in a moment.",
+    "orderNumber": "Order {number}",
+    "items": "Items",
+    "shippingCost": "Shipping",
+    "total": "Total",
+    "shipTo": "Delivering to"
   }
 }
 EOF
@@ -852,7 +858,13 @@ cat > src/messages/de.json <<'EOF'
     "successBody": "Ihre Zahlung war erfolgreich, die Rechnung ist unterwegs.",
     "cancelTitle": "Zahlung abgebrochen",
     "cancelBody": "Es wurde nichts abgebucht. Ihr Warenkorb ist unverändert, Sie können jederzeit fortfahren.",
-    "tryAgain": "Zurück zur Kasse"
+    "tryAgain": "Zurück zur Kasse",
+    "processing": "Wir bestätigen gerade Ihre Zahlung. Diese Seite aktualisiert sich gleich von selbst.",
+    "orderNumber": "Bestellung {number}",
+    "items": "Artikel",
+    "shippingCost": "Versand",
+    "total": "Gesamt",
+    "shipTo": "Lieferung an"
   }
 }
 EOF
@@ -1026,7 +1038,13 @@ cat > src/messages/tr.json <<'EOF'
     "successBody": "Ödemeniz alındı, makbuzunuzu e-posta ile gönderdik.",
     "cancelTitle": "Ödeme iptal edildi",
     "cancelBody": "Hesabınızdan ücret alınmadı. Sepetiniz olduğu gibi duruyor, dilediğiniz zaman kaldığınız yerden devam edebilirsiniz.",
-    "tryAgain": "Ödemeye dön"
+    "tryAgain": "Ödemeye dön",
+    "processing": "Ödemenizi doğruluyoruz. Bu sayfa birazdan kendiliğinden güncellenecek.",
+    "orderNumber": "Sipariş {number}",
+    "items": "Ürünler",
+    "shippingCost": "Kargo",
+    "total": "Toplam",
+    "shipTo": "Teslimat adresi"
   }
 }
 EOF
@@ -1200,7 +1218,13 @@ cat > src/messages/ar.json <<'EOF'
     "successBody": "تمت عملية الدفع بنجاح وأرسلنا الإيصال إلى بريدك.",
     "cancelTitle": "تم إلغاء الدفع",
     "cancelBody": "لم يتم خصم أي مبلغ. سلتك كما تركتها، ويمكنك المتابعة متى شئت.",
-    "tryAgain": "العودة إلى الدفع"
+    "tryAgain": "العودة إلى الدفع",
+    "processing": "نتحقق من عملية الدفع. ستتحدّث هذه الصفحة تلقائيًا خلال لحظات.",
+    "orderNumber": "الطلب {number}",
+    "items": "المنتجات",
+    "shippingCost": "الشحن",
+    "total": "الإجمالي",
+    "shipTo": "التسليم إلى"
   }
 }
 EOF

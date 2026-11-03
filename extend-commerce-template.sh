@@ -545,27 +545,109 @@ cat > "src/app/[locale]/checkout/success/page.tsx" <<'EOF'
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
+import OrderPending from '@/components/checkout/OrderPending';
+import { getOrderByStripeSession, orderReference } from '@/lib/orders/service';
+import { formatPrice } from '@/lib/format';
+
+/**
+ * Where Stripe sends the shopper after paying. The order itself is written
+ * by the webhook, so this page only reads: if the webhook has not landed
+ * yet it shows a holding message and re-renders until it has.
+ */
+export const dynamic = 'force-dynamic';
+
 export default async function CheckoutSuccessPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ session_id?: string }>;
 }) {
   const { locale } = await params;
+  const { session_id: sessionId } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'Checkout' });
 
+  const order = sessionId ? await getOrderByStripeSession(sessionId) : null;
+
   return (
-    <main className="mx-auto max-w-2xl p-6 text-center">
-      <p className="text-5xl" aria-hidden="true">
-        ✅
-      </p>
-      <h1 className="mt-4 text-2xl font-bold">{t('successTitle')}</h1>
-      <p className="mt-2 text-gray-600">{t('successBody')}</p>
-      <Link
-        href={`/${locale}/shop`}
-        className="mt-6 inline-block rounded-md bg-black px-5 py-2.5 font-semibold text-white"
-      >
-        {t('keepShopping')}
-      </Link>
+    <main className="mx-auto max-w-2xl p-6">
+      <div className="text-center">
+        <p className="text-5xl" aria-hidden="true">
+          ✅
+        </p>
+        <h1 className="mt-4 text-2xl font-bold">{t('successTitle')}</h1>
+        <p className="mt-2 text-gray-600">{t('successBody')}</p>
+        {!order && sessionId && <OrderPending message={t('processing')} />}
+      </div>
+
+      {order && (
+        <section className="mt-8 rounded-lg border border-gray-200 p-4">
+          <h2 className="font-semibold">
+            {t('orderNumber', { number: orderReference(order) })}
+          </h2>
+
+          <h3 className="mt-4 text-sm font-semibold uppercase text-gray-500">{t('items')}</h3>
+          <ul className="mt-2 divide-y divide-gray-100">
+            {order.items.map((item) => (
+              <li key={item.id} className="flex items-start justify-between gap-4 py-2">
+                <div>
+                  <p className="font-medium">{item.productName}</p>
+                  {(item.selectedSize || item.selectedColor) && (
+                    <p className="text-sm text-gray-500">
+                      {[item.selectedSize, item.selectedColor].filter(Boolean).join(' / ')}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500">
+                    {item.quantity} × {formatPrice(item.unitPriceCents, order.currency, locale)}
+                  </p>
+                </div>
+                <p className="font-medium">
+                  {formatPrice(item.unitPriceCents * item.quantity, order.currency, locale)}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          <dl className="mt-4 space-y-1 border-t border-gray-200 pt-4 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-600">{t('subtotal')}</dt>
+              <dd>{formatPrice(order.subtotalCents, order.currency, locale)}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-600">{t('shippingCost')}</dt>
+              <dd>{formatPrice(order.shippingCents, order.currency, locale)}</dd>
+            </div>
+            <div className="flex justify-between text-base font-bold">
+              <dt>{t('total')}</dt>
+              <dd>{formatPrice(order.totalCents, order.currency, locale)}</dd>
+            </div>
+          </dl>
+
+          {order.shipping.line1 && (
+            <address className="mt-4 border-t border-gray-200 pt-4 text-sm not-italic text-gray-600">
+              <p className="font-semibold text-gray-900">{t('shipTo')}</p>
+              {order.shipping.name && <p>{order.shipping.name}</p>}
+              <p>{order.shipping.line1}</p>
+              {order.shipping.line2 && <p>{order.shipping.line2}</p>}
+              <p>
+                {[order.shipping.postalCode, order.shipping.city, order.shipping.region]
+                  .filter(Boolean)
+                  .join(' ')}
+              </p>
+              {order.shipping.country && <p>{order.shipping.country}</p>}
+            </address>
+          )}
+        </section>
+      )}
+
+      <div className="mt-8 text-center">
+        <Link
+          href={`/${locale}/shop`}
+          className="inline-block rounded-md bg-black px-5 py-2.5 font-semibold text-white"
+        >
+          {t('keepShopping')}
+        </Link>
+      </div>
     </main>
   );
 }
