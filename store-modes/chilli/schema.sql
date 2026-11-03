@@ -638,3 +638,41 @@ $$;
 
 revoke all on function public.claim_guest_orders() from public, anon;
 grant execute on function public.claim_guest_orders() to authenticated;
+
+-- The shop owner moves an order through its lifecycle from the admin. Only
+-- the status column is writable, and only by the owner: there is no update
+-- policy on orders, so this function is the single way to change one. For
+-- now this is bookkeeping only; a refund here does not call Stripe.
+create or replace function public.set_order_status(
+  p_order_id uuid,
+  p_status text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_shop_owner() then
+    raise exception 'Only the shop owner can change an order status'
+      using errcode = '42501';
+  end if;
+
+  if p_status not in ('pending', 'paid', 'fulfilled', 'cancelled', 'refunded') then
+    raise exception 'Unknown order status: %', p_status
+      using errcode = '22023';
+  end if;
+
+  update public.orders
+     set status = p_status
+   where id = p_order_id;
+
+  if not found then
+    raise exception 'Order not found'
+      using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+revoke all on function public.set_order_status(uuid, text) from public, anon;
+grant execute on function public.set_order_status(uuid, text) to authenticated;

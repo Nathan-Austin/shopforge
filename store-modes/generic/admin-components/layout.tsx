@@ -11,7 +11,8 @@ interface AdminLayoutProps {
 const NAV_ITEMS = [
   { key: 'dashboard', path: '' },
   { key: 'products', path: '/products' },
-  { key: 'newProduct', path: '/products/new' }
+  { key: 'newProduct', path: '/products/new' },
+  { key: 'orders', path: '/orders' }
 ];
 
 export default async function AdminLayout({ children, params }: AdminLayoutProps) {

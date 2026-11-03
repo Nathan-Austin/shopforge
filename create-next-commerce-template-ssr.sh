@@ -575,12 +575,22 @@ cat > src/messages/en.json <<'EOF'
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "newProduct": "New product"
+      "newProduct": "New product",
+      "orders": "Orders"
     },
     "stats": {
       "products": "Products",
       "brands": "Brands",
       "categories": "Categories"
+    },
+    "orders": {
+      "heading": "Orders",
+      "subheading": "Every paid order, newest first. Changing the status here only records it; refunds are made in Stripe.",
+      "order": "Order {number}",
+      "status": "Status",
+      "save": "Save",
+      "total": "Total",
+      "empty": "No orders yet."
     },
     "products": {
       "heading": "Product catalogue",
@@ -775,12 +785,22 @@ cat > src/messages/de.json <<'EOF'
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "newProduct": "New product"
+      "newProduct": "New product",
+      "orders": "Bestellungen"
     },
     "stats": {
       "products": "Products",
       "brands": "Brands",
       "categories": "Categories"
+    },
+    "orders": {
+      "heading": "Bestellungen",
+      "subheading": "Alle bezahlten Bestellungen, neueste zuerst. Eine Statusänderung wird hier nur vermerkt; Erstattungen erfolgen in Stripe.",
+      "order": "Bestellung {number}",
+      "status": "Status",
+      "save": "Speichern",
+      "total": "Gesamt",
+      "empty": "Noch keine Bestellungen."
     },
     "products": {
       "heading": "Product catalogue",
@@ -975,12 +995,22 @@ cat > src/messages/tr.json <<'EOF'
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "newProduct": "New product"
+      "newProduct": "New product",
+      "orders": "Siparişler"
     },
     "stats": {
       "products": "Products",
       "brands": "Brands",
       "categories": "Categories"
+    },
+    "orders": {
+      "heading": "Siparişler",
+      "subheading": "Tüm ödenmiş siparişler, en yeniden eskiye. Durum değişikliği burada yalnızca kaydedilir; iadeler Stripe üzerinden yapılır.",
+      "order": "Sipariş {number}",
+      "status": "Durum",
+      "save": "Kaydet",
+      "total": "Toplam",
+      "empty": "Henüz sipariş yok."
     },
     "products": {
       "heading": "Product catalogue",
@@ -1175,12 +1205,22 @@ cat > src/messages/ar.json <<'EOF'
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "newProduct": "New product"
+      "newProduct": "New product",
+      "orders": "الطلبات"
     },
     "stats": {
       "products": "Products",
       "brands": "Brands",
       "categories": "Categories"
+    },
+    "orders": {
+      "heading": "الطلبات",
+      "subheading": "جميع الطلبات المدفوعة، الأحدث أولًا. تغيير الحالة هنا يُسجَّل فقط؛ أما الاسترداد فيتم عبر Stripe.",
+      "order": "الطلب {number}",
+      "status": "الحالة",
+      "save": "حفظ",
+      "total": "الإجمالي",
+      "empty": "لا توجد طلبات بعد."
     },
     "products": {
       "heading": "Product catalogue",
