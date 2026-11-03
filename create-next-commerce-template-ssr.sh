@@ -2138,85 +2138,25 @@ mkdir -p src/app/[locale]/shop/[slug] src/app/[locale]/cart src/app/[locale]/che
 cat > src/app/[locale]/shop/page.tsx <<'EOF'
 import { getTranslations } from 'next-intl/server';
 
-import AddToCartButton from '@/components/cart/AddToCartButton';
-import ProductCard from '@/components/store/ProductCard';
-import type { StoreProduct } from '@/components/store/types';
-import { createClient } from '@/lib/supabase/server';
-import { maxAllowedQuantity } from '@/lib/cart/pricing';
+import ShopArchive from '@/components/store/ShopArchive';
 
 export default async function ShopPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Shop' });
-  const supabase = await createClient();
-
-  // products_public is the storefront view: it hides supplier fields and
-  // only contains published, unarchived rows.
-  const { data: products } = await supabase
-    .from('products_public')
-    .select(
-      'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug'
-    )
-    .order('created_at', { ascending: false });
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">{t('title')}</h1>
+    <main className="mx-auto max-w-7xl p-6">
+      <h1 className="text-2xl font-bold">{t('title')}</h1>
 
-      {!products?.length ? (
-        <p className="text-gray-600">{t('empty')}</p>
-      ) : (
-        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((row) => {
-            const soldOut =
-              maxAllowedQuantity({
-                stock: row.stock,
-                trackInventory: row.track_inventory,
-                allowBackorder: row.allow_backorder,
-                maxOrderQuantity: row.max_order_quantity
-              }) <= 0;
-
-            const product: StoreProduct = {
-              id: row.id,
-              name: row.name,
-              slug: row.slug,
-              description: row.description,
-              image_url: row.image_url,
-              price_cents: row.price_cents,
-              currency: row.currency,
-              category: row.category_id
-                ? {
-                    id: row.category_id,
-                    name: row.category_name ?? '',
-                    slug: row.category_slug ?? ''
-                  }
-                : null
-            };
-
-            return (
-              <li key={row.id}>
-                <ProductCard
-                  product={product}
-                  locale={locale}
-                  action={
-                    <AddToCartButton
-                      locale={locale}
-                      productId={row.id}
-                      sizeOptions={row.size_options}
-                      colorOptions={row.color_options}
-                      soldOut={soldOut}
-                      className="w-full"
-                    />
-                  }
-                />
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {/* Search, filters, sorting and the grid; state in the URL. The
+          mode-specific fetching lives in ShopArchive. */}
+      <ShopArchive locale={locale} searchParams={await searchParams} />
     </main>
   );
 }

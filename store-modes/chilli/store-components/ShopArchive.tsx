@@ -1,3 +1,5 @@
+import { getTranslations } from 'next-intl/server';
+
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
 import { parseArchiveQuery } from '@/lib/products/archive';
 import { many } from '@/lib/supabase/relations';
@@ -124,6 +126,13 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     name: row.name,
     slug: row.slug
   }));
+
+  // A shop with nothing in it yet gets a plain note, not search controls
+  // and a "no matches" message that suggest the customer did something.
+  if (products.length === 0) {
+    const t = await getTranslations({ locale, namespace: 'Shop' });
+    return <p className="py-8 text-gray-600">{t('empty')}</p>;
+  }
 
   return (
     <ProductArchive
