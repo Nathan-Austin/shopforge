@@ -221,7 +221,10 @@ pnpm dev
    sent to `/en/auth/mfa` first: scan the QR code with an authenticator app
    and enter the code it shows. Each new session asks for a code again.
 4. Add your first product. Paid orders appear under **Orders** in the admin,
-   where you can mark them shipped, cancelled or refunded.
+   where you can mark them shipped, cancelled or refunded. These are labels
+   for your own bookkeeping: marking an order refunded does not move money.
+   Make the actual refund in the Stripe dashboard, then record it here.
+   Customers are not emailed when a status changes.
 
 New accounts are always customers, and customers can't change their own role,
 so only the SQL editor (or the service-role key) can create a shop owner.
@@ -266,6 +269,12 @@ git push -u origin main
 - [ ] The Vercel build log shows no errors
 
 ## Troubleshooting
+
+**The owner lost their authenticator app** (new phone, app deleted). There
+are no recovery codes yet. In Supabase, open **Authentication → Users**, find
+the owner, and delete their MFA factor; the next visit to `/admin` starts
+enrolment again with a fresh QR code. Only do this for an account you have
+verified belongs to the owner.
 
 **`supabase link` fails or can't find the project.** The CLI is logged in to a
 Supabase account that can't see this project. Run `npx supabase login` with the

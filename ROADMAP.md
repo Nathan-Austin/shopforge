@@ -19,13 +19,17 @@ Planned work for shopforge, roughly in order.
 - [x] Order confirmation email — done 2026-11-03: Resend via the webhook,
       optional, escaped HTML template with unit tests, `confirmation_sent_at`
       guards against double sends
-- [ ] Shipping notification email when the owner marks an order fulfilled
+- [ ] Shipping notification email when the owner marks an order fulfilled.
+      Deferred 2026-11-03: carriers each have their own tracking URL format,
+      so this needs a carrier/tracking-number field on the order first, and
+      it sits naturally alongside the refund work below
 - [x] Admin orders view, with status changes (fulfilled, cancelled, refunded)
       recorded in the database only — done 2026-11-03 via `set_order_status()`
 - [ ] Refunds from the admin: a "refund" action that calls Stripe for the
       full order or for chosen order items (partial refund), then records
       the status. Today the status is only a label; the money has to be
-      refunded in the Stripe dashboard
+      refunded in the Stripe dashboard. Should also email the customer that
+      the refund was made, using the same template system as the receipt
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
 
 ## 2. Admin and store settings
