@@ -39,6 +39,9 @@ support for languages such as Arabic.
   the order, decrements stock and empties the cart once payment is confirmed.
   Success and cancel pages, with the success page showing the order and
   updating itself while the webhook catches up
+- **Order confirmation email:** optional. With a Resend key and a verified
+  sender, the webhook emails the customer their receipt the moment payment
+  clears, and can blind-copy the owner. Without one the shop sends nothing
 - **Orders:** `orders` and `order_items` snapshot names, prices and the
   delivery address at the time of payment. Customers see their own orders,
   the shop owner sees all. A guest can create an account afterwards and, once
@@ -55,8 +58,8 @@ support for languages such as Arabic.
 - **Storefront pages:** `/shop` is a plain grid. Storefront components
   (product listing with filters, product card, brand showcase) are copied
   into `src/components/store/` for you to wire in.
-- **Orders after the sale:** no confirmation email yet, and "refunded" is a
-  status label only: the money is refunded in the Stripe dashboard.
+- **Orders after the sale:** "refunded" is a status label only; the money is
+  refunded in the Stripe dashboard. Status changes don't notify the customer.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
   placeholder values in `src/lib/shipping/config.ts`. The countries you
   deliver to are a placeholder list in `src/lib/checkout/config.ts`; the

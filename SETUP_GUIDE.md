@@ -139,10 +139,48 @@ NEXT_PUBLIC_STORE_MODE=single        # or multi
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_…          # from dashboard.stripe.com → Developers → API keys
 STRIPE_WEBHOOK_SECRET=whsec_…        # from the webhook you create below
+NEXT_PUBLIC_SHOP_NAME=My Shop        # shown in the confirmation email
+RESEND_API_KEY=re_…                  # optional, see "Order confirmation emails"
+EMAIL_FROM=My Shop <orders@myshop.com>   # optional, must be a verified sender
+EMAIL_REPLY_TO=hello@myshop.com      # optional, where replies go
+SHOP_OWNER_EMAIL=you@myshop.com      # optional, blind copy of every order
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 ```
 
 `.env.local` is gitignored. Never commit it.
+
+### Order confirmation emails
+
+Optional. Leave `RESEND_API_KEY` and `EMAIL_FROM` empty and the shop works
+exactly as before, sending nothing. Set both and the webhook emails the
+customer a receipt as soon as the payment clears.
+
+1. Create a free account at [resend.com](https://resend.com) and an API key.
+2. Decide which address the email comes from. Until a domain is verified,
+   Resend only lets you send from its sandbox sender, and only to your own
+   address — enough to test the flow end to end before you have a domain.
+3. When your shop has a live domain, add it in Resend under **Domains** and
+   create the DNS records it shows you (a DKIM record, and SPF if you don't
+   already send mail from that domain). Verification usually takes minutes,
+   but DNS can take longer to propagate. Then set
+   `EMAIL_FROM="My Shop <orders@yourdomain.com>"`.
+4. For a staging site, either add the staging domain in Resend as a second
+   domain, or point staging at the same verified sending domain — the from
+   address does not have to match the site's own URL. Keep a separate API
+   key per environment so you can revoke one without touching the other.
+
+The customer's receipt lists the items, the totals and the delivery address.
+`SHOP_OWNER_EMAIL` blind-copies you on every one. Each order records
+`confirmation_sent_at`, so a retried webhook never emails twice and you can
+find orders whose email never went out:
+
+```sql
+select id, email, created_at from public.orders
+ where confirmation_sent_at is null and status = 'paid';
+```
+
+A provider outage never fails the webhook: the payment and the order are
+already real, so the order is kept and the failure is logged.
 
 ### The Stripe webhook
 
@@ -221,6 +259,8 @@ git push -u origin main
       when signed in
 - [ ] A test payment lands in `public.orders` with its `order_items`, and the
       success page shows it within a few seconds
+- [ ] If email is configured, the receipt arrives and the order's
+      `confirmation_sent_at` is set
 - [ ] Every configured language loads (e.g. `/en`, `/de`, `/ar`), and `/ar` is
       right-to-left
 - [ ] The Vercel build log shows no errors

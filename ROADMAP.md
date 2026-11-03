@@ -16,7 +16,10 @@ Planned work for shopforge, roughly in order.
       cancel page; `--shipping=form|stripe` for who collects the address
 - [x] Customer order history page (`/account/orders`), reading via RLS —
       done 2026-11-03
-- [ ] Order confirmation email
+- [x] Order confirmation email — done 2026-11-03: Resend via the webhook,
+      optional, escaped HTML template with unit tests, `confirmation_sent_at`
+      guards against double sends
+- [ ] Shipping notification email when the owner marks an order fulfilled
 - [x] Admin orders view, with status changes (fulfilled, cancelled, refunded)
       recorded in the database only — done 2026-11-03 via `set_order_status()`
 - [ ] Refunds from the admin: a "refund" action that calls Stripe for the
