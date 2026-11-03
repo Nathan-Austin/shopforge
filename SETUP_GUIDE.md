@@ -271,6 +271,29 @@ git push -u origin main
 Supabase account that can't see this project. Run `npx supabase login` with the
 account that owns it, then re-run the script.
 
+**You lost the phone with the admin authenticator.** There are no recovery
+codes yet. In the Supabase dashboard open **Authentication → Users**, find
+your account, and delete its MFA factor. The next visit to `/admin` starts
+enrolment again, so have the new phone ready. Only someone with dashboard
+access can do this, which is why it is a safe recovery path.
+
+**A customer says the receipt never arrived.** Check the order first:
+
+```sql
+select id, email, confirmation_sent_at from public.orders
+ where stripe_session_id = 'cs_…';
+```
+
+A null `confirmation_sent_at` means the send failed or email isn't
+configured; the server log has the reason. Failed sends are not retried, so
+resend it by hand from Resend or your mail client. A timestamp means Resend
+accepted it, and the delivery log in the Resend dashboard is the next place
+to look.
+
+**Customers get a sign-in link instead of a code.** The shop was generated
+with email-code sign-in but the Supabase **Magic Link** email template still
+uses `{{ .ConfirmationURL }}`. Change it to `{{ .Token }}`.
+
 **pnpm stops with "Ignored build scripts" (`ERR_PNPM_IGNORED_BUILDS`).** The
 generator already approves the build scripts it knows about in the shop's
 `pnpm-workspace.yaml` (`allowBuilds`). If a dependency you add later triggers

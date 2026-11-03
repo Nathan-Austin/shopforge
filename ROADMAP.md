@@ -98,6 +98,22 @@ Planned work for shopforge, roughly in order.
 
 ## Notes for future turns
 
+Decided on 2026-11-03:
+
+- Guest checkout stays open, and a guest's orders are attached to an account
+  only once that account's email is **confirmed**. The shop therefore depends
+  on Supabase's "Confirm email" setting being on; the setup guide says so.
+- The success page finds an order by its Stripe session id with the
+  service-role key, because the buyer may be a guest with no RLS identity.
+  Reviewed and accepted: the id is high-entropy and only the paying browser
+  is given it.
+- Orders have no update policy at all. `set_order_status()` is the single
+  write path and re-checks `is_shop_owner()`, so the Data API cannot change
+  an order even for the owner.
+- Email is optional by design. No `RESEND_API_KEY` and `EMAIL_FROM` means the
+  shop sends nothing and behaves exactly as before, so the generator stays
+  usable without a Resend account.
+
 Decided on 2026-11-02:
 
 - Generated stores ship with Vitest (dev dependency, Node environment, no
@@ -136,8 +152,10 @@ Decided on 2026-11-02:
 - `ProductArchive` (search, filters, sorting) and `BrandShowcase` are copied
   into every store and now have all their message keys, but nothing renders
   them yet. Wiring `ProductArchive` into `/shop` would replace the plain grid.
-- Orders are recorded, but nothing reads them yet apart from the success
-  page: no history page, no confirmation email and no admin view.
+- The buying loop is closed end to end: pay, order recorded, receipt
+  emailed, customer sees it at `/account/orders`, owner manages it at
+  `/admin/orders`. What is missing around it is money movement (refunds)
+  and later-stage notifications (shipping emails), both listed in section 1.
 
 **Known gaps in the generated store (not build failures):**
 
@@ -151,6 +169,13 @@ Decided on 2026-11-02:
   but one of them gets an apology. Reserving at session creation with a
   timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
+- Marking an order `refunded` in the admin records the label only. No money
+  moves: refund it in the Stripe dashboard as well, until the refund action
+  in section 1 is built.
+- Changing an order's status does not notify the customer; the shipping
+  notification email in section 1 covers that.
+- The auth pages (sign-in, sign-up, email code, MFA) are English-only, even
+  in a multilingual shop.
 - Money is entered in major units and stored as cents everywhere, but the
   currency is per product and free text. A store-level currency belongs with
   the store settings work above.
