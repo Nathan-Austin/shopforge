@@ -8,11 +8,16 @@ Planned work for shopforge, roughly in order.
       `shop_cart_session` cookie, server actions, /shop and /cart pages,
       header count, guest-cart merge on sign-in, cookie-based checkout
 - [ ] Product detail page
-- [ ] Orders tables, so paid checkouts are recorded. The webhook exists and is
-      verified, idempotent and decrements stock — it just has nowhere to write
-      the order itself yet
+- [x] Orders tables, so paid checkouts are recorded — done 2026-11-03:
+      `orders` and `order_items` with RLS (own rows for customers, all for
+      the owner), written by the webhook before stock is touched; guest
+      checkout with sign-up prompt and `claim_guest_orders()` on confirmed
+      email; success page shows the order and polls until the webhook lands;
+      cancel page; `--shipping=form|stripe` for who collects the address
+- [ ] Customer order history page (`/account/orders`), reading via RLS
 - [ ] Order confirmation email
-- [ ] Admin orders view
+- [ ] Admin orders view, with status changes (fulfilled, cancelled, refunded)
+- [ ] Guest-cart merge on sign-*up*, not just sign-in
 
 ## 2. Admin and store settings
 
@@ -101,8 +106,8 @@ Decided on 2026-11-02:
 - `ProductArchive` (search, filters, sorting) and `BrandShowcase` are copied
   into every store and now have all their message keys, but nothing renders
   them yet. Wiring `ProductArchive` into `/shop` would replace the plain grid.
-- Orders: the webhook decrements stock and clears the cart but writes no
-  order row, so there is no history, no confirmation email and no admin view.
+- Orders are recorded, but nothing reads them yet apart from the success
+  page: no history page, no confirmation email and no admin view.
 
 **Known gaps in the generated store (not build failures):**
 
@@ -116,8 +121,10 @@ Decided on 2026-11-02:
   but one of them gets an apology. Reserving at session creation with a
   timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
-- `/checkout` is still a placeholder: the API route works from the cookie but
-  nothing posts to it yet.
+- `--shipping=form` validates the country as a 3-letter code while Stripe
+  reports 2-letter codes, so `orders.shipping_country` can hold either
+  depending on the mode. Normalising to alpha-2 belongs with the store
+  settings work.
 - Money is entered in major units and stored as cents everywhere, but the
   currency is per product and free text. A store-level currency belongs with
   the store settings work above.

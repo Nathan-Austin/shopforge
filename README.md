@@ -16,8 +16,8 @@ support for languages such as Arabic.
   (Supabase Auth); a profile row is created for every new user
 - **Admin panel** at `/<locale>/admin`, for the shop owner only: list, create,
   edit and delete products, with image uploads to Supabase Storage
-- **Database:** profiles, addresses, brands, categories, products and cart
-  items, with row-level security and seed data
+- **Database:** profiles, addresses, brands, categories, products, cart
+  items and orders, with row-level security and seed data
 - **Languages:** any set of locales via `next-intl`, with RTL layout for Arabic
 - **Product fields you choose:** pick from ~32 fields at generation time
   (headline, SKU, stock, compare-at price, net content, allergens, nutrition,
@@ -30,24 +30,33 @@ support for languages such as Arabic.
     and the words for it — mild, medium, hot, and any others you want — are
     display bands over that number, all optional
 - **Cart and checkout:** add to cart with size/colour variants, stock limits
-  enforced server-side, a `/cart` page and a live header count. Checkout
-  creates a Stripe session and the webhook decrements stock and empties the
-  cart once payment is confirmed
+  enforced server-side, a `/cart` page and a live header count. `/checkout`
+  works signed in or as a guest and hands over to Stripe; the webhook records
+  the order, decrements stock and empties the cart once payment is confirmed.
+  Success and cancel pages, with the success page showing the order and
+  updating itself while the webhook catches up
+- **Orders:** `orders` and `order_items` snapshot names, prices and the
+  delivery address at the time of payment. Customers see their own orders,
+  the shop owner sees all. A guest can create an account afterwards and, once
+  their email is confirmed, their orders are attached to it
+- **Delivery address, your way:** `--shipping=form` (default) asks for it on
+  your checkout page; `--shipping=stripe` leaves it to Stripe's payment page,
+  for owners who would rather not handle it at all
 - **Security defaults:** customers can't change their own role, carts are
   server-only, supplier fields aren't published, and nobody becomes an admin
   automatically
 
 **Starting points you finish yourself**
 
-- **Storefront pages:** `/shop`, `/cart` and `/checkout` are placeholders
-  (checkout already requires sign-in). Storefront components (product
-  listing with filters, product card, brand showcase) are copied into
-  `src/components/store/` for you to wire in.
-- **Stripe:** `POST /api/checkout/session` creates a Checkout session from the
-  cart, using database prices. There's no add-to-cart button, success page or
-  webhook yet, so orders aren't recorded.
+- **Storefront pages:** `/shop` is a plain grid. Storefront components
+  (product listing with filters, product card, brand showcase) are copied
+  into `src/components/store/` for you to wire in.
+- **Orders after the sale:** there is no customer order history page, admin
+  orders view or confirmation email yet. The data is all there in `orders`.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
-  placeholder values in `src/lib/shipping/config.ts`.
+  placeholder values in `src/lib/shipping/config.ts`. With `--shipping=stripe`
+  the countries Stripe may ship to are a placeholder list in
+  `src/lib/checkout/config.ts`.
 
 ## Requirements
 
@@ -125,10 +134,20 @@ To skip the questions, preset `SHOPFORGE_PRODUCT_FIELDS` (`all`,
 `SHOPFORGE_HEAT_BANDS` (`Mild:3,Hot:10`) and `SHOPFORGE_HEAT_DISPLAY`. The
 answers end up in `src/lib/products/config.ts`, which you can edit afterwards.
 
-`extend-commerce-template.sh [--mode=…]` runs inside an existing generated shop
-and adds the profile API and Stripe checkout session route, plus the latest
-store and admin components for that mode. It doesn't change migrations or ask
-for keys.
+`extend-commerce-template.sh [--mode=…] [--shipping=form|stripe]` runs inside
+an existing generated shop and adds the profile API, the Stripe checkout
+session route, the webhook and the checkout pages, plus the latest store and
+admin components for that mode. It doesn't change migrations or ask for keys.
+
+`--shipping` decides who asks the customer for the delivery address:
+
+| Value | Where the address is typed | Why you might pick it |
+| --- | --- | --- |
+| `form` (default) | Your `/checkout` page, then Stripe for the card | One page fewer for the customer, and the form is yours to style |
+| `stripe` | Stripe's payment page, alongside the card | Nothing personal is posted to your server before payment, Stripe validates the address, and some owners prefer the customer to see they are typing into Stripe |
+
+Either way the webhook stores the same address on the order. The choice is
+written to `src/lib/checkout/config.ts`, which you can edit later.
 
 ## Security model
 
@@ -146,6 +165,12 @@ for keys.
 - **Payments:** the Stripe webhook verifies the signature before acting, and
   records each event id so a retry can't decrement stock twice. Stock is only
   decremented once Stripe reports the payment as paid.
+- **Orders:** written only by the webhook with the service-role key; the Data
+  API can't insert or change them. Customers read their own, the owner reads
+  all. A guest order has no `user_id` and is attached to an account only when
+  that account's email is confirmed, so registering with someone else's
+  address reveals nothing. The success page finds the order by the Stripe
+  session id, which only the paying browser is given.
 - **Secrets:** the generator creates a random `NEXTAUTH_SECRET`. Keep
   `SUPABASE_SERVICE_ROLE_KEY` and `STRIPE_SECRET_KEY` server-side only;
   `.env.local` is already gitignored.
@@ -154,7 +179,7 @@ for keys.
 
 ```
 create-next-commerce-template-ssr.sh   scaffolds a new shop
-extend-commerce-template.sh            adds checkout + profile API to a shop
+extend-commerce-template.sh            adds checkout, webhook + profile API to a shop
 store-modes/<mode>/                    schema, seeds, storefront and admin components
 shared-assets/lib/                     helpers copied into every shop
 shared-assets/components/              components copied into every shop
@@ -166,12 +191,15 @@ test/generate-and-check.sh             generates a store and runs install, tsc, 
 
 ```bash
 test/generate-and-check.sh --mode=generic
+test/generate-and-check.sh --mode=chilli --shipping=stripe
 ```
 
 This generates `test-generic/` with placeholder keys (no Supabase project
 needed), then runs `pnpm install --frozen-lockfile`, `tsc --noEmit`,
 `pnpm lint`, `pnpm test` and `pnpm build`, the same checks a Vercel deploy
-performs. Add `--keep` to inspect the generated store afterwards.
+performs. `--shipping` is passed through to the extend script so both
+address modes can be checked. Add `--keep` to inspect the generated store
+afterwards.
 
 Generated shops come with [Vitest](https://vitest.dev) and unit tests for
 the logic that ships with them — the heat scale, product field parsing,

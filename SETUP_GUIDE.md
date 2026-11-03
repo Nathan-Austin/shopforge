@@ -77,6 +77,8 @@ The script will:
 ```bash
 cd my-shop
 ~/shopforge/extend-commerce-template.sh --mode=generic
+# or, to have Stripe's payment page collect the delivery address:
+~/shopforge/extend-commerce-template.sh --mode=generic --shipping=stripe
 ```
 
 Use the same `--mode` as in step 3. This adds:
@@ -84,6 +86,15 @@ Use the same `--mode` as in step 3. This adds:
 - `POST /api/profile`, which makes sure the signed-in user has a profile row
 - `POST /api/checkout/session`, which builds a Stripe Checkout session from the
   cart on the server, using prices from the database
+- `POST /api/webhooks/stripe`, which records the order, decrements stock and
+  empties the cart once Stripe confirms payment
+- `/checkout`, `/checkout/success` and `/checkout/cancel` pages
+
+`--shipping` picks who asks for the delivery address. `form` (the default)
+asks on your checkout page; `stripe` asks only for an email there and lets
+Stripe's payment page collect the address, which suits owners who would
+rather no personal details reach their server before payment. If you choose
+`stripe`, set the countries you ship to in `src/lib/checkout/config.ts`.
 
 It doesn't touch migrations or ask for keys. Re-running it overwrites the
 files it adds, including the copied store and admin components, so commit any
@@ -115,9 +126,10 @@ NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 
 ### The Stripe webhook
 
-Payment only counts when Stripe says so, so stock is decremented and the cart
-is emptied by the webhook, not by the browser returning from checkout. Without
-it, payments still succeed but nothing is deducted and carts stay full.
+Payment only counts when Stripe says so, so the order is recorded, stock is
+decremented and the cart is emptied by the webhook, not by the browser
+returning from checkout. Without it, payments still succeed but no order is
+written, nothing is deducted and carts stay full.
 
 In the Stripe dashboard, add an endpoint at
 `https://your-site/api/webhooks/stripe` subscribed to
@@ -175,7 +187,10 @@ git push -u origin main
 - [ ] Sign-up works and creates a row in `public.profiles` with role `customer`
 - [ ] After promotion, `/en/admin` opens; for other accounts it redirects away
 - [ ] Creating a product with an image works, and the image loads
-- [ ] `/en/checkout` redirects to sign-in when signed out
+- [ ] `/en/checkout` opens signed out (guest checkout) and prefills your email
+      when signed in
+- [ ] A test payment lands in `public.orders` with its `order_items`, and the
+      success page shows it within a few seconds
 - [ ] Every configured language loads (e.g. `/en`, `/de`, `/ar`), and `/ar` is
       right-to-left
 - [ ] The Vercel build log shows no errors
