@@ -124,6 +124,7 @@ import { calculateShippingCost, SHIPPING_RATE_LABEL } from '@/lib/checkout/prici
 import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
 import { getCart } from '@/lib/cart/service';
 import { getCartSessionId } from '@/lib/cart/session';
+import { createClient } from '@/lib/supabase/server';
 
 const checkoutSchema = z.object({
   email: z.string().email(),
@@ -201,6 +202,13 @@ export async function POST(request: Request) {
     const headersList = await headers();
     const origin = process.env.NEXT_PUBLIC_SITE_URL || headersList.get('origin');
 
+    // Who is paying, if anyone is signed in. The webhook attaches the order
+    // to this account; a guest order is written with no user_id.
+    const supabase = await createClient();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
     // 4. Create Stripe Session with rich metadata
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -218,11 +226,19 @@ export async function POST(request: Request) {
       }],
       success_url: `${origin}/${payload.locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${payload.locale}/checkout`,
+      // Everything the webhook needs to write the order. Stripe echoes
+      // metadata back on the checkout.session.completed event, so the
+      // delivery details typed into our form reach the webhook even though
+      // Stripe itself never asked for them.
       metadata: {
         cart_session_id: cartSessionId,
+        user_id: user?.id ?? '',
+        shipping_name: `${payload.firstName} ${payload.lastName}`,
+        shipping_line1: payload.addressLine1,
+        shipping_city: payload.city,
+        shipping_postal_code: payload.postalCode,
         shipping_country: payload.country,
         package_weight_kg: packageWeight.toString(),
-        customer_name: `${payload.firstName} ${payload.lastName}`,
       },
     });
 
@@ -244,18 +260,67 @@ import type Stripe from 'stripe';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { one } from '@/lib/supabase/relations';
 
 /**
  * Stripe webhook.
  *
- * This is what makes a payment real: it is the only place that decrements
- * stock and empties the cart, because it is the only signal that money
- * actually moved. The browser never gets to tell us a payment succeeded.
+ * This is what makes a payment real: it is the only place that records the
+ * order, decrements stock and empties the cart, because it is the only signal
+ * that money actually moved. The browser never gets to tell us a payment
+ * succeeded.
  */
 
 // Stripe signatures are computed over the raw body, so it must not be parsed.
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+/**
+ * Where the parcel goes, as Stripe reported it when the payment completed.
+ *
+ * In order of preference: an address Stripe collected itself (when the
+ * session was created with shipping_address_collection), then the one typed
+ * into our own checkout form and carried through metadata, then the billing
+ * address as a last resort.
+ */
+function shippingSnapshot(session: Stripe.Checkout.Session) {
+  const collected = session.collected_information?.shipping_details;
+  if (collected?.address) {
+    return {
+      shipping_name: collected.name ?? null,
+      shipping_line1: collected.address.line1 ?? null,
+      shipping_line2: collected.address.line2 ?? null,
+      shipping_city: collected.address.city ?? null,
+      shipping_postal_code: collected.address.postal_code ?? null,
+      shipping_region: collected.address.state ?? null,
+      shipping_country: collected.address.country ?? null
+    };
+  }
+
+  const meta = session.metadata ?? {};
+  if (meta.shipping_line1) {
+    return {
+      shipping_name: meta.shipping_name || null,
+      shipping_line1: meta.shipping_line1,
+      shipping_line2: null,
+      shipping_city: meta.shipping_city || null,
+      shipping_postal_code: meta.shipping_postal_code || null,
+      shipping_region: null,
+      shipping_country: meta.shipping_country || null
+    };
+  }
+
+  const billing = session.customer_details?.address;
+  return {
+    shipping_name: session.customer_details?.name ?? null,
+    shipping_line1: billing?.line1 ?? null,
+    shipping_line2: billing?.line2 ?? null,
+    shipping_city: billing?.city ?? null,
+    shipping_postal_code: billing?.postal_code ?? null,
+    shipping_region: billing?.state ?? null,
+    shipping_country: billing?.country ?? null
+  };
+}
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -313,9 +378,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
+    // The cart lines, with the product as it is now. The order copies the
+    // name and price so later edits to the product leave the order alone.
     const { data: lines, error: linesError } = await supabase
       .from('cart_items')
-      .select('product_id, quantity')
+      .select(
+        'product_id, quantity, selected_size, selected_color, products ( name, price_cents )'
+      )
       .eq('cart_session_id', cartSessionId);
 
     if (linesError) {
@@ -323,14 +392,73 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Could not read cart' }, { status: 500 });
     }
 
+    // 1. The order. Amounts come from Stripe, not from the cart, because
+    //    they are what was actually charged.
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({
+        user_id: session.metadata?.user_id || null,
+        email: session.customer_details?.email ?? session.customer_email ?? '',
+        status: 'paid',
+        currency: (session.currency ?? 'eur').toUpperCase(),
+        subtotal_cents: session.amount_subtotal ?? 0,
+        shipping_cents: session.shipping_cost?.amount_total ?? 0,
+        total_cents: session.amount_total ?? 0,
+        stripe_session_id: session.id,
+        stripe_payment_intent_id:
+          typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent?.id ?? null,
+        ...shippingSnapshot(session)
+      })
+      .select('id')
+      .single();
+
+    if (orderError || !order) {
+      // Unique violation on stripe_session_id: an earlier delivery already
+      // wrote this order, so there is nothing more to do.
+      if (orderError?.code === '23505') {
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      console.error('Could not record the order:', orderError?.message);
+      // Release the event claim and fail the delivery, so Stripe's retry is
+      // not turned away as a duplicate and gets another go at writing it.
+      await supabase.from('stripe_events').delete().eq('id', event.id);
+      return NextResponse.json({ error: 'Could not record order' }, { status: 500 });
+    }
+
+    // 2. The lines.
+    if (lines && lines.length > 0) {
+      const { error: itemsError } = await supabase.from('order_items').insert(
+        lines.map((line) => {
+          const product = one(line.products);
+          return {
+            order_id: order.id,
+            product_id: line.product_id,
+            product_name: product?.name ?? 'Unknown product',
+            unit_price_cents: product?.price_cents ?? 0,
+            quantity: line.quantity,
+            selected_size: line.selected_size,
+            selected_color: line.selected_color
+          };
+        })
+      );
+      if (itemsError) {
+        console.error(`Could not record the lines of order ${order.id}:`, itemsError.message);
+      }
+    } else {
+      console.error(`Order ${order.id} was paid but its cart ${cartSessionId} was empty`);
+    }
+
+    // 3. Stock.
     for (const line of lines ?? []) {
       const { error: stockError } = await supabase.rpc('decrement_product_stock', {
         p_product_id: line.product_id,
         p_quantity: line.quantity
       });
       if (stockError) {
-        // Keep going: the rest of the order should still be recorded, and
-        // the shop owner can reconcile one line by hand.
+        // Keep going: the order is recorded, and the shop owner can
+        // reconcile one line by hand.
         console.error(
           `Could not decrement stock for ${line.product_id}:`,
           stockError.message
@@ -338,6 +466,7 @@ export async function POST(request: Request) {
       }
     }
 
+    // 4. The cart.
     const { error: clearError } = await supabase
       .from('cart_items')
       .delete()
