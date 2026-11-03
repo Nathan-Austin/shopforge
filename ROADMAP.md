@@ -121,10 +121,6 @@ Decided on 2026-11-02:
   but one of them gets an apology. Reserving at session creation with a
   timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
-- `--shipping=form` validates the country as a 3-letter code while Stripe
-  reports 2-letter codes, so `orders.shipping_country` can hold either
-  depending on the mode. Normalising to alpha-2 belongs with the store
-  settings work.
 - Money is entered in major units and stored as cents everywhere, but the
   currency is per product and free text. A store-level currency belongs with
   the store settings work above.

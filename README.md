@@ -54,9 +54,9 @@ support for languages such as Arabic.
 - **Orders after the sale:** there is no customer order history page, admin
   orders view or confirmation email yet. The data is all there in `orders`.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
-  placeholder values in `src/lib/shipping/config.ts`. With `--shipping=stripe`
-  the countries Stripe may ship to are a placeholder list in
-  `src/lib/checkout/config.ts`.
+  placeholder values in `src/lib/shipping/config.ts`. The countries you
+  deliver to are a placeholder list in `src/lib/checkout/config.ts`; the
+  checkout form offers exactly those and stores the two-letter code.
 
 ## Requirements
 

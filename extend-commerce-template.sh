@@ -163,9 +163,10 @@ export const CHECKOUT_CONFIG = {
   shippingAddress: '${SHIPPING_ADDRESS}' as 'form' | 'stripe',
 
   /**
-   * Countries Stripe may collect a delivery address for, as ISO 3166-1
-   * alpha-2 codes. Only used when shippingAddress is 'stripe'. Placeholder
-   * list: replace it with where you actually ship.
+   * Countries the shop delivers to, as ISO 3166-1 alpha-2 codes. The
+   * checkout form offers exactly these, and in 'stripe' mode Stripe's page
+   * is limited to them too. Placeholder list: replace it with where you
+   * actually ship.
    */
   allowedCountries: ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'],
 } as const;
@@ -193,7 +194,15 @@ const addressSchema = z.object({
   addressLine1: z.string().min(1),
   city: z.string().min(1),
   postalCode: z.string().min(1),
-  country: z.string().length(3), // ISO 3-letter
+  // ISO 3166-1 alpha-2, stored uppercase so it matches what Stripe reports.
+  country: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{2}$/)
+    .refine((code) => (CHECKOUT_CONFIG.allowedCountries as readonly string[]).includes(code), {
+      message: 'We do not deliver to that country'
+    }),
 });
 
 const checkoutSchema = z.object({
@@ -364,6 +373,12 @@ export const dynamic = 'force-dynamic';
  * into our own checkout form and carried through metadata, then the billing
  * address as a last resort.
  */
+/** Two uppercase letters or null: the orders table enforces the same. */
+function countryCode(value: string | null | undefined): string | null {
+  const code = value?.trim().toUpperCase() ?? '';
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 function shippingSnapshot(session: Stripe.Checkout.Session) {
   const collected = session.collected_information?.shipping_details;
   if (collected?.address) {
@@ -374,7 +389,7 @@ function shippingSnapshot(session: Stripe.Checkout.Session) {
       shipping_city: collected.address.city ?? null,
       shipping_postal_code: collected.address.postal_code ?? null,
       shipping_region: collected.address.state ?? null,
-      shipping_country: collected.address.country ?? null
+      shipping_country: countryCode(collected.address.country)
     };
   }
 
@@ -387,7 +402,7 @@ function shippingSnapshot(session: Stripe.Checkout.Session) {
       shipping_city: meta.shipping_city || null,
       shipping_postal_code: meta.shipping_postal_code || null,
       shipping_region: null,
-      shipping_country: meta.shipping_country || null
+      shipping_country: countryCode(meta.shipping_country)
     };
   }
 
@@ -399,7 +414,7 @@ function shippingSnapshot(session: Stripe.Checkout.Session) {
     shipping_city: billing?.city ?? null,
     shipping_postal_code: billing?.postal_code ?? null,
     shipping_region: billing?.state ?? null,
-    shipping_country: billing?.country ?? null
+    shipping_country: countryCode(billing?.country)
   };
 }
 
@@ -829,6 +844,15 @@ import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
  * is asked for here.
  */
 const ASKS_FOR_ADDRESS = CHECKOUT_CONFIG.shippingAddress === 'form';
+
+/** The country's name in the shopper's language, falling back to the code. */
+function countryName(code: string, locale: string): string {
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
 export default function CheckoutForm({
   locale,
   defaultEmail
@@ -916,14 +940,22 @@ export default function CheckoutForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="country">{t('country')}</Label>
-          <Input
+          <select
             id="country"
             name="country"
             required
-            maxLength={3}
-            minLength={3}
-            placeholder="DEU"
-          />
+            defaultValue=""
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+          >
+            <option value="" disabled>
+              {t('selectCountry')}
+            </option>
+            {CHECKOUT_CONFIG.allowedCountries.map((code) => (
+              <option key={code} value={code}>
+                {countryName(code, locale)}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       </>

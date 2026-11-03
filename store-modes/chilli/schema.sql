@@ -528,7 +528,9 @@ create table if not exists public.orders (
   shipping_city text,
   shipping_postal_code text,
   shipping_region text,
-  shipping_country text,
+  -- ISO 3166-1 alpha-2, uppercase, whichever side collected the address.
+  shipping_country text
+    check (shipping_country is null or shipping_country ~ '^[A-Z]{2}$'),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
