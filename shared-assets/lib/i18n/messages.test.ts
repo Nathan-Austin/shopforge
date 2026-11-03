@@ -37,6 +37,7 @@ const REQUIRED_NAMESPACES = [
   'Shop',
   'Cart',
   'Checkout',
+  'Account',
   'UI',
   'SauceArchive',
   'homepage'

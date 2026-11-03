@@ -524,6 +524,20 @@ cat > src/messages/en.json <<'EOF'
     "Checkout": "Checkout",
     "Account": "Account"
   },
+  "Account": {
+    "ordersTitle": "Your orders",
+    "noOrders": "You have not placed any orders yet.",
+    "startShopping": "Start shopping",
+    "orderNumber": "Order {number}",
+    "total": "Total",
+    "status": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "fulfilled": "Shipped",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
+    }
+  },
   "Shop": {
     "title": "Shop",
     "empty": "No products yet."
@@ -709,6 +723,20 @@ cat > src/messages/de.json <<'EOF'
     "Cart": "Warenkorb",
     "Checkout": "Kasse",
     "Account": "Konto"
+  },
+  "Account": {
+    "ordersTitle": "Ihre Bestellungen",
+    "noOrders": "Sie haben noch keine Bestellungen aufgegeben.",
+    "startShopping": "Jetzt einkaufen",
+    "orderNumber": "Bestellung {number}",
+    "total": "Gesamt",
+    "status": {
+      "pending": "Ausstehend",
+      "paid": "Bezahlt",
+      "fulfilled": "Versandt",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet"
+    }
   },
   "Shop": {
     "title": "Shop",
@@ -896,6 +924,20 @@ cat > src/messages/tr.json <<'EOF'
     "Checkout": "Ödeme",
     "Account": "Hesap"
   },
+  "Account": {
+    "ordersTitle": "Siparişleriniz",
+    "noOrders": "Henüz sipariş vermediniz.",
+    "startShopping": "Alışverişe başla",
+    "orderNumber": "Sipariş {number}",
+    "total": "Toplam",
+    "status": {
+      "pending": "Beklemede",
+      "paid": "Ödendi",
+      "fulfilled": "Kargolandı",
+      "cancelled": "İptal edildi",
+      "refunded": "İade edildi"
+    }
+  },
   "Shop": {
     "title": "Mağaza",
     "empty": "Henüz ürün yok."
@@ -1081,6 +1123,20 @@ cat > src/messages/ar.json <<'EOF'
     "Cart": "السلة",
     "Checkout": "الدفع",
     "Account": "الحساب"
+  },
+  "Account": {
+    "ordersTitle": "طلباتك",
+    "noOrders": "لم تقم بأي طلب بعد.",
+    "startShopping": "ابدأ التسوق",
+    "orderNumber": "الطلب {number}",
+    "total": "الإجمالي",
+    "status": {
+      "pending": "قيد الانتظار",
+      "paid": "مدفوع",
+      "fulfilled": "تم الشحن",
+      "cancelled": "ملغى",
+      "refunded": "مسترد"
+    }
   },
   "Shop": {
     "title": "المتجر",
@@ -1945,6 +2001,9 @@ export default async function Header({ locale }: { locale: string }) {
 
           {user ? (
             <div className="flex items-center gap-3">
+              <Link href={`/${locale}/account/orders`} className="text-gray-600 hover:text-gray-900">
+                Orders
+              </Link>
               <span className="text-gray-500 hidden sm:block">{user.email}</span>
               <form action="/api/auth/sign-out" method="POST">
                 <button type="submit" className="text-gray-600 hover:text-gray-900 underline">

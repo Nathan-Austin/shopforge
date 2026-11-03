@@ -825,6 +825,103 @@ export default async function CheckoutCancelPage({
 }
 EOF
 
+# --- Customer order history -------------------------------------------------
+echo "📜 Setting up the account orders page..."
+mkdir -p "src/app/[locale]/account/orders"
+cat > "src/app/[locale]/account/orders/page.tsx" <<'EOF'
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+
+import { listOrders, orderReference } from '@/lib/orders/service';
+import { createClient } from '@/lib/supabase/server';
+import { formatPrice } from '@/lib/format';
+
+/**
+ * The signed-in customer's orders. Reads go through the user's own client,
+ * so RLS limits the list to their rows; the shop owner sees every order
+ * here too, but has /admin/orders for that.
+ */
+export const dynamic = 'force-dynamic';
+
+export default async function AccountOrdersPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`/${locale}/auth/sign-in`);
+
+  // Pick up any orders placed as a guest with this (confirmed) email.
+  await supabase.rpc('claim_guest_orders');
+
+  const t = await getTranslations({ locale, namespace: 'Account' });
+  const orders = await listOrders(supabase);
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+
+  return (
+    <main className="mx-auto max-w-3xl p-6">
+      <h1 className="mb-6 text-2xl font-bold">{t('ordersTitle')}</h1>
+
+      {orders.length === 0 ? (
+        <div className="rounded-lg border border-gray-200 p-6 text-center">
+          <p className="text-gray-600">{t('noOrders')}</p>
+          <Link href={`/${locale}/shop`} className="mt-4 inline-block underline">
+            {t('startShopping')}
+          </Link>
+        </div>
+      ) : (
+        <ul className="space-y-4">
+          {orders.map((order) => (
+            <li key={order.id} className="rounded-lg border border-gray-200 p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-semibold">
+                  {t('orderNumber', { number: orderReference(order) })}
+                </h2>
+                <span className="text-sm text-gray-500">
+                  {dateFormat.format(new Date(order.createdAt))}
+                </span>
+              </div>
+              <p className="mt-1 text-sm">
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold uppercase text-gray-700">
+                  {t(`status.${order.status}`)}
+                </span>
+              </p>
+              <ul className="mt-3 divide-y divide-gray-100 text-sm">
+                {order.items.map((item) => (
+                  <li key={item.id} className="flex justify-between gap-4 py-1.5">
+                    <span>
+                      {item.quantity} × {item.productName}
+                      {(item.selectedSize || item.selectedColor) && (
+                        <span className="text-gray-500">
+                          {' '}
+                          ({[item.selectedSize, item.selectedColor].filter(Boolean).join(' / ')})
+                        </span>
+                      )}
+                    </span>
+                    <span>
+                      {formatPrice(item.unitPriceCents * item.quantity, order.currency, locale)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-3 flex justify-between border-t border-gray-200 pt-2 text-sm font-semibold">
+                <span>{t('total')}</span>
+                <span>{formatPrice(order.totalCents, order.currency, locale)}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
+}
+EOF
+
 mkdir -p src/components/cart
 cat > src/components/cart/CheckoutForm.tsx <<'EOF'
 'use client';

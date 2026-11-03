@@ -1,5 +1,7 @@
 import 'server-only';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
 import { createAdminClient } from '../supabase/admin';
 
 /**
@@ -122,6 +124,30 @@ function toOrder(row: OrderRow): Order {
 /** Short, human-friendly order reference for receipts and the success page. */
 export function orderReference(order: Pick<Order, 'id'>): string {
   return order.id.slice(0, 8).toUpperCase();
+}
+
+/** Every status an order can be in, in lifecycle order. */
+export const ORDER_STATUSES = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'] as const;
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+/**
+ * Orders visible to the caller, newest first. Runs through the caller's own
+ * Supabase client, so RLS decides what comes back: a customer gets their
+ * own orders, the shop owner gets every order. Nothing here uses the
+ * service-role key.
+ */
+export async function listOrders(
+  supabase: SupabaseClient,
+  options: { limit?: number } = {}
+): Promise<Order[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(ORDER_COLUMNS)
+    .order('created_at', { ascending: false })
+    .limit(options.limit ?? 100);
+
+  if (error || !data) return [];
+  return (data as unknown as OrderRow[]).map(toOrder);
 }
 
 /**
