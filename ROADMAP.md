@@ -2,12 +2,41 @@
 
 Planned work for shopforge, roughly in order.
 
+## Next up
+
+The current priority list. Keep it up to date as work lands: remove or tick
+finished items, reorder when priorities change, and add new ones. The
+details for each item are in the numbered sections below.
+
+1. **Product detail page (`/shop/[slug]`)** (section 1). `ProductCard` links
+   to `/shop/<slug>`, which 404s. It is the only broken link in the
+   storefront, and the other storefront work depends on it.
+2. **Render `ProductArchive` on `/shop`** (section 1). The component (search,
+   category filters, sorting) is built and translated but not rendered yet.
+   Small effort, large visible improvement.
+3. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
+   `refunded` changes only the label today. Add full and partial refunds
+   through the Stripe API.
+4. **Shipping notification email** (section 1). Email the customer via Resend
+   when the owner marks an order fulfilled or otherwise changes its status.
+   The template and transport exist already; what's missing is the hook on
+   status change.
+5. **Discount codes, then the email marketing builder** (section 2). Discount
+   codes backed by Stripe coupons/promotion codes and applied at checkout,
+   then the block-based campaign editor with an opt-in/unsubscribe
+   subscriber list.
+6. **Translate the auth pages** (section 2b). Move the hardcoded English on
+   `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
+   files.
+
 ## 1. Storefront and orders
 
 - [x] Cart and add-to-cart — done 2026-11-02 on `feat/cart`: httpOnly
       `shop_cart_session` cookie, server actions, /shop and /cart pages,
       header count, guest-cart merge on sign-in, cookie-based checkout
 - [ ] Product detail page
+- [ ] Render `ProductArchive` (search, filters, sorting) on `/shop` in place
+      of the plain grid
 - [x] Orders tables, so paid checkouts are recorded — done 2026-11-03:
       `orders` and `order_items` with RLS (own rows for customers, all for
       the owner), written by the webhook before stock is touched; guest
@@ -144,18 +173,15 @@ Decided on 2026-11-02:
   'force-dynamic'` removed first. Revisit once the real storefront pages
   exist and there is something worth caching.
 
-**Where to pick up next:**
+**Where things stand** (the priority order is under "Next up" at the top):
 
-- The storefront still only has `/shop` and `/cart`. There is no product
-  detail page, so `ProductCard` links to `/shop/<slug>`, which 404s. That is
-  the next obvious piece.
-- `ProductArchive` (search, filters, sorting) and `BrandShowcase` are copied
-  into every store and now have all their message keys, but nothing renders
-  them yet. Wiring `ProductArchive` into `/shop` would replace the plain grid.
+- The storefront still only has `/shop` and `/cart`.
+- `ProductArchive` and `BrandShowcase` are copied into every store and have
+  all their message keys, but nothing renders them yet.
 - The buying loop is closed end to end: pay, order recorded, receipt
   emailed, customer sees it at `/account/orders`, owner manages it at
   `/admin/orders`. What is missing around it is money movement (refunds)
-  and later-stage notifications (shipping emails), both listed in section 1.
+  and later-stage notifications (shipping emails).
 
 **Known gaps in the generated store (not build failures):**
 
