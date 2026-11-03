@@ -203,6 +203,36 @@ ensure_customer_auth() {
   export SHOPFORGE_CUSTOMER_AUTH="$existing"
 }
 
+# Whether the shop owner needs an authenticator app as a second factor.
+ensure_admin_mfa() {
+  local existing answer
+  existing=$(get_env_var "SHOPFORGE_ADMIN_MFA")
+  [ -z "$existing" ] && existing="${SHOPFORGE_ADMIN_MFA:-}"
+  if [ -z "$existing" ] && [ "$SKIP_SUPABASE" = "true" ]; then
+    existing="required"
+  fi
+  if [ -z "$existing" ]; then
+    echo ""
+    echo "🛡️  Admin two-factor authentication"
+    echo "   The admin panel holds your catalogue and every customer's orders."
+    echo "   With this on, the owner also needs a code from an authenticator"
+    echo "   app (Google Authenticator, Authy, 1Password...) to open /admin."
+    echo "   Set up on first visit. Needs TOTP enabled under Authentication →"
+    echo "   Multi-Factor in Supabase (it is by default)."
+    read -r -p "   Require an authenticator code for the admin? [Y/n]: " answer
+    case "$answer" in
+      n|N|no|off) existing="off" ;;
+      *) existing="required" ;;
+    esac
+  fi
+  case "$existing" in
+    required|off) ;;
+    *) echo "⚠️  Unknown SHOPFORGE_ADMIN_MFA '$existing', using required."; existing="required" ;;
+  esac
+  set_env_var "SHOPFORGE_ADMIN_MFA" "$existing"
+  export SHOPFORGE_ADMIN_MFA="$existing"
+}
+
 # 1.5) Approve dependency build scripts up front.
 # create-next-app pins pnpm 11 via "packageManager", and pnpm 11 fails
 # `pnpm add` with ERR_PNPM_IGNORED_BUILDS when a new dependency has a build
@@ -411,6 +441,7 @@ prompt_env_var "SUPABASE_SERVICE_ROLE_KEY" "Supabase service role key" true "pla
 prompt_env_var "SUPABASE_PROJECT_REF" "Supabase project ref (e.g. abcd1234)" false "placeholder"
 ensure_store_mode
 ensure_customer_auth
+ensure_admin_mfa
 
 echo "🧱 Choosing product fields..."
 ensure_product_fields
@@ -422,7 +453,7 @@ python3 "$FIELD_PICKER" config \
   "$FIELD_CATALOGUE" "$STORE_MODE" "$SHOPFORGE_PRODUCT_FIELDS" "$HEAT_JSON" \
   src/lib/products/config.ts
 
-echo "🔐 Writing auth config (customer sign-in: $SHOPFORGE_CUSTOMER_AUTH)..."
+echo "🔐 Writing auth config (customer sign-in: $SHOPFORGE_CUSTOMER_AUTH, admin 2FA: $SHOPFORGE_ADMIN_MFA)..."
 mkdir -p src/lib/auth
 cat > src/lib/auth/config.ts <<EOF
 /**
@@ -441,6 +472,13 @@ export const AUTH_CONFIG = {
    * The shop owner always signs in with a password.
    */
   customerSignIn: '${SHOPFORGE_CUSTOMER_AUTH}' as 'password' | 'otp',
+
+  /**
+   * Whether the shop owner must also enter a code from an authenticator
+   * app to use the admin. 'required' sends them to /auth/mfa to enrol on
+   * first visit and to verify on every new session. 'off' skips it.
+   */
+  adminMfa: '${SHOPFORGE_ADMIN_MFA}' as 'required' | 'off',
 } as const;
 EOF
 
@@ -2364,6 +2402,171 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(`${origin}/en/auth/sign-in?error=confirmation_failed`);
+}
+EOF
+
+mkdir -p src/app/[locale]/auth/mfa
+cat > src/app/[locale]/auth/mfa/page.tsx <<'EOF'
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+
+import { supabase } from '@/lib/supabase/client';
+
+/**
+ * Second factor for the shop owner: a six-digit code from an authenticator
+ * app. The admin guard sends the owner here when their session is not yet
+ * at AAL2. First visit enrols (shows a QR code), later visits verify.
+ */
+type Stage =
+  | { kind: 'loading' }
+  | { kind: 'enrol'; factorId: string; qrCode: string; secret: string }
+  | { kind: 'verify'; factorId: string }
+  | { kind: 'error'; message: string };
+
+export default function MfaPage() {
+  const { locale } = useParams() as { locale: string };
+  const router = useRouter();
+  const [stage, setStage] = useState<Stage>({ kind: 'loading' });
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function prepare() {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace(`/${locale}/auth/sign-in?method=password`);
+        return;
+      }
+
+      const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+      if (listError) {
+        if (!cancelled) setStage({ kind: 'error', message: listError.message });
+        return;
+      }
+
+      const verified = factors.totp.find((factor) => factor.status === 'verified');
+      if (verified) {
+        if (!cancelled) setStage({ kind: 'verify', factorId: verified.id });
+        return;
+      }
+
+      // An abandoned enrolment leaves an unverified factor behind, and a
+      // second enrol with the same name is refused, so clear it first.
+      for (const factor of factors.totp.filter((f) => f.status !== 'verified')) {
+        await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      }
+
+      const { data: enrolment, error: enrolError } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'Shop admin'
+      });
+      if (enrolError || !enrolment) {
+        if (!cancelled) {
+          setStage({ kind: 'error', message: enrolError?.message ?? 'Could not start enrolment' });
+        }
+        return;
+      }
+      if (!cancelled) {
+        setStage({
+          kind: 'enrol',
+          factorId: enrolment.id,
+          qrCode: enrolment.totp.qr_code,
+          secret: enrolment.totp.secret
+        });
+      }
+    }
+
+    void prepare();
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, router]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (stage.kind !== 'enrol' && stage.kind !== 'verify') return;
+    setErr(null);
+    setBusy(true);
+
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+      factorId: stage.factorId
+    });
+    if (challengeError || !challenge) {
+      setBusy(false);
+      setErr(challengeError?.message ?? 'Could not start verification');
+      return;
+    }
+
+    const { error: verifyError } = await supabase.auth.mfa.verify({
+      factorId: stage.factorId,
+      challengeId: challenge.id,
+      code: code.trim()
+    });
+    if (verifyError) {
+      setBusy(false);
+      setErr(verifyError.message);
+      return;
+    }
+
+    router.push(`/${locale}/admin`);
+    router.refresh();
+  }
+
+  return (
+    <main className="mx-auto max-w-sm p-6">
+      <h1 className="text-2xl font-bold mb-4">Two-factor authentication</h1>
+
+      {stage.kind === 'loading' && <p className="text-gray-600">Preparing…</p>}
+
+      {stage.kind === 'error' && <p className="text-red-600 text-sm">{stage.message}</p>}
+
+      {stage.kind === 'enrol' && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Scan this code with your authenticator app (Google Authenticator, Authy,
+            1Password…), then enter the six-digit code it shows.
+          </p>
+          {/* Supabase returns the QR code as an inline SVG data URL, which
+              next/image cannot optimise, so a plain img is the right tag. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={stage.qrCode} alt="Authenticator QR code" className="mx-auto h-48 w-48" />
+          <p className="text-xs text-gray-500 break-all">
+            Can&apos;t scan? Enter this key by hand: <code>{stage.secret}</code>
+          </p>
+        </div>
+      )}
+
+      {stage.kind === 'verify' && (
+        <p className="text-sm text-gray-600">Enter the code from your authenticator app.</p>
+      )}
+
+      {(stage.kind === 'enrol' || stage.kind === 'verify') && (
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <input
+            className="w-full border p-2 rounded tracking-widest"
+            placeholder="123456"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{6}"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+          />
+          {err && <p className="text-red-600 text-sm">{err}</p>}
+          <button className="w-full rounded bg-black text-white p-2" disabled={busy}>
+            {busy ? 'Checking…' : stage.kind === 'enrol' ? 'Activate' : 'Continue'}
+          </button>
+        </form>
+      )}
+    </main>
+  );
 }
 EOF
 

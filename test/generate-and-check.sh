@@ -2,7 +2,7 @@
 # Generates a store without touching Supabase, then runs the checks a first
 # deploy on Vercel would: install, type-check, lint and build.
 #
-#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--keep]
+#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--admin-mfa=required|off] [--keep]
 #
 # The store is written to test-<mode>/ in the repository root (gitignored)
 # and removed afterwards unless --keep is given. Needs Node, pnpm and python3.
@@ -12,12 +12,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MODE="generic"
 SHIPPING="form"
 AUTH="password"
+ADMIN_MFA="required"
 KEEP="false"
 for arg in "$@"; do
   case $arg in
     --mode=*) MODE="${arg#--mode=}" ;;
     --shipping=*) SHIPPING="${arg#--shipping=}" ;;
     --auth=*) AUTH="${arg#--auth=}" ;;
+    --admin-mfa=*) ADMIN_MFA="${arg#--admin-mfa=}" ;;
     --keep) KEEP="true" ;;
     *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
@@ -29,8 +31,8 @@ rm -rf "$APP"
 
 step() { echo; echo "=== $*"; }
 
-step "Generate ($MODE, customer sign-in: $AUTH)"
-SHOPFORGE_CUSTOMER_AUTH="$AUTH" ./create-next-commerce-template-ssr.sh "$APP" en "en,de,ar" --mode="$MODE" --skip-supabase
+step "Generate ($MODE, customer sign-in: $AUTH, admin 2FA: $ADMIN_MFA)"
+SHOPFORGE_CUSTOMER_AUTH="$AUTH" SHOPFORGE_ADMIN_MFA="$ADMIN_MFA" ./create-next-commerce-template-ssr.sh "$APP" en "en,de,ar" --mode="$MODE" --skip-supabase
 
 cd "$APP"
 
