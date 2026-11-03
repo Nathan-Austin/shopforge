@@ -8,21 +8,18 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Render `ProductArchive` on `/shop`** (section 1). The component (search,
-   category filters, sorting) is built and translated but not rendered yet.
-   Small effort, large visible improvement.
-2. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
+1. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
    `refunded` changes only the label today. Add full and partial refunds
    through the Stripe API.
-3. **Shipping notification email** (section 1). Email the customer via Resend
+2. **Shipping notification email** (section 1). Email the customer via Resend
    when the owner marks an order fulfilled or otherwise changes its status.
    The template and transport exist already; what's missing is the hook on
    status change.
-4. **Discount codes, then the email marketing builder** (section 2). Discount
+3. **Discount codes, then the email marketing builder** (section 2). Discount
    codes backed by Stripe coupons/promotion codes and applied at checkout,
    then the block-based campaign editor with an opt-in/unsubscribe
    subscriber list.
-5. **Translate the auth pages** (section 2b). Move the hardcoded English on
+4. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -38,8 +35,13 @@ details for each item are in the numbered sections below.
       long copy, ingredients, net content, weight, dimensions, allergens,
       dietary flags, nutrition, storage, tags and SEO metadata. Chilli shops
       add a heat meter, Scoville and chilli-type chips via `ProductExtras`
-- [ ] Render `ProductArchive` (search, filters, sorting) on `/shop` in place
-      of the plain grid
+- [x] Render `ProductArchive` (search, filters, sorting) on `/shop` in place
+      of the plain grid — done 2026-11-03: state lives in the URL (`?q=`,
+      `category`, `heat`, `type`, `sort`, slugs as values), parsed on the
+      server so filtered links render filtered; `recent` and `popular` were
+      no-ops and now mean newest-first and featured-first (no sales counts
+      yet); cards keep their add-to-cart button; a mode-specific
+      `ShopArchive` server component does the fetching
 - [x] Orders tables, so paid checkouts are recorded — done 2026-11-03:
       `orders` and `order_items` with RLS (own rows for customers, all for
       the owner), written by the webhook before stock is touched; guest
@@ -179,8 +181,8 @@ Decided on 2026-11-02:
 **Where things stand** (the priority order is under "Next up" at the top):
 
 - The storefront has `/shop`, `/shop/[slug]` and `/cart`.
-- `ProductArchive` and `BrandShowcase` are copied into every store and have
-  all their message keys, but nothing renders them yet.
+- `BrandShowcase` is copied into every store with its message keys, but
+  nothing renders it yet.
 - The buying loop is closed end to end: pay, order recorded, receipt
   emailed, customer sees it at `/account/orders`, owner manages it at
   `/admin/orders`. What is missing around it is money movement (refunds)
@@ -188,10 +190,12 @@ Decided on 2026-11-02:
 
 **Known gaps in the generated store (not build failures):**
 
-- `/shop` is still a plain grid that reads only the card fields; the product
-  page shows every public field except `video_url`, and brand and category
-  are plain text because there are no brand or category pages to link to
-  yet.
+- The product page shows every public field except `video_url`; brand and
+  category are plain text there because there are no brand or category pages
+  to link to yet.
+- "Popular" on `/shop` sorts featured-first: there are no per-product sales
+  counts to rank by yet. Deriving popularity from `order_items` would give
+  it real meaning.
 - Only `size_options` and `color_options` are cart-selectable variants
   (`cart_items.selected_size` / `selected_color`). Weight and volume are
   display facts (`net_content`, `weight_grams`), not variants; a product
