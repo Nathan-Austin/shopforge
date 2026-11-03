@@ -2125,7 +2125,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 EOF
 
 # 10) Minimal shop/cart/checkout pages; checkout protected server-side
-mkdir -p src/app/[locale]/shop src/app/[locale]/cart src/app/[locale]/checkout
+mkdir -p src/app/[locale]/shop/[slug] src/app/[locale]/cart src/app/[locale]/checkout
 cat > src/app/[locale]/shop/page.tsx <<'EOF'
 import { getTranslations } from 'next-intl/server';
 
@@ -2208,6 +2208,273 @@ export default async function ShopPage({
           })}
         </ul>
       )}
+    </main>
+  );
+}
+EOF
+# The product page is one file for both store modes; the mode-specific
+# part (heat, chilli types) is ProductExtras in src/components/store.
+cat > src/app/[locale]/shop/[slug]/page.tsx <<'EOF'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { cache } from 'react';
+import { getTranslations } from 'next-intl/server';
+
+import AddToCartButton from '@/components/cart/AddToCartButton';
+import ProductExtras from '@/components/store/ProductExtras';
+import ProductGallery from '@/components/store/ProductGallery';
+import { Badge } from '@/components/ui/badge';
+import { formatPrice } from '@/lib/format';
+import {
+  cleanList,
+  formatDimensions,
+  formatMeasure,
+  formatWeight,
+  galleryImages,
+  hasSaving,
+  nutritionRows,
+  quantityLimit,
+  stockRulesOf,
+  stockStatus,
+  type ProductDetailRow
+} from '@/lib/products/detail';
+import { createClient } from '@/lib/supabase/server';
+
+type Params = Promise<{ locale: string; slug: string }>;
+
+// products_public is the storefront view: published, unarchived rows with
+// no supplier fields, so selecting everything is safe. Its columns also
+// differ by store mode (heat_level only exists in chilli shops), which is
+// the other reason not to list them. cache() shares the row between
+// generateMetadata and the page within one request.
+const loadProduct = cache(async (slug: string): Promise<ProductDetailRow | null> => {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('products_public')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  return (data as ProductDetailRow | null) ?? null;
+});
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await loadProduct(slug);
+  if (!product) return {};
+  return {
+    title: product.meta_title ?? product.name,
+    description:
+      product.meta_description ?? product.headline ?? product.description ?? undefined
+  };
+}
+
+const SECTION_HEADING = 'text-sm font-semibold uppercase tracking-wide text-gray-500';
+
+export default async function ProductPage({ params }: { params: Params }) {
+  const { locale, slug } = await params;
+  const product = await loadProduct(slug);
+  if (!product) notFound();
+
+  const t = await getTranslations({ locale, namespace: 'Product' });
+
+  const rules = stockRulesOf(product);
+  const status = stockStatus(rules);
+  const soldOut = status.kind === 'sold_out';
+  const images = galleryImages(product.image_url, product.gallery_urls);
+  const tags = cleanList(product.tags);
+  const nutrition = nutritionRows(product.nutrition_info, locale);
+  const wasPrice = hasSaving(product.price_cents, product.compare_at_price_cents)
+    ? formatPrice(product.compare_at_price_cents as number, product.currency, locale)
+    : null;
+
+  // The short description is the lead when there is long copy as well;
+  // otherwise it is the body on its own.
+  const lead = product.details ? product.description : null;
+  const body = product.details ?? product.description;
+
+  const unit =
+    product.net_content_unit === 'pieces' ? t('units.pieces') : product.net_content_unit;
+  const facts: { label: string; value: string }[] = [];
+  const addFact = (label: string, value: string | null | undefined) => {
+    if (value) facts.push({ label, value });
+  };
+  addFact(t('netContent'), formatMeasure(product.net_content, unit, locale));
+  addFact(t('weight'), formatWeight(product.weight_grams, locale));
+  addFact(t('dimensions'), formatDimensions(product.dimensions_mm, locale));
+  addFact(t('countryOfOrigin'), product.country_of_origin);
+  addFact(t('allergens'), cleanList(product.allergens).join(', '));
+  addFact(
+    t('dietary'),
+    cleanList(product.dietary_flags)
+      .map((flag) => (t.has(`dietaryFlags.${flag}`) ? t(`dietaryFlags.${flag}`) : flag))
+      .join(', ')
+  );
+  addFact(t('bestBefore'), product.best_before_text);
+
+  const stockLine = (() => {
+    switch (status.kind) {
+      case 'low_stock':
+        return { text: t('lowStock', { count: status.remaining }), tone: 'text-amber-700' };
+      case 'backorder':
+        return { text: t('backorder'), tone: 'text-amber-700' };
+      case 'sold_out':
+        return { text: t('soldOut'), tone: 'text-red-700' };
+      default:
+        return { text: t('inStock'), tone: 'text-green-700' };
+    }
+  })();
+
+  return (
+    <main className="mx-auto max-w-6xl p-6">
+      <nav className="mb-6 text-sm">
+        <Link href={`/${locale}/shop`} className="text-gray-600 underline hover:text-gray-900">
+          {t('backToShop')}
+        </Link>
+      </nav>
+
+      <div className="grid gap-10 lg:grid-cols-2">
+        <ProductGallery images={images} name={product.name} />
+
+        <div className="space-y-8">
+          <header className="space-y-3">
+            {(product.category_name || product.brand_name) && (
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                {product.category_name && (
+                  <Badge variant="secondary" className="font-normal">
+                    <span className="sr-only">{t('category')}: </span>
+                    {product.category_name}
+                  </Badge>
+                )}
+                {product.brand_name && (
+                  <span>
+                    <span className="sr-only">{t('brand')}: </span>
+                    {product.brand_name}
+                  </span>
+                )}
+              </div>
+            )}
+            <h1 className="text-3xl font-bold">{product.name}</h1>
+            {product.headline && <p className="text-lg text-gray-700">{product.headline}</p>}
+          </header>
+
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="text-2xl font-bold">
+                {formatPrice(product.price_cents, product.currency, locale)}
+              </span>
+              {wasPrice && (
+                <>
+                  <span className="sr-only">{t('wasPrice', { price: wasPrice })}</span>
+                  <s aria-hidden="true" className="text-base text-gray-500">
+                    {wasPrice}
+                  </s>
+                </>
+              )}
+              <span className={`text-sm font-medium ${stockLine.tone}`}>{stockLine.text}</span>
+            </div>
+
+            <AddToCartButton
+              locale={locale}
+              productId={product.id}
+              sizeOptions={product.size_options}
+              colorOptions={product.color_options}
+              soldOut={soldOut}
+              withQuantity
+              maxQuantity={quantityLimit(rules)}
+              className="w-full sm:w-auto sm:min-w-48"
+            />
+          </div>
+
+          <ProductExtras
+            locale={locale}
+            productId={product.id}
+            heatLevel={product.heat_level ?? null}
+            scovilleShu={product.scoville_shu ?? null}
+          />
+
+          {body && (
+            <section aria-labelledby="product-about" className="space-y-2">
+              <h2 id="product-about" className={SECTION_HEADING}>
+                {t('about')}
+              </h2>
+              {lead && lead !== body && <p className="font-medium text-gray-800">{lead}</p>}
+              <div className="whitespace-pre-line text-gray-800">{body}</div>
+            </section>
+          )}
+
+          {product.ingredients && (
+            <section aria-labelledby="product-ingredients" className="space-y-2">
+              <h2 id="product-ingredients" className={SECTION_HEADING}>
+                {t('ingredients')}
+              </h2>
+              <p className="whitespace-pre-line text-gray-800">{product.ingredients}</p>
+            </section>
+          )}
+
+          {facts.length > 0 && (
+            <section aria-labelledby="product-facts" className="space-y-2">
+              <h2 id="product-facts" className={SECTION_HEADING}>
+                {t('facts')}
+              </h2>
+              <dl className="grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1 text-sm">
+                {facts.map((fact) => (
+                  <div key={fact.label} className="contents">
+                    <dt className="text-gray-500">{fact.label}</dt>
+                    <dd className="text-gray-800">{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          {nutrition.length > 0 && (
+            <section aria-labelledby="product-nutrition" className="space-y-2">
+              <h2 id="product-nutrition" className={SECTION_HEADING}>
+                {t('nutritionTitle')}
+              </h2>
+              <table className="w-full max-w-md text-sm">
+                <tbody className="divide-y divide-gray-200">
+                  {nutrition.map((row) => (
+                    <tr key={row.key}>
+                      <th scope="row" className="py-1 text-start font-normal text-gray-500">
+                        {t(`nutrition.${row.key}`)}
+                      </th>
+                      <td className="py-1 text-end text-gray-800">{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+
+          {product.storage_instructions && (
+            <section aria-labelledby="product-storage" className="space-y-2">
+              <h2 id="product-storage" className={SECTION_HEADING}>
+                {t('storage')}
+              </h2>
+              <p className="whitespace-pre-line text-gray-800">{product.storage_instructions}</p>
+            </section>
+          )}
+
+          {tags.length > 0 && (
+            <section aria-labelledby="product-tags" className="space-y-2">
+              <h2 id="product-tags" className={SECTION_HEADING}>
+                {t('tags')}
+              </h2>
+              <ul className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <li key={tag}>
+                    <Badge variant="outline" className="font-normal">
+                      {tag}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      </div>
     </main>
   );
 }
