@@ -63,6 +63,15 @@ if ! grep -q "Proxy (Middleware)" "/tmp/shopforge-build-$MODE.log"; then
   exit 1
 fi
 
+# The storefront routes the product cards link to. A page file in the wrong
+# folder would not fail the build either, so check the route table.
+for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]"; do
+  if ! grep -qE "ƒ +$route\$" "/tmp/shopforge-build-$MODE.log"; then
+    echo "❌ Build output has no $route route." >&2
+    exit 1
+  fi
+done
+
 cd "$ROOT"
 if [ "$KEEP" != "true" ]; then
   rm -rf "$APP"
