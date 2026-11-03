@@ -688,7 +688,8 @@ cat > src/messages/en.json <<'EOF'
     "createAccountTitle": "Keep track of this order",
     "createAccountBody": "Create an account with {email} and this order will be saved to it once you confirm your email address.",
     "createAccount": "Create account",
-    "savedToAccount": "This order is saved to your account."
+    "savedToAccount": "This order is saved to your account.",
+    "addressAtStripe": "You will enter your delivery address on the secure payment page."
   }
 }
 EOF
@@ -872,7 +873,8 @@ cat > src/messages/de.json <<'EOF'
     "createAccountTitle": "Bestellung im Blick behalten",
     "createAccountBody": "Erstellen Sie ein Konto mit {email}. Sobald Sie Ihre E-Mail-Adresse bestätigt haben, wird diese Bestellung darin gespeichert.",
     "createAccount": "Konto erstellen",
-    "savedToAccount": "Diese Bestellung ist in Ihrem Konto gespeichert."
+    "savedToAccount": "Diese Bestellung ist in Ihrem Konto gespeichert.",
+    "addressAtStripe": "Ihre Lieferadresse geben Sie auf der sicheren Zahlungsseite ein."
   }
 }
 EOF
@@ -1056,7 +1058,8 @@ cat > src/messages/tr.json <<'EOF'
     "createAccountTitle": "Bu siparişi takip edin",
     "createAccountBody": "{email} ile bir hesap oluşturun; e-posta adresinizi doğruladığınızda bu sipariş hesabınıza kaydedilir.",
     "createAccount": "Hesap oluştur",
-    "savedToAccount": "Bu sipariş hesabınıza kaydedildi."
+    "savedToAccount": "Bu sipariş hesabınıza kaydedildi.",
+    "addressAtStripe": "Teslimat adresinizi güvenli ödeme sayfasında gireceksiniz."
   }
 }
 EOF
@@ -1240,7 +1243,8 @@ cat > src/messages/ar.json <<'EOF'
     "createAccountTitle": "تابع هذا الطلب",
     "createAccountBody": "أنشئ حسابًا باستخدام {email} وسيُحفظ هذا الطلب فيه بعد تأكيد بريدك الإلكتروني.",
     "createAccount": "إنشاء حساب",
-    "savedToAccount": "تم حفظ هذا الطلب في حسابك."
+    "savedToAccount": "تم حفظ هذا الطلب في حسابك.",
+    "addressAtStripe": "ستدخل عنوان التسليم في صفحة الدفع الآمنة."
   }
 }
 EOF

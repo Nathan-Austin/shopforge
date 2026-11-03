@@ -8,13 +8,32 @@ if ! command -v pnpm >/dev/null 2>&1; then
 fi
 
 STORE_MODE="chilli"
+# Who asks the customer for the delivery address: our own checkout form, or
+# Stripe's payment page. See the note above the checkout config below.
+SHIPPING_ADDRESS="form"
 for arg in "$@"; do
   case $arg in
     --mode=*)
       STORE_MODE="${arg#--mode=}"
       ;;
+    --shipping=*)
+      SHIPPING_ADDRESS="${arg#--shipping=}"
+      ;;
+    *)
+      echo "❌ Unknown argument: $arg" >&2
+      echo "   Usage: extend-commerce-template.sh [--mode=generic|chilli] [--shipping=form|stripe]" >&2
+      exit 2
+      ;;
   esac
 done
+
+case $SHIPPING_ADDRESS in
+  form|stripe) ;;
+  *)
+    echo "❌ --shipping must be 'form' or 'stripe', got '$SHIPPING_ADDRESS'" >&2
+    exit 2
+    ;;
+esac
 
 MODE_DIR="$SCRIPT_DIR/store-modes/$STORE_MODE"
 SHARED_DIR="$SCRIPT_DIR/shared-assets"
@@ -26,7 +45,7 @@ if [ ! -d "$MODE_DIR" ]; then
   exit 1
 fi
 
-echo "🚀 Applying production-grade enhancements (${STORE_MODE})..."
+echo "🚀 Applying production-grade enhancements (${STORE_MODE}, shipping address: ${SHIPPING_ADDRESS})..."
 
 # --- Core Assets & Libraries ------------------------------------------------
 echo "📦 Syncing shared libraries..."
@@ -111,6 +130,47 @@ export async function POST() {
 }
 EOF
 
+# --- Checkout config ---------------------------------------------------------
+# Two ways to collect the delivery address:
+#
+#   form    Our /checkout page asks for name and address, then hands the
+#           customer to Stripe for the card only. The address travels to the
+#           webhook in the session metadata. One fewer page for the customer
+#           and the form is yours to style, but the address passes through
+#           your server.
+#
+#   stripe  Our /checkout page asks only for an email. Stripe's payment page
+#           collects the delivery address alongside the card, and the webhook
+#           reads it from the completed session. Some owners prefer this: the
+#           customer types everything into Stripe, nothing personal is posted
+#           to your server before payment, and Stripe validates the address.
+#
+# Either way the webhook stores the same address columns on the order.
+echo "🧭 Writing checkout config (shipping address: ${SHIPPING_ADDRESS})..."
+mkdir -p src/lib/checkout
+cat > src/lib/checkout/config.ts <<EOF
+/**
+ * Checkout configuration.
+ *
+ * Written by extend-commerce-template.sh from --shipping=form|stripe.
+ * Edit by hand or re-run the script to change it.
+ */
+export const CHECKOUT_CONFIG = {
+  /**
+   * 'form':   the /checkout page collects the delivery address.
+   * 'stripe': Stripe's payment page collects it (shipping_address_collection).
+   */
+  shippingAddress: '${SHIPPING_ADDRESS}' as 'form' | 'stripe',
+
+  /**
+   * Countries Stripe may collect a delivery address for, as ISO 3166-1
+   * alpha-2 codes. Only used when shippingAddress is 'stripe'. Placeholder
+   * list: replace it with where you actually ship.
+   */
+  allowedCountries: ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'],
+} as const;
+EOF
+
 # --- Advanced Checkout Session API ------------------------------------------
 echo "💳 Setting up production-grade Stripe checkout..."
 mkdir -p src/app/api/checkout/session
@@ -125,22 +185,32 @@ import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
 import { getCart } from '@/lib/cart/service';
 import { getCartSessionId } from '@/lib/cart/session';
 import { createClient } from '@/lib/supabase/server';
+import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 
-const checkoutSchema = z.object({
-  email: z.string().email(),
+const addressSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
   addressLine1: z.string().min(1),
   city: z.string().min(1),
   postalCode: z.string().min(1),
   country: z.string().length(3), // ISO 3-letter
+});
+
+const checkoutSchema = z.object({
+  email: z.string().email(),
   locale: z.string().min(2),
 });
 
 export async function POST(request: Request) {
   try {
     const stripe = getStripeServerClient();
-    const payload = checkoutSchema.parse(await request.json());
+    const body = await request.json();
+    const payload = checkoutSchema.parse(body);
+    // Who collects the address is decided in lib/checkout/config.ts. With
+    // Stripe collecting, the form sends only the email and the address is
+    // asked for on Stripe's page; otherwise it must be in the request.
+    const collectsAddressAtStripe = CHECKOUT_CONFIG.shippingAddress === 'stripe';
+    const address = collectsAddressAtStripe ? null : addressSchema.parse(body);
     
     // The cart is identified by the httpOnly cookie, never by anything the
     // caller sends, so a request cannot check out someone else's cart.
@@ -214,6 +284,13 @@ export async function POST(request: Request) {
       mode: 'payment',
       customer_email: payload.email,
       line_items: lineItems,
+      ...(collectsAddressAtStripe
+        ? {
+            shipping_address_collection: {
+              allowed_countries: [...CHECKOUT_CONFIG.allowedCountries],
+            },
+          }
+        : {}),
       shipping_options: [{
         shipping_rate_data: {
           display_name: SHIPPING_RATE_LABEL,
@@ -233,12 +310,16 @@ export async function POST(request: Request) {
       metadata: {
         cart_session_id: cartSessionId,
         user_id: user?.id ?? '',
-        shipping_name: `${payload.firstName} ${payload.lastName}`,
-        shipping_line1: payload.addressLine1,
-        shipping_city: payload.city,
-        shipping_postal_code: payload.postalCode,
-        shipping_country: payload.country,
         package_weight_kg: packageWeight.toString(),
+        ...(address
+          ? {
+              shipping_name: `${address.firstName} ${address.lastName}`,
+              shipping_line1: address.addressLine1,
+              shipping_city: address.city,
+              shipping_postal_code: address.postalCode,
+              shipping_country: address.country,
+            }
+          : {}),
       },
     });
 
@@ -739,11 +820,15 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 
 /**
  * Collects the delivery details and asks the server for a Stripe session.
  * The cart itself is never sent: the route reads it from the cart cookie.
+ * When Stripe collects the address (lib/checkout/config.ts) only the email
+ * is asked for here.
  */
+const ASKS_FOR_ADDRESS = CHECKOUT_CONFIG.shippingAddress === 'form';
 export default function CheckoutForm({
   locale,
   defaultEmail
@@ -798,6 +883,12 @@ export default function CheckoutForm({
         <Input id="email" name="email" type="email" defaultValue={defaultEmail} required />
       </div>
 
+      {!ASKS_FOR_ADDRESS && (
+        <p className="text-sm text-gray-500">{t('addressAtStripe')}</p>
+      )}
+
+      {ASKS_FOR_ADDRESS && (
+      <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="firstName">{t('firstName')}</Label>
@@ -835,6 +926,8 @@ export default function CheckoutForm({
           />
         </div>
       </div>
+      </>
+      )}
 
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? t('redirecting') : t('payNow')}

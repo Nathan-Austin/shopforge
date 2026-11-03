@@ -2,7 +2,7 @@
 # Generates a store without touching Supabase, then runs the checks a first
 # deploy on Vercel would: install, type-check, lint and build.
 #
-#   test/generate-and-check.sh [--mode=generic|chilli] [--keep]
+#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--keep]
 #
 # The store is written to test-<mode>/ in the repository root (gitignored)
 # and removed afterwards unless --keep is given. Needs Node, pnpm and python3.
@@ -10,10 +10,12 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MODE="generic"
+SHIPPING="form"
 KEEP="false"
 for arg in "$@"; do
   case $arg in
     --mode=*) MODE="${arg#--mode=}" ;;
+    --shipping=*) SHIPPING="${arg#--shipping=}" ;;
     --keep) KEEP="true" ;;
     *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
@@ -30,8 +32,8 @@ step "Generate ($MODE)"
 
 cd "$APP"
 
-step "Extend ($MODE)"
-"$ROOT/extend-commerce-template.sh" --mode="$MODE"
+step "Extend ($MODE, shipping address: $SHIPPING)"
+"$ROOT/extend-commerce-template.sh" --mode="$MODE" --shipping="$SHIPPING"
 
 step "Install (frozen lockfile, like Vercel)"
 pnpm install --frozen-lockfile
