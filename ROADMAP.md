@@ -37,6 +37,14 @@ Planned work for shopforge, roughly in order.
       how heat appears in the shop (word and number, word only, number only,
       chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
 - [ ] Theme tokens instead of hardcoded colours
+- [ ] Discount codes: an admin page to create and retire them, backed by
+      Stripe coupons/promotion codes, applied at checkout and recorded on
+      the order. Needed by the email marketing builder below
+- [ ] Email marketing page in the admin: a block builder where the owner
+      composes a campaign from image, text, button/link and discount-code
+      blocks, previews it, and sends to a customer list. Needs the discount
+      codes above, a subscriber list with opt-in and unsubscribe, and the
+      transactional email provider already wired in for sending
 
 ## 2b. Accounts and sign-in
 
@@ -47,7 +55,8 @@ Planned work for shopforge, roughly in order.
 - [ ] Translate the auth pages (sign-in, sign-up, email code, MFA, reset);
       they are English-only today
 - [ ] Recovery codes for admin MFA, so a lost phone does not lock the owner
-      out (today: unenrol the factor from the Supabase dashboard)
+      out. Deferred 2026-11-03: unenrolling the factor from the Supabase
+      dashboard is the recovery path for now
 - [ ] Account page beyond orders: addresses, email change, delete account
 
 ## 3. Languages
