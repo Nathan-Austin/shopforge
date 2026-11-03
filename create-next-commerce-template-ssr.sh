@@ -684,7 +684,11 @@ cat > src/messages/en.json <<'EOF'
     "items": "Items",
     "shippingCost": "Shipping",
     "total": "Total",
-    "shipTo": "Delivering to"
+    "shipTo": "Delivering to",
+    "createAccountTitle": "Keep track of this order",
+    "createAccountBody": "Create an account with {email} and this order will be saved to it once you confirm your email address.",
+    "createAccount": "Create account",
+    "savedToAccount": "This order is saved to your account."
   }
 }
 EOF
@@ -864,7 +868,11 @@ cat > src/messages/de.json <<'EOF'
     "items": "Artikel",
     "shippingCost": "Versand",
     "total": "Gesamt",
-    "shipTo": "Lieferung an"
+    "shipTo": "Lieferung an",
+    "createAccountTitle": "Bestellung im Blick behalten",
+    "createAccountBody": "Erstellen Sie ein Konto mit {email}. Sobald Sie Ihre E-Mail-Adresse bestätigt haben, wird diese Bestellung darin gespeichert.",
+    "createAccount": "Konto erstellen",
+    "savedToAccount": "Diese Bestellung ist in Ihrem Konto gespeichert."
   }
 }
 EOF
@@ -1044,7 +1052,11 @@ cat > src/messages/tr.json <<'EOF'
     "items": "Ürünler",
     "shippingCost": "Kargo",
     "total": "Toplam",
-    "shipTo": "Teslimat adresi"
+    "shipTo": "Teslimat adresi",
+    "createAccountTitle": "Bu siparişi takip edin",
+    "createAccountBody": "{email} ile bir hesap oluşturun; e-posta adresinizi doğruladığınızda bu sipariş hesabınıza kaydedilir.",
+    "createAccount": "Hesap oluştur",
+    "savedToAccount": "Bu sipariş hesabınıza kaydedildi."
   }
 }
 EOF
@@ -1224,7 +1236,11 @@ cat > src/messages/ar.json <<'EOF'
     "items": "المنتجات",
     "shippingCost": "الشحن",
     "total": "الإجمالي",
-    "shipTo": "التسليم إلى"
+    "shipTo": "التسليم إلى",
+    "createAccountTitle": "تابع هذا الطلب",
+    "createAccountBody": "أنشئ حسابًا باستخدام {email} وسيُحفظ هذا الطلب فيه بعد تأكيد بريدك الإلكتروني.",
+    "createAccount": "إنشاء حساب",
+    "savedToAccount": "تم حفظ هذا الطلب في حسابك."
   }
 }
 EOF
@@ -2020,11 +2036,33 @@ EOF
 cat > src/app/[locale]/auth/sign-up/page.tsx <<'EOF'
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 
+// useSearchParams needs a Suspense boundary so the page can still be
+// prerendered; the form below is the actual page.
 export default function SignUpPage() {
-  const [email, setEmail] = useState('');
+  return (
+    <Suspense fallback={null}>
+      <SignUpForm />
+    </Suspense>
+  );
+}
+
+function SignUpForm() {
+  const searchParams = useSearchParams();
+  // Where to land after the confirmation link. The success page sends
+  // guests here with their checkout email and itself as `next`, so that
+  // confirming the account brings them straight back to their order.
+  // Same-origin paths only: never redirect through a link to somewhere else.
+  const requestedNext = searchParams.get('next');
+  const next =
+    requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//')
+      ? requestedNext
+      : null;
+
+  const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [err, setErr] = useState<string | null>(null);
@@ -2040,7 +2078,11 @@ export default function SignUpPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: next
+          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+          : `${window.location.origin}/auth/callback`
+      },
     });
     if (error) setErr(error.message);
     else setDone(true);
@@ -2098,6 +2140,10 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // The email is confirmed now, so any orders placed as a guest with
+      // this address can be attached to the account. Best effort: the
+      // success and account pages call it again.
+      await supabase.rpc('claim_guest_orders');
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

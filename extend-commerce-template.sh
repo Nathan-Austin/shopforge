@@ -485,7 +485,6 @@ EOF
 echo "🧾 Setting up the checkout page..."
 mkdir -p "src/app/[locale]/checkout/success" "src/app/[locale]/checkout/cancel"
 cat > "src/app/[locale]/checkout/page.tsx" <<'EOF'
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
@@ -500,11 +499,13 @@ export default async function CheckoutPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  // Guests can check out. A signed-in user gets their email filled in and
+  // the order attached to their account; a guest is offered an account on
+  // the success page and the order follows once their email is confirmed.
   const supabase = await createClient();
   const {
     data: { user }
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/${locale}/auth/sign-in`);
 
   const t = await getTranslations({ locale, namespace: 'Checkout' });
   const cart = await getCart();
@@ -535,7 +536,7 @@ export default async function CheckoutPage({
         <p className="mt-1 text-sm text-gray-500">{t('shippingNote')}</p>
       </div>
 
-      <CheckoutForm locale={locale} defaultEmail={user.email ?? ''} />
+      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} />
     </main>
   );
 }
@@ -548,6 +549,7 @@ import { getTranslations } from 'next-intl/server';
 import OrderPending from '@/components/checkout/OrderPending';
 import { getOrderByStripeSession, orderReference } from '@/lib/orders/service';
 import { formatPrice } from '@/lib/format';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Where Stripe sends the shopper after paying. The order itself is written
@@ -567,7 +569,25 @@ export default async function CheckoutSuccessPage({
   const { session_id: sessionId } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'Checkout' });
 
+  const supabase = await createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  // A signed-in shopper may have placed earlier orders as a guest with this
+  // email. The function only attaches them once the email is confirmed.
+  if (user) {
+    await supabase.rpc('claim_guest_orders');
+  }
+
   const order = sessionId ? await getOrderByStripeSession(sessionId) : null;
+
+  const isGuestOrder = order !== null && order.userId === null && !user;
+  const signUpHref = order
+    ? `/${locale}/auth/sign-up?email=${encodeURIComponent(order.email)}&next=${encodeURIComponent(
+        `/${locale}/checkout/success?session_id=${order.stripeSessionId}`
+      )}`
+    : null;
 
   return (
     <main className="mx-auto max-w-2xl p-6">
@@ -638,6 +658,25 @@ export default async function CheckoutSuccessPage({
             </address>
           )}
         </section>
+      )}
+
+      {isGuestOrder && signUpHref && (
+        <aside className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <h2 className="font-semibold">{t('createAccountTitle')}</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            {t('createAccountBody', { email: order.email })}
+          </p>
+          <Link
+            href={signUpHref}
+            className="mt-3 inline-block rounded-md border border-gray-900 px-4 py-2 text-sm font-semibold"
+          >
+            {t('createAccount')}
+          </Link>
+        </aside>
+      )}
+
+      {order && user && order.userId === user.id && (
+        <p className="mt-4 text-center text-sm text-gray-500">{t('savedToAccount')}</p>
       )}
 
       <div className="mt-8 text-center">

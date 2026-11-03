@@ -550,3 +550,41 @@ revoke all on public.orders from anon, authenticated;
 revoke all on public.order_items from anon, authenticated;
 grant select on public.orders to authenticated;
 grant select on public.order_items to authenticated;
+
+-- A guest who paid with an email address and later signs up with the same
+-- one gets their orders attached to the new account. The match is only made
+-- once the address is confirmed, otherwise anyone could register with a
+-- stranger's email and read their order history before clicking the link.
+-- Returns the number of orders attached.
+create or replace function public.claim_guest_orders()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_email text;
+  v_count integer;
+begin
+  select u.email
+    into v_email
+    from auth.users u
+   where u.id = auth.uid()
+     and u.email_confirmed_at is not null;
+
+  if v_email is null then
+    return 0;
+  end if;
+
+  update public.orders
+     set user_id = auth.uid()
+   where user_id is null
+     and lower(email) = lower(v_email);
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+revoke all on function public.claim_guest_orders() from public, anon;
+grant execute on function public.claim_guest_orders() to authenticated;
