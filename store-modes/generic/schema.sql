@@ -449,3 +449,104 @@ create policy "No public access to cart_items"
   with check (false);
 
 revoke all on public.cart_items from anon, authenticated;
+
+-- Orders ---------------------------------------------------------------------
+
+-- An order is written by the Stripe webhook once a payment has succeeded, and
+-- never by the browser. Prices, names and the address are copied onto the
+-- order at that moment so editing or deleting a product later does not
+-- rewrite history.
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  -- Null for guest checkouts. A guest can later sign up with the same email
+  -- and have the order attached to their account.
+  user_id uuid references public.profiles(id) on delete set null,
+  email text not null,
+  status text not null default 'paid'
+    check (status in ('pending', 'paid', 'fulfilled', 'cancelled', 'refunded')),
+  currency text not null,
+  subtotal_cents integer not null check (subtotal_cents >= 0),
+  shipping_cents integer not null default 0 check (shipping_cents >= 0),
+  total_cents integer not null check (total_cents >= 0),
+  -- One session, one order: this is the second line of defence after
+  -- stripe_events against a retried webhook creating a duplicate.
+  stripe_session_id text not null unique,
+  stripe_payment_intent_id text,
+  -- Delivery details as Stripe reported them when the payment completed,
+  -- whether they were typed into our checkout form or into Stripe's.
+  shipping_name text,
+  shipping_line1 text,
+  shipping_line2 text,
+  shipping_city text,
+  shipping_postal_code text,
+  shipping_region text,
+  shipping_country text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.orders(id) on delete cascade,
+  -- Kept as a pointer only: the row below is the record of what was sold.
+  product_id uuid references public.products(id) on delete set null,
+  product_name text not null,
+  unit_price_cents integer not null check (unit_price_cents >= 0),
+  quantity integer not null check (quantity > 0),
+  selected_size text,
+  selected_color text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_orders_user on public.orders(user_id);
+create index if not exists idx_orders_email on public.orders(lower(email));
+create index if not exists idx_order_items_order on public.order_items(order_id);
+
+drop trigger if exists trg_orders_updated on public.orders;
+create trigger trg_orders_updated
+before update on public.orders
+for each row
+execute function public.touch_updated_at();
+
+alter table public.orders enable row level security;
+alter table public.order_items enable row level security;
+
+-- Customers read their own orders; the shop owner reads every order. Guest
+-- orders have no user_id and so are invisible through the Data API until
+-- they are attached to an account. Nobody writes through the Data API: the
+-- webhook inserts with the service-role key.
+drop policy if exists "Orders select own" on public.orders;
+create policy "Orders select own"
+  on public.orders
+  for select
+  using (user_id is not null and auth.uid() = user_id);
+
+drop policy if exists "Orders select all for owner" on public.orders;
+create policy "Orders select all for owner"
+  on public.orders
+  for select
+  using (public.is_shop_owner());
+
+drop policy if exists "Order items select own" on public.order_items;
+create policy "Order items select own"
+  on public.order_items
+  for select
+  using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_items.order_id
+        and o.user_id is not null
+        and o.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Order items select all for owner" on public.order_items;
+create policy "Order items select all for owner"
+  on public.order_items
+  for select
+  using (public.is_shop_owner());
+
+revoke all on public.orders from anon, authenticated;
+revoke all on public.order_items from anon, authenticated;
+grant select on public.orders to authenticated;
+grant select on public.order_items to authenticated;
