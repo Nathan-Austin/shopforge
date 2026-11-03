@@ -92,6 +92,23 @@ export function clampQuantity(requested: number, rules: StockRules): ClampResult
   };
 }
 
+/**
+ * Keeps a quantity picker between 1 and its limit. A limit below one is
+ * ignored here: that is the sold-out state, which the button shows instead
+ * of a picker.
+ */
+export function clampPickerQuantity(
+  requested: number,
+  maxQuantity: number | null | undefined
+): number {
+  const wanted = Number.isFinite(requested) ? Math.floor(requested) : 1;
+  const atLeastOne = Math.max(1, wanted);
+  if (typeof maxQuantity === 'number' && maxQuantity >= 1) {
+    return Math.min(atLeastOne, Math.floor(maxQuantity));
+  }
+  return atLeastOne;
+}
+
 export interface CartLinePricing {
   quantity: number;
   unitPriceCents: number;

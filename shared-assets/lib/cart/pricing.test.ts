@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   calculateCartTotals,
   cartLineKey,
+  clampPickerQuantity,
   clampQuantity,
   maxAllowedQuantity
 } from './pricing';
@@ -155,5 +156,31 @@ describe('cartLineKey', () => {
   it('treats a missing variant the same as an empty one', () => {
     expect(cartLineKey('p1', null, null)).toBe(cartLineKey('p1', '', ''));
     expect(cartLineKey('p1')).toBe(cartLineKey('p1', null, null));
+  });
+});
+
+describe('clampPickerQuantity', () => {
+  it('never goes below one', () => {
+    expect(clampPickerQuantity(0, null)).toBe(1);
+    expect(clampPickerQuantity(-5, 10)).toBe(1);
+    expect(clampPickerQuantity(Number.NaN, 10)).toBe(1);
+  });
+
+  it('rounds down to whole units', () => {
+    expect(clampPickerQuantity(2.9, null)).toBe(2);
+  });
+
+  it('is unlimited without a maximum', () => {
+    expect(clampPickerQuantity(40, null)).toBe(40);
+    expect(clampPickerQuantity(40, undefined)).toBe(40);
+  });
+
+  it('stops at the maximum', () => {
+    expect(clampPickerQuantity(40, 3)).toBe(3);
+    expect(clampPickerQuantity(3, 3)).toBe(3);
+  });
+
+  it('ignores a maximum below one, which the sold-out state handles instead', () => {
+    expect(clampPickerQuantity(2, 0)).toBe(2);
   });
 });
