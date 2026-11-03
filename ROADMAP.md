@@ -17,6 +17,11 @@ Planned work for shopforge, roughly in order.
 - [ ] Customer order history page (`/account/orders`), reading via RLS
 - [ ] Order confirmation email
 - [ ] Admin orders view, with status changes (fulfilled, cancelled, refunded)
+      recorded in the database only
+- [ ] Refunds from the admin: a "refund" action that calls Stripe for the
+      full order or for chosen order items (partial refund), then records
+      the status. Today the status is only a label; the money has to be
+      refunded in the Stripe dashboard
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
 
 ## 2. Admin and store settings

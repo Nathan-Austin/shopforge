@@ -45,6 +45,12 @@ project, then collect these from **Project Settings**:
 | Anon (public) key | API Keys | `eyJ…` |
 | Service-role key | API Keys | `eyJ…`; keep it secret, server-side only |
 
+Then check **Authentication → Sign In / Providers → Email** and make sure
+**Confirm email** is on. It is on by default for new projects. The shop
+relies on it: a guest's orders are attached to an account only after the
+account's email is confirmed, so with confirmation off anyone could sign up
+with someone else's address and read their orders. Leave it on.
+
 ## 3. Generate the shop
 
 From `~/projects`:
