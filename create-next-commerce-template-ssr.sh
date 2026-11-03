@@ -675,7 +675,10 @@ cat > src/messages/en.json <<'EOF'
     "stockChanged": "Something in your cart sold out. Please check your cart.",
     "successTitle": "Thank you for your order",
     "keepShopping": "Keep shopping",
-    "successBody": "Your payment went through and we have emailed your receipt."
+    "successBody": "Your payment went through and we have emailed your receipt.",
+    "cancelTitle": "Payment cancelled",
+    "cancelBody": "You were not charged. Your cart is just as you left it, so you can pick up where you stopped whenever you like.",
+    "tryAgain": "Back to checkout"
   }
 }
 EOF
@@ -846,7 +849,10 @@ cat > src/messages/de.json <<'EOF'
     "stockChanged": "Ein Artikel ist ausverkauft. Bitte prüfen Sie Ihren Warenkorb.",
     "successTitle": "Vielen Dank für Ihre Bestellung",
     "keepShopping": "Weiter einkaufen",
-    "successBody": "Ihre Zahlung war erfolgreich, die Rechnung ist unterwegs."
+    "successBody": "Ihre Zahlung war erfolgreich, die Rechnung ist unterwegs.",
+    "cancelTitle": "Zahlung abgebrochen",
+    "cancelBody": "Es wurde nichts abgebucht. Ihr Warenkorb ist unverändert, Sie können jederzeit fortfahren.",
+    "tryAgain": "Zurück zur Kasse"
   }
 }
 EOF
@@ -1017,7 +1023,10 @@ cat > src/messages/tr.json <<'EOF'
     "stockChanged": "Sepetinizdeki bir ürün tükendi. Lütfen sepetinizi kontrol edin.",
     "successTitle": "Siparişiniz için teşekkürler",
     "keepShopping": "Alışverişe devam et",
-    "successBody": "Ödemeniz alındı, makbuzunuzu e-posta ile gönderdik."
+    "successBody": "Ödemeniz alındı, makbuzunuzu e-posta ile gönderdik.",
+    "cancelTitle": "Ödeme iptal edildi",
+    "cancelBody": "Hesabınızdan ücret alınmadı. Sepetiniz olduğu gibi duruyor, dilediğiniz zaman kaldığınız yerden devam edebilirsiniz.",
+    "tryAgain": "Ödemeye dön"
   }
 }
 EOF
@@ -1188,7 +1197,10 @@ cat > src/messages/ar.json <<'EOF'
     "stockChanged": "نفد أحد المنتجات في سلتك. يرجى مراجعة السلة.",
     "successTitle": "شكرًا لطلبك",
     "keepShopping": "متابعة التسوق",
-    "successBody": "تمت عملية الدفع بنجاح وأرسلنا الإيصال إلى بريدك."
+    "successBody": "تمت عملية الدفع بنجاح وأرسلنا الإيصال إلى بريدك.",
+    "cancelTitle": "تم إلغاء الدفع",
+    "cancelBody": "لم يتم خصم أي مبلغ. سلتك كما تركتها، ويمكنك المتابعة متى شئت.",
+    "tryAgain": "العودة إلى الدفع"
   }
 }
 EOF

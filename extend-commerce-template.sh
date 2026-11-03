@@ -225,7 +225,7 @@ export async function POST(request: Request) {
         },
       }],
       success_url: `${origin}/${payload.locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/${payload.locale}/checkout`,
+      cancel_url: `${origin}/${payload.locale}/checkout/cancel`,
       // Everything the webhook needs to write the order. Stripe echoes
       // metadata back on the checkout.session.completed event, so the
       // delivery details typed into our form reach the webhook even though
@@ -483,7 +483,7 @@ EOF
 
 # --- Checkout and success pages ---------------------------------------------
 echo "🧾 Setting up the checkout page..."
-mkdir -p "src/app/[locale]/checkout/success"
+mkdir -p "src/app/[locale]/checkout/success" "src/app/[locale]/checkout/cancel"
 cat > "src/app/[locale]/checkout/page.tsx" <<'EOF'
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -566,6 +566,43 @@ export default async function CheckoutSuccessPage({
       >
         {t('keepShopping')}
       </Link>
+    </main>
+  );
+}
+EOF
+
+# Stripe sends the shopper here when they leave the payment page. Nothing was
+# charged and the cart is untouched: the webhook never fired.
+cat > "src/app/[locale]/checkout/cancel/page.tsx" <<'EOF'
+import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+
+export default async function CheckoutCancelPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Checkout' });
+
+  return (
+    <main className="mx-auto max-w-2xl p-6 text-center">
+      <h1 className="text-2xl font-bold">{t('cancelTitle')}</h1>
+      <p className="mt-2 text-gray-600">{t('cancelBody')}</p>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Link
+          href={`/${locale}/checkout`}
+          className="inline-block rounded-md bg-black px-5 py-2.5 font-semibold text-white"
+        >
+          {t('tryAgain')}
+        </Link>
+        <Link
+          href={`/${locale}/cart`}
+          className="inline-block rounded-md border border-gray-300 px-5 py-2.5 font-semibold"
+        >
+          {t('backToCart')}
+        </Link>
+      </div>
     </main>
   );
 }
