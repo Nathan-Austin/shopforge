@@ -28,4 +28,11 @@ export interface StoreProduct {
   brand?: StoreBrand | null;
   stock?: number;
   is_active?: boolean;
+  isFeatured?: boolean | null;
+  /** ISO timestamp; what the archive's "newest" sort orders by. */
+  createdAt?: string | null;
+  /** Cart variant options and availability, for the card's add-to-cart. */
+  sizeOptions?: string[] | null;
+  colorOptions?: string[] | null;
+  soldOut?: boolean;
 }

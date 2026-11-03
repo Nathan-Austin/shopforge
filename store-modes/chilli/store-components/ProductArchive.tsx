@@ -1,122 +1,95 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+
+import AddToCartButton from '@/components/cart/AddToCartButton';
+import {
+  archiveQueryString,
+  filterArchive,
+  sortArchive,
+  type ArchiveQuery,
+  type ArchiveSort
+} from '@/lib/products/archive';
+import { formatHeat, heatScale } from '@/lib/products/heat';
 import type { StoreProduct, ChilliType, Category } from './types';
-import { formatHeat, heatScale, heatWord } from '@/lib/products/heat';
 import ProductCard from './ProductCard';
 import Chip from './Chip';
+
+/** Sorts this store mode offers, including the heat sorts. */
+export const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = [
+  'recent',
+  'popular',
+  'mild-first',
+  'hot-first'
+];
+
+const PAGE_SIZE = 12;
+
+// Heat is stored as a number; the filter buttons are the shop's word bands.
+const HEAT_WORDS = heatScale?.bands.map((band) => band.word) ?? [];
 
 interface ProductArchiveProps {
   products: StoreProduct[];
   chilliTypes: ChilliType[];
   categories: Category[];
   locale: string;
+  /** Parsed server-side from the page's searchParams. */
+  initialQuery: ArchiveQuery;
 }
 
-type SortOption = 'recent' | 'popular' | 'mild-first' | 'hot-first';
-
-// Heat is stored as a number; the words come from the shop's heat scale.
-const HEAT_WORDS = heatScale?.bands.map((band) => band.word) ?? [];
-
-const resolveHeatRank = (value?: string | number | null): number | null => {
-  if (value === null || value === undefined || value === '') return null;
-  const numeric = Number(value);
-  return Number.isFinite(numeric) ? numeric : null;
-};
-
+/**
+ * The /shop listing: search, heat, chilli type and category filters and
+ * sorting over products the server already fetched. The state lives in the
+ * URL (?q=…&heat=…&type=…&category=…&sort=…) so results can be shared and
+ * survive a reload; updates go through history.replaceState, so typing
+ * never re-runs the server page.
+ */
 export default function ProductArchive({
   products,
   chilliTypes,
   categories,
-  locale
+  locale,
+  initialQuery
 }: ProductArchiveProps) {
   const t = useTranslations('SauceArchive');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedHeatLevel, setSelectedHeatLevel] = useState('');
-  const [selectedChilliType, setSelectedChilliType] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('recent');
-  const [displayCount, setDisplayCount] = useState(12);
+  const pathname = usePathname();
+  const [query, setQuery] = useState<ArchiveQuery>(initialQuery);
+  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
 
-  const filteredAndSortedProducts = useMemo(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = !searchTerm ||
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.brand?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchesHeatLevel =
-        !selectedHeatLevel || heatWord(product.heatLevel) === selectedHeatLevel;
-
-      const matchesChilliType = !selectedChilliType || (
-        Array.isArray(product.chilliTypes) &&
-        product.chilliTypes.some((ct) => ct?.id?.toString() === selectedChilliType || ct?.name === selectedChilliType)
-      );
-
-      const matchesCategory =
-        !selectedCategory ||
-        product.category?.id?.toString() === selectedCategory ||
-        product.category?.slug === selectedCategory;
-
-      return matchesSearch && matchesHeatLevel && matchesChilliType && matchesCategory;
-    });
-
-    if (sortBy === 'mild-first') {
-      filtered = [...filtered].sort((a, b) => {
-        const aLevel = resolveHeatRank(a.heatLevel);
-        const bLevel = resolveHeatRank(b.heatLevel);
-        return (aLevel ?? 999) - (bLevel ?? 999);
-      });
-    } else if (sortBy === 'hot-first') {
-      filtered = [...filtered].sort((a, b) => {
-        const aLevel = resolveHeatRank(a.heatLevel);
-        const bLevel = resolveHeatRank(b.heatLevel);
-        return (bLevel ?? -1) - (aLevel ?? -1);
-      });
-    } else if (sortBy === 'popular') {
-      filtered = [...filtered];
-    } else {
-      filtered = [...filtered];
-    }
-
-    return filtered;
-  }, [products, searchTerm, selectedHeatLevel, selectedChilliType, selectedCategory, sortBy]);
-
-  const activeFilters = useMemo(() => {
-    const filters: Array<{label: string; value: string; clear: () => void}> = [];
-    if (selectedHeatLevel) {
-      filters.push({
-        label: `Heat: ${selectedHeatLevel}`,
-        value: selectedHeatLevel,
-        clear: () => setSelectedHeatLevel('')
-      });
-    }
-    if (selectedCategory) {
-      const catName = categories.find(cat => cat.id.toString() === selectedCategory)?.name || selectedCategory;
-      filters.push({
-        label: `Type: ${catName}`,
-        value: selectedCategory,
-        clear: () => setSelectedCategory('')
-      });
-    }
-    return filters;
-  }, [selectedHeatLevel, selectedCategory, categories]);
-
-  const selectedPepper = useMemo(() => {
-    if (!selectedChilliType) return null;
-    return chilliTypes.find(ct => ct.id.toString() === selectedChilliType);
-  }, [selectedChilliType, chilliTypes]);
-
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setSelectedHeatLevel('');
-    setSelectedChilliType('');
-    setSelectedCategory('');
+  const update = (changes: Partial<ArchiveQuery>) => {
+    const next = { ...query, ...changes };
+    setQuery(next);
+    // A new filter means a new result list, so start its paging over.
+    setDisplayCount(PAGE_SIZE);
+    window.history.replaceState(null, '', `${pathname}${archiveQueryString(next)}`);
   };
 
-  const displayedProducts = filteredAndSortedProducts.slice(0, displayCount);
-  const hasMore = filteredAndSortedProducts.length > displayCount;
+  const filtered = useMemo(
+    () => sortArchive(filterArchive(products, query, heatScale), query.sort),
+    [products, query]
+  );
+
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.slug === query.category) ?? null,
+    [categories, query.category]
+  );
+
+  const selectedPepper = useMemo(
+    () => chilliTypes.find((type) => type.slug === query.chilliType) ?? null,
+    [chilliTypes, query.chilliType]
+  );
+
+  const clearAllFilters = () =>
+    update({ search: '', heat: '', chilliType: '', category: '' });
+
+  const displayed = filtered.slice(0, displayCount);
+  const hasMore = filtered.length > displayCount;
+  const chipCount =
+    Number(Boolean(query.heat)) +
+    Number(Boolean(selectedCategory)) +
+    Number(Boolean(selectedPepper));
 
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8">
@@ -130,8 +103,8 @@ export default function ProductArchive({
               <input
                 type="search"
                 placeholder={t('search.placeholder')}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={query.search}
+                onChange={(e) => update({ search: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
                          focus:outline-none focus:ring-2 focus:ring-emerald-700"
               />
@@ -143,17 +116,19 @@ export default function ProductArchive({
                 {t('search.filters.heatLevel')}
               </legend>
               <div className="mt-1 flex flex-wrap gap-2 items-center">
-                {HEAT_WORDS.map((level) => (
+                {HEAT_WORDS.map((word) => (
                   <button
-                    key={level}
-                    onClick={() => setSelectedHeatLevel(selectedHeatLevel === level ? '' : level)}
+                    key={word}
+                    type="button"
+                    aria-pressed={query.heat === word}
+                    onClick={() => update({ heat: query.heat === word ? '' : word })}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors
-                      ${selectedHeatLevel === level
+                      ${query.heat === word
                         ? 'bg-emerald-700 text-stone-50 border-emerald-700'
                         : 'border-border bg-card text-foreground hover:border-emerald-700 hover:bg-emerald-700/10'
                       }`}
                   >
-                    {level}
+                    {word}
                   </button>
                 ))}
               </div>
@@ -163,14 +138,14 @@ export default function ProductArchive({
             <label className="block text-sm font-medium text-foreground">
               {t('search.filters.pepper')}
               <select
-                value={selectedChilliType}
-                onChange={(e) => setSelectedChilliType(e.target.value)}
+                value={query.chilliType}
+                onChange={(e) => update({ chilliType: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
                          focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="">{t('search.filters.allChilliTypes')}</option>
-                {chilliTypes.map(chilliType => (
-                  <option key={chilliType.id} value={chilliType.id}>
+                {chilliTypes.map((chilliType) => (
+                  <option key={chilliType.id} value={chilliType.slug}>
                     {chilliType.name}
                   </option>
                 ))}
@@ -181,14 +156,14 @@ export default function ProductArchive({
             <label className="block text-sm font-medium text-foreground">
               {t('search.filters.sauceType')}
               <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={query.category}
+                onChange={(e) => update({ category: e.target.value })}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
                          focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
                 <option value="">{t('search.filters.allCategories')}</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.slug}>
                     {category.name}
                   </option>
                 ))}
@@ -199,8 +174,8 @@ export default function ProductArchive({
             <label className="block text-sm font-medium text-foreground">
               {t('search.filters.sort')}
               <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                value={query.sort}
+                onChange={(e) => update({ sort: e.target.value as ArchiveSort })}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground
                          focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
@@ -213,21 +188,27 @@ export default function ProductArchive({
           </div>
 
           {/* Active Filter Chips */}
-          {(activeFilters.length > 0 || selectedPepper) && (
+          {chipCount > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 items-center">
               {selectedPepper && (
-                <Chip variant="filter" onRemove={() => setSelectedChilliType('')}>
+                <Chip variant="filter" onRemove={() => update({ chilliType: '' })}>
                   {selectedPepper.name}
                   {selectedPepper.heatLevel ? ` • ${formatHeat(selectedPepper.heatLevel)}` : ''}
                 </Chip>
               )}
-              {activeFilters.map((filter) => (
-                <Chip key={filter.value} variant="filter" onRemove={filter.clear}>
-                  {filter.label}
+              {query.heat && (
+                <Chip variant="filter" onRemove={() => update({ heat: '' })}>
+                  {t('search.filters.heatChip', { value: query.heat })}
                 </Chip>
-              ))}
-              {(activeFilters.length > 0 || selectedPepper) && (activeFilters.length + (selectedPepper ? 1 : 0)) > 1 && (
+              )}
+              {selectedCategory && (
+                <Chip variant="filter" onRemove={() => update({ category: '' })}>
+                  {t('search.filters.categoryChip', { value: selectedCategory.name })}
+                </Chip>
+              )}
+              {chipCount > 1 && (
                 <button
+                  type="button"
                   onClick={clearAllFilters}
                   className="text-xs font-medium text-foreground underline-offset-4 hover:text-emerald-700 hover:underline"
                 >
@@ -239,11 +220,11 @@ export default function ProductArchive({
 
           {/* Results Count */}
           <div className="mt-3 text-sm text-text-muted">
-            {t('results.showing')} {displayedProducts.length} {t('results.of')} {filteredAndSortedProducts.length} {t('results.sauces')}
+            {t('results.showingCount', { shown: displayed.length, total: filtered.length })}
           </div>
         </section>
 
-        {filteredAndSortedProducts.length === 0 && (
+        {filtered.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🌶️</div>
             <h3 className="text-xl font-bold text-foreground mb-4">{t('results.noResults')}</h3>
@@ -251,6 +232,7 @@ export default function ProductArchive({
               {t('results.adjustSearch')}
             </p>
             <button
+              type="button"
               onClick={clearAllFilters}
               className="mt-4 px-4 py-2 rounded-lg border border-border bg-card text-foreground
                        transition-colors hover:border-emerald-700 hover:bg-emerald-700/10"
@@ -260,10 +242,24 @@ export default function ProductArchive({
           </div>
         )}
 
-        {displayedProducts.length > 0 && (
+        {displayed.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} locale={locale} />
+            {displayed.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                locale={locale}
+                action={
+                  <AddToCartButton
+                    locale={locale}
+                    productId={product.id.toString()}
+                    sizeOptions={product.sizeOptions}
+                    colorOptions={product.colorOptions}
+                    soldOut={product.soldOut}
+                    className="w-full"
+                  />
+                }
+              />
             ))}
           </div>
         )}
@@ -272,7 +268,8 @@ export default function ProductArchive({
         {hasMore && (
           <div className="mt-8 flex justify-center">
             <button
-              onClick={() => setDisplayCount(prev => prev + 12)}
+              type="button"
+              onClick={() => setDisplayCount((prev) => prev + PAGE_SIZE)}
               className="px-4 py-2 rounded-lg border border-border bg-card text-foreground
                        transition-colors font-medium hover:border-emerald-700 hover:bg-emerald-700/10"
             >
