@@ -1,7 +1,12 @@
 import { getTranslations } from 'next-intl/server';
 
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
-import { availableSorts, parseArchiveQuery } from '@/lib/products/archive';
+import {
+  availableSorts,
+  categoriesInUse,
+  chilliTypesInUse,
+  parseArchiveQuery
+} from '@/lib/products/archive';
 import { many } from '@/lib/supabase/relations';
 import { createClient } from '@/lib/supabase/server';
 import ProductArchive, { ARCHIVE_SORT_OPTIONS } from './ProductArchive';
@@ -137,11 +142,12 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
       }) <= 0
   }));
 
-  const categories: Category[] = (categoryRows ?? []).map((row) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug
-  }));
+  // Only options that lead to at least one product, so no filter is a
+  // one-click route to "no matches".
+  const categories: Category[] = categoriesInUse(
+    (categoryRows ?? []).map((row) => ({ id: row.id, name: row.name, slug: row.slug })),
+    products
+  );
 
   // A shop with nothing in it yet gets a plain note, not search controls
   // and a "no matches" message that suggest the customer did something.
@@ -153,7 +159,7 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
   return (
     <ProductArchive
       products={products}
-      chilliTypes={chilliTypes}
+      chilliTypes={chilliTypesInUse(chilliTypes, products)}
       categories={categories}
       locale={locale}
       initialQuery={parseArchiveQuery(searchParams, sortOptions)}

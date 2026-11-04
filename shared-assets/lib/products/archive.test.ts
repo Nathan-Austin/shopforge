@@ -4,6 +4,8 @@ import {
   ARCHIVE_SORTS,
   archiveQueryString,
   availableSorts,
+  categoriesInUse,
+  chilliTypesInUse,
   POPULARITY_MIN_UNITS,
   popularityAvailable,
   DEFAULT_ARCHIVE_SORT,
@@ -282,5 +284,39 @@ describe('availableSorts', () => {
     expect(parseArchiveQuery({ sort: 'popular' }, availableSorts(['recent', 'popular'], 0)).sort).toBe(
       DEFAULT_ARCHIVE_SORT
     );
+  });
+});
+
+describe('categoriesInUse', () => {
+  const categories = [
+    { id: 1, name: 'Fruit-forward', slug: 'fruit-forward' },
+    { id: 2, name: 'Smoky', slug: 'smoky' },
+    { id: 3, name: 'Fermented', slug: 'fermented' }
+  ];
+
+  it('drops categories with no products in them', () => {
+    expect(categoriesInUse(categories, sauces).map((c) => c.slug)).toEqual([
+      'fruit-forward',
+      'smoky'
+    ]);
+  });
+
+  it('keeps the incoming order and is empty for an empty catalogue', () => {
+    expect(categoriesInUse(categories, [])).toEqual([]);
+  });
+});
+
+describe('chilliTypesInUse', () => {
+  const types = [
+    { id: 'a', name: 'Jalapeño', slug: 'jalapeno' },
+    { id: 'b', name: 'Habanero', slug: 'habanero' },
+    { id: 'z', name: 'Aji', slug: 'aji' }
+  ];
+
+  it('drops chilli types no product is linked to', () => {
+    expect(chilliTypesInUse(types, sauces).map((t) => t.slug)).toEqual([
+      'jalapeno',
+      'habanero'
+    ]);
   });
 });

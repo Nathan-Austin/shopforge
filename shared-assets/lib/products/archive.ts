@@ -224,3 +224,37 @@ export function sortArchive<T extends ArchiveProduct>(
       return sorted.sort(byNewest);
   }
 }
+
+/**
+ * Only offer filter options that lead somewhere. A category or chilli type
+ * with no published product would be a one-click route to "no matches".
+ */
+export function categoriesInUse<C extends { id: string | number; slug: string }>(
+  categories: readonly C[],
+  products: readonly ArchiveProduct[]
+): C[] {
+  const used = new Set<string>();
+  for (const product of products) {
+    if (product.category) {
+      used.add(product.category.slug);
+      used.add(product.category.id.toString());
+    }
+  }
+  return categories.filter(
+    (category) => used.has(category.slug) || used.has(category.id.toString())
+  );
+}
+
+export function chilliTypesInUse<T extends { id: string | number; slug: string }>(
+  chilliTypes: readonly T[],
+  products: readonly ArchiveProduct[]
+): T[] {
+  const used = new Set<string>();
+  for (const product of products) {
+    for (const type of product.chilliTypes ?? []) {
+      if (type.slug) used.add(type.slug);
+      used.add(type.id.toString());
+    }
+  }
+  return chilliTypes.filter((type) => used.has(type.slug) || used.has(type.id.toString()));
+}
