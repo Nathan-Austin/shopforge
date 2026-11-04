@@ -208,7 +208,7 @@ const addressSchema = z.object({
 });
 
 const checkoutSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   locale: z.string().min(2),
 });
 
@@ -414,7 +414,15 @@ function countryCode(value: string | null | undefined): string | null {
 }
 
 function shippingSnapshot(session: Stripe.Checkout.Session) {
-  const collected = session.collected_information?.shipping_details;
+  // Webhook payloads use the API version set on the endpoint in the Stripe
+  // dashboard, not the SDK's. Since 2025-03-31 the address lives under
+  // collected_information; an endpoint pinned to an older version still
+  // sends it at the top level, so read both.
+  type LegacySession = { shipping_details?: Stripe.Checkout.Session.CollectedInformation.ShippingDetails | null };
+  const collected =
+    session.collected_information?.shipping_details ??
+    (session as unknown as LegacySession).shipping_details ??
+    null;
   if (collected?.address) {
     return {
       shipping_name: collected.name ?? null,
