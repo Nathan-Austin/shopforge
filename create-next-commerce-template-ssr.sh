@@ -3158,10 +3158,25 @@ import { NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale, getMessages } from 'next-intl/server';
 import '../globals.css';
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import Header from '@/components/Header';
 import { parseLocale } from '@/lib/i18n/locales';
+import { siteUrl } from '@/lib/seo/alternates';
+import { googleSiteVerification, shopName } from '@/lib/seo/store';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Site-wide head defaults. metadataBase makes every relative URL in page
+ * metadata absolute (Google requires absolute canonical and hreflang
+ * URLs); the pages add their own canonical, hreflang set and description.
+ */
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
+  title: { default: shopName(), template: `%s | ${shopName()}` },
+  applicationName: shopName(),
+  ...(googleSiteVerification() ? { verification: { google: googleSiteVerification() } } : {})
+};
 
 export default async function LocaleLayout({
   children,
@@ -3192,31 +3207,287 @@ EOF
 
 # 9) Locale root page
 cat > src/app/[locale]/page.tsx <<'EOF'
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
+
+import JsonLd from '@/components/seo/JsonLd';
+import { hreflangOf } from '@/lib/i18n/locales';
+import { localizedUrl, pageAlternates } from '@/lib/seo/alternates';
+import { onlineStoreJsonLd, webSiteJsonLd } from '@/lib/seo/jsonld';
+import { logoUrl, returnPolicy, shippingPolicy, shopName } from '@/lib/seo/store';
+import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Home' });
+  return {
+    description: t('tagline', { shop: shopName() }),
+    alternates: pageAlternates(locale, ''),
+    openGraph: { type: 'website', siteName: shopName(), locale: hreflangOf(locale), url: localizedUrl(locale, '') }
+  };
+}
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Home' });
+  const tNav = await getTranslations({ locale, namespace: 'Nav' });
+  const name = shopName();
+  const url = localizedUrl(locale, '');
+
   return (
     <main className="mx-auto max-w-3xl p-6">
-      <h1 className="text-3xl font-bold mb-6">Next Commerce Template</h1>
-      <nav className="flex gap-4">
-        <Link href={`/${locale}/shop`} className="underline">Shop</Link>
-        <Link href={`/${locale}/cart`} className="underline">Cart</Link>
-        <Link href={`/${locale}/checkout`} className="underline">Checkout</Link>
-        <Link href={`/${locale}/auth/sign-in`} className="underline">Sign in</Link>
-        <Link href={`/${locale}/auth/sign-up`} className="underline">Create account</Link>
+      {/* The shop itself, once, on the home page: site name, policies. */}
+      <JsonLd
+        data={[
+          onlineStoreJsonLd({
+            name,
+            url,
+            logo: logoUrl(),
+            shipping: shippingPolicy(),
+            returnPolicy: returnPolicy(CHECKOUT_CONFIG.allowedCountries[0])
+          }),
+          webSiteJsonLd({ name, url, inLanguage: hreflangOf(locale) })
+        ]}
+      />
+      <h1 className="mb-2 text-3xl font-bold">{name}</h1>
+      <p className="mb-6 text-gray-600">{t('tagline', { shop: name })}</p>
+      <nav className="flex flex-wrap gap-4">
+        <Link href={`/${locale}/shop`} className="rounded-md bg-black px-4 py-2 font-semibold text-white hover:bg-gray-800">
+          {t('browse')}
+        </Link>
+        <Link href={`/${locale}/cart`} className="underline">{tNav('Cart')}</Link>
+        <Link href={`/${locale}/account/orders`} className="underline">{tNav('Account')}</Link>
       </nav>
     </main>
   );
 }
 EOF
 
+# 9b) Baseline checkout config (which countries the shop delivers to). The
+# extend script rewrites this file from its --shipping flag; it exists here
+# so the structured data on the product and home pages can name the
+# delivery countries even before the extend script has run.
+mkdir -p src/lib/checkout
+cat > src/lib/checkout/config.ts <<'EOF'
+/**
+ * Checkout configuration.
+ *
+ * Written by extend-commerce-template.sh from --shipping=form|stripe.
+ * Edit by hand or re-run the script to change it.
+ */
+export const CHECKOUT_CONFIG = {
+  /**
+   * 'form':   the /checkout page collects the delivery address.
+   * 'stripe': Stripe's payment page collects it (shipping_address_collection).
+   */
+  shippingAddress: 'form' as 'form' | 'stripe',
+
+  /**
+   * Countries the shop delivers to, as ISO 3166-1 alpha-2 codes. The
+   * checkout form offers exactly these, and in 'stripe' mode Stripe's page
+   * is limited to them too. Placeholder list: replace it with where you
+   * actually ship.
+   */
+  allowedCountries: ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'],
+} as const;
+EOF
+
+# 9c) robots.txt and sitemap.xml, from the same alternates helper the pages
+# use, so the sitemap's hreflang set is the one in the <head>.
+cat > src/app/robots.ts <<'EOF'
+import type { MetadataRoute } from 'next';
+
+import { siteUrl } from '@/lib/seo/alternates';
+
+export default function robots(): MetadataRoute.Robots {
+  const base = siteUrl();
+  return {
+    rules: [
+      {
+        userAgent: '*',
+        // The feeds are under /api on purpose: Merchant Center fetches them.
+        allow: ['/', '/api/feeds/'],
+        disallow: ['/api/', '/*/cart', '/*/checkout', '/*/account', '/*/auth', '/*/admin']
+      }
+    ],
+    sitemap: `${base}/sitemap.xml`,
+    host: base
+  };
+}
+EOF
+cat > src/app/sitemap.ts <<'EOF'
+import type { MetadataRoute } from 'next';
+
+import { sitemapEntriesFor } from '@/lib/seo/alternates';
+import { createClient } from '@/lib/supabase/server';
+
+// Read at request time: the catalogue changes, and a build must not depend
+// on the database being reachable.
+export const dynamic = 'force-dynamic';
+
+/**
+ * Every indexable page in every locale, each entry carrying the full
+ * hreflang set. Cart, checkout, account, auth and admin are noindex and
+ * stay out.
+ */
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const supabase = await createClient();
+  const { data: products } = await supabase
+    .from('products_public')
+    .select('slug, updated_at')
+    .order('created_at', { ascending: false });
+
+  return [
+    ...sitemapEntriesFor('', { priority: 1 }),
+    ...sitemapEntriesFor('/shop', { priority: 0.9 }),
+    ...(products ?? []).flatMap((product) =>
+      sitemapEntriesFor(`/shop/${product.slug}`, {
+        lastModified: product.updated_at ?? undefined,
+        priority: 0.8
+      })
+    )
+  ];
+}
+EOF
+
+# 9d) Merchant Center feed, one per locale, from the same rows and currency
+# as the pages. 503 rather than an empty feed when the catalogue can't be
+# read: Merchant Center deletes products that vanish from their source.
+mkdir -p "src/app/api/feeds/google/[locale]"
+cat > "src/app/api/feeds/google/[locale]/route.ts" <<'EOF'
+import { NextResponse } from 'next/server';
+
+import { LOCALES } from '@/i18n/config';
+import { stockRulesOf, stockStatus } from '@/lib/products/detail';
+import { localizedUrl } from '@/lib/seo/alternates';
+import { availabilityFor } from '@/lib/seo/jsonld';
+import { buildMerchantFeed, type FeedProduct } from '@/lib/seo/merchantFeed';
+import { shopName } from '@/lib/seo/store';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+export const dynamic = 'force-dynamic';
+
+interface FeedRow {
+  id: string;
+  name: string;
+  slug: string;
+  sku: string | null;
+  barcode: string | null;
+  description: string | null;
+  details: string | null;
+  image_url: string | null;
+  gallery_urls: string[] | null;
+  price_cents: number;
+  currency: string;
+  stock: number | null;
+  track_inventory: boolean | null;
+  allow_backorder: boolean | null;
+  max_order_quantity: number | null;
+  weight_grams: number | null;
+  brand_name: string | null;
+  category_name: string | null;
+}
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ locale: string }> }
+) {
+  const { locale: raw } = await params;
+  // /api/feeds/google/de-de and /api/feeds/google/de-de.xml both work.
+  const locale = raw.replace(/\.xml$/, '');
+  if (!(LOCALES as readonly string[]).includes(locale)) {
+    return new NextResponse('Unknown locale', { status: 404 });
+  }
+
+  const { data, error } = await createAdminClient()
+    .from('products_public')
+    .select(
+      'id, name, slug, sku, barcode, description, details, image_url, gallery_urls, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, weight_grams, brand_name, category_name'
+    )
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return new NextResponse('Catalogue unavailable', { status: 503, headers: { 'Retry-After': '300' } });
+  }
+
+  const products: FeedProduct[] = ((data ?? []) as FeedRow[])
+    .filter((row) => row.image_url)
+    .map((row) => ({
+      id: row.id,
+      title: row.name,
+      description: row.details || row.description,
+      link: localizedUrl(locale, `/shop/${row.slug}`),
+      images: [row.image_url as string, ...(row.gallery_urls ?? [])],
+      priceCents: row.price_cents,
+      currency: row.currency,
+      availability: availabilityFor(stockStatus(stockRulesOf(row)).kind),
+      brand: row.brand_name,
+      sku: row.sku,
+      barcode: row.barcode,
+      category: row.category_name,
+      shippingWeightGrams: row.weight_grams
+    }));
+
+  const xml = buildMerchantFeed({
+    shopName: shopName(),
+    shopUrl: localizedUrl(locale, ''),
+    products
+  });
+
+  return new NextResponse(xml, {
+    headers: {
+      'Content-Type': 'application/rss+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=900'
+    }
+  });
+}
+EOF
+
+# 9e) noindex layouts for the pages that must stay out of search. A layout
+# rather than per-page metadata because some of these pages are client
+# components, which cannot export metadata.
+for section in cart checkout account auth; do
+  mkdir -p "src/app/[locale]/$section"
+  cat > "src/app/[locale]/$section/layout.tsx" <<'EOF'
+import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
+
+import { NOINDEX } from '@/lib/seo/alternates';
+
+/** Private or transactional pages: never indexed, no hreflang set. */
+export const metadata: Metadata = NOINDEX;
+
+export default function NoIndexLayout({ children }: { children: ReactNode }) {
+  return children;
+}
+EOF
+done
+
 # 10) Minimal shop/cart/checkout pages; checkout protected server-side
 mkdir -p src/app/[locale]/shop/[slug] src/app/[locale]/cart src/app/[locale]/checkout
 cat > src/app/[locale]/shop/page.tsx <<'EOF'
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
+import JsonLd from '@/components/seo/JsonLd';
 import ShopArchive from '@/components/store/ShopArchive';
+import { localizedUrl, pageAlternates } from '@/lib/seo/alternates';
+import { breadcrumbJsonLd } from '@/lib/seo/jsonld';
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Shop' });
+  return { title: t('title'), alternates: pageAlternates(locale, '/shop') };
+}
 
 export default async function ShopPage({
   params,
@@ -3227,9 +3498,16 @@ export default async function ShopPage({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Shop' });
+  const tNav = await getTranslations({ locale, namespace: 'Nav' });
 
   return (
     <main className="mx-auto max-w-7xl p-6">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: tNav('Home'), url: localizedUrl(locale, '') },
+          { name: t('title') }
+        ])}
+      />
       <h1 className="text-2xl font-bold">{t('title')}</h1>
 
       {/* Search, filters, sorting and the grid; state in the URL. The
@@ -3249,10 +3527,16 @@ import { cache } from 'react';
 import { getTranslations } from 'next-intl/server';
 
 import AddToCartButton from '@/components/cart/AddToCartButton';
+import JsonLd from '@/components/seo/JsonLd';
 import ProductExtras from '@/components/store/ProductExtras';
 import ProductGallery from '@/components/store/ProductGallery';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
+import { hreflangOf } from '@/lib/i18n/locales';
+import { localizedUrl, pageAlternates } from '@/lib/seo/alternates';
+import { availabilityFor, breadcrumbJsonLd, productJsonLd } from '@/lib/seo/jsonld';
+import { returnPolicy, shippingPolicy, shopName } from '@/lib/seo/store';
+import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 import {
   cleanList,
   formatDimensions,
@@ -3286,13 +3570,27 @@ const loadProduct = cache(async (slug: string): Promise<ProductDetailRow | null>
 });
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const product = await loadProduct(slug);
   if (!product) return {};
+  const description =
+    product.meta_description ?? product.headline ?? product.description ?? undefined;
+  const images = galleryImages(product.image_url, product.gallery_urls);
   return {
     title: product.meta_title ?? product.name,
-    description:
-      product.meta_description ?? product.headline ?? product.description ?? undefined
+    description,
+    // Self-referencing canonical plus the full hreflang set, x-default
+    // included, built by the same helper as the sitemap.
+    alternates: pageAlternates(locale, `/shop/${product.slug}`),
+    openGraph: {
+      type: 'website',
+      siteName: shopName(),
+      locale: hreflangOf(locale),
+      url: localizedUrl(locale, `/shop/${product.slug}`),
+      title: product.meta_title ?? product.name,
+      description,
+      images: images.map((url) => ({ url }))
+    }
   };
 }
 
@@ -3304,11 +3602,42 @@ export default async function ProductPage({ params }: { params: Params }) {
   if (!product) notFound();
 
   const t = await getTranslations({ locale, namespace: 'Product' });
+  const tNav = await getTranslations({ locale, namespace: 'Nav' });
 
   const rules = stockRulesOf(product);
   const status = stockStatus(rules);
   const soldOut = status.kind === 'sold_out';
   const images = galleryImages(product.image_url, product.gallery_urls);
+  const pageUrl = localizedUrl(locale, `/shop/${product.slug}`);
+
+  // Home > Shop > Category > Product, visible and as BreadcrumbList.
+  const crumbs = [
+    { name: tNav('Home'), url: localizedUrl(locale, '') },
+    { name: tNav('Shop'), url: localizedUrl(locale, '/shop') },
+    ...(product.category_name && product.category_slug
+      ? [{ name: product.category_name, url: localizedUrl(locale, `/shop?category=${encodeURIComponent(product.category_slug)}`) }]
+      : []),
+    { name: product.name }
+  ];
+  const structuredData = [
+    breadcrumbJsonLd(crumbs),
+    productJsonLd({
+      url: pageUrl,
+      name: product.name,
+      description: product.meta_description ?? product.description ?? product.details,
+      images,
+      sku: product.sku,
+      barcode: product.barcode,
+      brand: product.brand_name,
+      category: product.category_name,
+      priceCents: product.price_cents,
+      currency: product.currency,
+      availability: availabilityFor(status.kind),
+      shipping: shippingPolicy(product.currency),
+      returnPolicy: returnPolicy(CHECKOUT_CONFIG.allowedCountries[0]),
+      sellerName: shopName()
+    })
+  ];
   const tags = cleanList(product.tags);
   const nutrition = nutritionRows(product.nutrition_info, locale);
   const wasPrice = hasSaving(product.price_cents, product.compare_at_price_cents)
@@ -3354,10 +3683,24 @@ export default async function ProductPage({ params }: { params: Params }) {
 
   return (
     <main className="mx-auto max-w-6xl p-6">
-      <nav className="mb-6 text-sm">
-        <Link href={`/${locale}/shop`} className="text-gray-600 underline hover:text-gray-900">
-          {t('backToShop')}
-        </Link>
+      <JsonLd data={structuredData} />
+      <nav aria-label={t('backToShop')} className="mb-6 text-sm text-gray-600">
+        <ol className="flex flex-wrap items-center gap-1">
+          {crumbs.map((crumb, index) => (
+            <li key={`${crumb.name}-${index}`} className="flex items-center gap-1">
+              {index > 0 && <span aria-hidden="true">/</span>}
+              {crumb.url ? (
+                <Link href={crumb.url} className="underline hover:text-gray-900">
+                  {crumb.name}
+                </Link>
+              ) : (
+                <span aria-current="page" className="text-gray-900">
+                  {crumb.name}
+                </span>
+              )}
+            </li>
+          ))}
+        </ol>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-2">

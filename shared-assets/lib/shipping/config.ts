@@ -17,6 +17,8 @@ export const SHIPPING_CONFIG = {
   itemWeightGrams: 500,
   /** Flat rate charged per order, in cents */
   flatRateCents: 500,
+  /** Currency of the flat rate and the threshold, ISO 4217 */
+  currency: 'EUR',
   /** Orders at or above this subtotal ship free (null to disable) */
   freeShippingThresholdCents: 5000 as number | null,
   /** Shown to the customer at checkout */
