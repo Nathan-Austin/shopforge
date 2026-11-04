@@ -16,6 +16,8 @@ export interface EmailMessage {
   subject: string;
   html: string;
   text: string;
+  /** Visible copy, used to keep the shop owner in the loop on a refund. */
+  cc?: string | null;
   /** Blind copy, used for the shop owner's copy of an order. */
   bcc?: string | null;
 }
@@ -48,6 +50,7 @@ export async function sendEmail(message: EmailMessage): Promise<SendResult> {
         html: message.html,
         text: message.text,
         ...(config.replyTo ? { reply_to: config.replyTo } : {}),
+        ...(message.cc ? { cc: [message.cc] } : {}),
         ...(message.bcc ? { bcc: [message.bcc] } : {})
       })
     });
