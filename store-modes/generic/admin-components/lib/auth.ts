@@ -14,20 +14,25 @@ async function hasSecondFactor(supabase: SupabaseClient): Promise<boolean> {
   return data?.currentLevel === 'aal2';
 }
 
+/**
+ * Pages: who is this, verified. getClaims() checks the JWT's signature
+ * (against the project's public keys, cached, so no round trip on
+ * asymmetric-key projects) instead of trusting whatever the cookie says,
+ * which is what Supabase warns getSession() does on the server.
+ */
 export async function requireShopOwner(locale: string) {
   const supabase = await createClient();
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims.sub;
 
-  if (!session) {
+  if (!userId) {
     redirect(`/${locale}/auth/sign-in`);
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', userId)
     .single();
 
   if (error || profile?.role !== 'shop_owner') {
@@ -38,23 +43,34 @@ export async function requireShopOwner(locale: string) {
     redirect(`/${locale}/auth/mfa`);
   }
 
-  return { supabase, user: session.user };
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (!user) {
+    redirect(`/${locale}/auth/sign-in`);
+  }
+
+  return { supabase, user };
 }
 
+/**
+ * Server actions (writes): getUser() asks the Auth server, so a revoked
+ * session is caught even if its token has not expired yet.
+ */
 export async function ensureShopOwner() {
   const supabase = await createClient();
   const {
-    data: { session }
-  } = await supabase.auth.getSession();
+    data: { user }
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return { error: 'UNAUTHENTICATED' as const, supabase: null, user: null };
   }
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   if (profile?.role !== 'shop_owner') {
@@ -67,5 +83,5 @@ export async function ensureShopOwner() {
     return { error: 'MFA_REQUIRED' as const, supabase: null, user: null };
   }
 
-  return { error: null, supabase, user: session.user };
+  return { error: null, supabase, user };
 }
