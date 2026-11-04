@@ -2,18 +2,26 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import { listOrders, orderReference, MANUAL_ORDER_STATUSES } from '@/lib/orders/service';
+import { hasTracking, normalizeTracking } from '@/lib/orders/notifications';
 import { formatPrice } from '@/lib/format';
 import { requireShopOwner } from '../lib/auth';
-import { updateOrderStatus } from '../actions/updateOrderStatus';
+import {
+  sendShippingEmail,
+  updateOrderStatus,
+  type OrderNotice
+} from '../actions/updateOrderStatus';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminOrdersPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ notice?: string; detail?: string }>;
 }) {
   const { locale } = await params;
+  const { notice, detail } = await searchParams;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
   const tStatus = await getTranslations({ locale, namespace: 'Account' });
@@ -27,13 +35,52 @@ export default async function AdminOrdersPage({
     'use server';
     await updateOrderStatus({ locale }, formData);
   }
+  async function sendShipping(formData: FormData) {
+    'use server';
+    await sendShippingEmail({ locale }, formData);
+  }
+
+  // The outcome of the last action, carried in the URL by the redirect.
+  const noticeText = ((): { text: string; tone: 'ok' | 'bad' } | null => {
+    switch (notice as OrderNotice | undefined) {
+      case 'status_saved':
+        return { text: t('orders.statusSaved'), tone: 'ok' };
+      case 'shipping_sent':
+        return { text: t('orders.shippingEmailSent', { email: detail ?? '' }), tone: 'ok' };
+      case 'shipping_off':
+        return { text: t('orders.shippingEmailOff'), tone: 'bad' };
+      case 'shipping_failed':
+        return { text: t('orders.shippingEmailFailed', { error: detail ?? '' }), tone: 'bad' };
+      case 'status_failed':
+        return { text: t('orders.statusFailed', { error: detail ?? '' }), tone: 'bad' };
+      case 'not_authorized':
+        return { text: t('refund.errors.not_authorized'), tone: 'bad' };
+      default:
+        return null;
+    }
+  })();
+  const inputClass = 'rounded-md border border-border bg-white px-2 py-1 text-sm';
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold">{t('orders.heading')}</h2>
         <p className="text-sm text-stone-600">{t('orders.subheading')}</p>
+        <p className="text-sm text-stone-600">{t('orders.autoEmailHint')}</p>
       </div>
+
+      {noticeText && (
+        <p
+          role="status"
+          className={`rounded-md border px-3 py-2 text-sm ${
+            noticeText.tone === 'ok'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              : 'border-red-200 bg-red-50 text-red-900'
+          }`}
+        >
+          {noticeText.text}
+        </p>
+      )}
 
       {orders.length === 0 ? (
         <p className="rounded-lg border border-border bg-white p-6 text-center text-stone-600">
@@ -73,34 +120,111 @@ export default async function AdminOrdersPage({
                   )}
                 </div>
 
-                <form action={setStatus} className="flex items-center gap-2 text-sm">
-                  <input type="hidden" name="order_id" value={order.id} />
-                  <label htmlFor={`status-${order.id}`} className="sr-only">
-                    {t('orders.status')}
-                  </label>
-                  <select
-                    id={`status-${order.id}`}
-                    name="status"
-                    defaultValue={order.status}
-                    disabled={order.status === 'refunded'}
-                    className="rounded-md border border-border bg-white px-2 py-1 disabled:opacity-60"
-                  >
-                    {order.status === 'refunded' && (
-                      <option value="refunded">{tStatus('status.refunded')}</option>
-                    )}
-                    {MANUAL_ORDER_STATUSES.map((status) => (
-                      <option key={status} value={status}>
-                        {tStatus(`status.${status}`)}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="submit"
-                    className="rounded-md bg-stone-900 px-3 py-1 font-semibold text-white hover:bg-stone-700"
-                  >
-                    {t('orders.save')}
-                  </button>
-                </form>
+                <div className="space-y-3 text-sm">
+                  <form action={setStatus} className="space-y-2">
+                    <input type="hidden" name="order_id" value={order.id} />
+                    <div className="flex items-center gap-2">
+                      <label htmlFor={`status-${order.id}`} className="sr-only">
+                        {t('orders.status')}
+                      </label>
+                      <select
+                        id={`status-${order.id}`}
+                        name="status"
+                        defaultValue={order.status}
+                        disabled={order.status === 'refunded'}
+                        className={`${inputClass} disabled:opacity-60`}
+                      >
+                        {order.status === 'refunded' && (
+                          <option value="refunded">{tStatus('status.refunded')}</option>
+                        )}
+                        {MANUAL_ORDER_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {tStatus(`status.${status}`)}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        disabled={order.status === 'refunded'}
+                        className="rounded-md bg-stone-900 px-3 py-1 font-semibold text-white hover:bg-stone-700 disabled:opacity-50"
+                      >
+                        {t('orders.save')}
+                      </button>
+                    </div>
+
+                    <fieldset className="space-y-1">
+                      <legend className="text-xs text-stone-600">{t('orders.tracking')}</legend>
+                      <div className="flex flex-wrap gap-2">
+                        <input
+                          type="text"
+                          name="tracking_carrier"
+                          defaultValue={order.tracking.carrier ?? ''}
+                          placeholder={t('orders.carrier')}
+                          aria-label={t('orders.carrier')}
+                          className={`${inputClass} w-32`}
+                        />
+                        <input
+                          type="text"
+                          name="tracking_number"
+                          defaultValue={order.tracking.number ?? ''}
+                          placeholder={t('orders.trackingNumber')}
+                          aria-label={t('orders.trackingNumber')}
+                          className={`${inputClass} w-44`}
+                        />
+                        <input
+                          type="url"
+                          name="tracking_url"
+                          defaultValue={order.tracking.url ?? ''}
+                          placeholder={t('orders.trackingUrl')}
+                          aria-label={t('orders.trackingUrl')}
+                          className={`${inputClass} w-64`}
+                        />
+                      </div>
+                      <p className="text-xs text-stone-500">{t('orders.trackingUrlHint')}</p>
+                    </fieldset>
+                  </form>
+
+                  {order.status === 'fulfilled' && (
+                    <div className="space-y-1 border-t border-stone-100 pt-2 text-xs text-stone-600">
+                      {order.shippedAt && (
+                        <p>{t('orders.shippedOn', { date: dateFormat.format(new Date(order.shippedAt)) })}</p>
+                      )}
+                      {hasTracking(normalizeTracking(order.tracking)) && (
+                        <p>
+                          {[order.tracking.carrier, order.tracking.number].filter(Boolean).join(' · ')}
+                          {normalizeTracking(order.tracking).url && (
+                            <>
+                              {' '}
+                              <a
+                                href={normalizeTracking(order.tracking).url ?? '#'}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline"
+                              >
+                                {t('orders.trackingUrl')}
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      )}
+                      <p className={order.shippingNotifiedAt ? '' : 'text-amber-700'}>
+                        {order.shippingNotifiedAt
+                          ? t('orders.customerNotified', {
+                              date: dateFormat.format(new Date(order.shippingNotifiedAt))
+                            })
+                          : t('orders.customerNotNotified')}
+                      </p>
+                      <form action={sendShipping}>
+                        <input type="hidden" name="order_id" value={order.id} />
+                        <button type="submit" className="underline hover:text-stone-900">
+                          {order.shippingNotifiedAt
+                            ? t('orders.resendShippingEmail')
+                            : t('orders.sendShippingEmail')}
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <table className="mt-4 w-full text-sm">

@@ -904,6 +904,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { listOrders, orderReference } from '@/lib/orders/service';
+import { normalizeTracking } from '@/lib/orders/notifications';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/format';
 
@@ -961,6 +962,31 @@ export default async function AccountOrdersPage({
                   {t(`status.${order.status}`)}
                 </span>
               </p>
+              {order.status === 'fulfilled' && (() => {
+                const tracking = normalizeTracking(order.tracking);
+                return (
+                  <p className="mt-2 text-sm text-gray-700">
+                    {order.shippedAt && (
+                      <span>{t('shippedOn', { date: dateFormat.format(new Date(order.shippedAt)) })}</span>
+                    )}
+                    {tracking.number && (
+                      <span>
+                        {order.shippedAt ? ' · ' : ''}
+                        {t('trackingNumber', { number: tracking.number })}
+                        {tracking.carrier ? ` (${tracking.carrier})` : ''}
+                      </span>
+                    )}
+                    {tracking.url && (
+                      <>
+                        {' · '}
+                        <a href={tracking.url} target="_blank" rel="noreferrer" className="underline">
+                          {t('track')}
+                        </a>
+                      </>
+                    )}
+                  </p>
+                );
+              })()}
               <ul className="mt-3 divide-y divide-gray-100 text-sm">
                 {order.items.map((item) => (
                   <li key={item.id} className="flex justify-between gap-4 py-1.5">
