@@ -1,8 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { getTranslations } from 'next-intl/server';
 
 import { getEmailConfig } from '@/lib/email/config';
+import { formatPrice } from '@/lib/format';
 import { renderRefundNotification } from '@/lib/email/refundNotification';
 import { sendEmail } from '@/lib/email/send';
 import {
@@ -155,25 +157,44 @@ export async function refundOrder(
   revalidatePath(`/${context.locale}/admin/orders/${order.id}`);
   revalidatePath(`/${context.locale}/account/orders`);
 
-  // 4. Tell the customer, with the owner in copy.
+  // 4. Tell the customer, in their language, with the owner in copy.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
+  const customerLocale = order.locale || context.locale;
+  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+  const reference = orderReference(order);
+  const refundedCents = order.refundedCents + plan.amountCents;
+  const money = (cents: number) => formatPrice(cents, order.currency, customerLocale);
+  const t = await getTranslations({ locale: customerLocale, namespace: 'Email.refund' });
   const email = renderRefundNotification(
     {
-      reference: orderReference(order),
-      shopName: process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop',
+      reference,
+      shopName,
       currency: order.currency,
       amountCents: plan.amountCents,
       totalCents: order.totalCents,
-      refundedCents: order.refundedCents + plan.amountCents,
+      refundedCents,
       items: plan.items.map((item) => ({
         productName: item.productName,
         quantity: item.quantity,
         amountCents: item.amountCents
       })),
       reason,
-      orderUrl: siteUrl ? `${siteUrl}/${context.locale}/account/orders` : null
+      orderUrl: siteUrl ? `${siteUrl}/${customerLocale}/account/orders` : null
     },
-    context.locale
+    {
+      subject: t('subject', { shop: shopName, amount: money(plan.amountCents), reference }),
+      headlineFull: t('headlineFull'),
+      headlinePartial: t('headlinePartial'),
+      summaryFull: t('summaryFull', { total: money(order.totalCents), reference }),
+      summaryPartial: t('summaryPartial', { amount: money(plan.amountCents), reference }),
+      refundedSoFar: t('refundedSoFar', {
+        refunded: money(refundedCents),
+        total: money(order.totalCents)
+      }),
+      viewOrders: t('viewOrders'),
+      footer: t('footer')
+    },
+    customerLocale
   );
   const sent = await sendEmail({
     to: order.email,

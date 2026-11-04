@@ -354,6 +354,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { one } from '@/lib/supabase/relations';
 import { sendEmail } from '@/lib/email/send';
 import { getEmailConfig } from '@/lib/email/config';
+import { getTranslations } from 'next-intl/server';
+
 import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
 
 /**
@@ -571,11 +573,16 @@ export async function POST(request: Request) {
       const shipping = shippingSnapshot(session);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
       const locale = session.metadata?.locale || 'en';
+      const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+      const reference = order.id.slice(0, 8).toUpperCase();
+      // In the customer's language: the wording comes from the message
+      // files, the template only lays it out.
+      const t = await getTranslations({ locale, namespace: 'Email.confirmation' });
 
       const email = renderOrderConfirmation(
         {
           // Same short reference the success page and the admin show.
-          reference: order.id.slice(0, 8).toUpperCase(),
+          reference,
           currency: (session.currency ?? 'eur').toUpperCase(),
           subtotalCents: session.amount_subtotal ?? 0,
           shippingCents: session.shipping_cost?.amount_total ?? 0,
@@ -591,7 +598,19 @@ export async function POST(request: Request) {
             country: shipping.shipping_country
           },
           orderUrl: siteUrl ? `${siteUrl}/${locale}/account/orders` : null,
-          shopName: process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop'
+          shopName
+        },
+        {
+          subject: t('subject', { shop: shopName, reference }),
+          headline: t('headline'),
+          orderLabel: t('order', { reference }),
+          subtotal: t('subtotal'),
+          shipping: t('shipping'),
+          discount: t('discount'),
+          total: t('total'),
+          addressHeading: t('address'),
+          viewOrder: t('viewOrder'),
+          footer: t('footer')
         },
         locale
       );

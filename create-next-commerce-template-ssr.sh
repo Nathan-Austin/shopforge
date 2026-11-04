@@ -957,6 +957,28 @@ cat > src/messages/en.json <<'EOF'
       "address": "Delivering to",
       "viewOrders": "View your orders",
       "footer": "Questions? Just reply to this email."
+    },
+    "confirmation": {
+      "subject": "{shop}: order {reference} confirmed",
+      "headline": "Thank you for your order",
+      "order": "Order {reference}",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "discount": "Discount",
+      "total": "Total",
+      "address": "Delivery address",
+      "viewOrder": "View your order",
+      "footer": "We will email you again when your order ships."
+    },
+    "refund": {
+      "subject": "{shop}: refund of {amount} for order {reference}",
+      "headlineFull": "Your order has been refunded",
+      "headlinePartial": "A refund is on its way",
+      "summaryFull": "We have refunded the full {total} for order {reference}.",
+      "summaryPartial": "We have refunded {amount} of order {reference}.",
+      "refundedSoFar": "Refunded so far: {refunded} of {total}.",
+      "viewOrders": "View your orders",
+      "footer": "The money goes back to the card or account you paid with. Banks usually show it within 5 to 10 working days."
     }
   }
 }
@@ -1316,6 +1338,28 @@ cat > src/messages/de.json <<'EOF'
       "address": "Lieferung an",
       "viewOrders": "Ihre Bestellungen ansehen",
       "footer": "Fragen? Antworten Sie einfach auf diese E-Mail."
+    },
+    "confirmation": {
+      "subject": "{shop}: Bestellung {reference} bestätigt",
+      "headline": "Vielen Dank für Ihre Bestellung",
+      "order": "Bestellung {reference}",
+      "subtotal": "Zwischensumme",
+      "shipping": "Versand",
+      "discount": "Rabatt",
+      "total": "Gesamt",
+      "address": "Lieferadresse",
+      "viewOrder": "Bestellung ansehen",
+      "footer": "Wir melden uns wieder per E-Mail, sobald Ihre Bestellung unterwegs ist."
+    },
+    "refund": {
+      "subject": "{shop}: Erstattung von {amount} für Bestellung {reference}",
+      "headlineFull": "Ihre Bestellung wurde erstattet",
+      "headlinePartial": "Eine Erstattung ist unterwegs",
+      "summaryFull": "Wir haben die vollen {total} für Bestellung {reference} erstattet.",
+      "summaryPartial": "Wir haben {amount} der Bestellung {reference} erstattet.",
+      "refundedSoFar": "Bisher erstattet: {refunded} von {total}.",
+      "viewOrders": "Ihre Bestellungen ansehen",
+      "footer": "Das Geld geht auf die Karte oder das Konto zurück, mit dem Sie bezahlt haben. Banken zeigen es meist innerhalb von 5 bis 10 Werktagen an."
     }
   }
 }
@@ -1675,6 +1719,28 @@ cat > src/messages/tr.json <<'EOF'
       "address": "Teslimat adresi",
       "viewOrders": "Siparişlerinizi görüntüleyin",
       "footer": "Sorunuz mu var? Bu e-postayı yanıtlamanız yeterli."
+    },
+    "confirmation": {
+      "subject": "{shop}: {reference} numaralı siparişiniz onaylandı",
+      "headline": "Siparişiniz için teşekkürler",
+      "order": "Sipariş {reference}",
+      "subtotal": "Ara toplam",
+      "shipping": "Kargo",
+      "discount": "İndirim",
+      "total": "Toplam",
+      "address": "Teslimat adresi",
+      "viewOrder": "Siparişinizi görüntüleyin",
+      "footer": "Siparişiniz kargoya verildiğinde size tekrar e-posta göndereceğiz."
+    },
+    "refund": {
+      "subject": "{shop}: {reference} numaralı sipariş için {amount} iade",
+      "headlineFull": "Siparişiniz iade edildi",
+      "headlinePartial": "İadeniz yolda",
+      "summaryFull": "{reference} numaralı siparişin tamamı olan {total} iade edildi.",
+      "summaryPartial": "{reference} numaralı siparişten {amount} iade edildi.",
+      "refundedSoFar": "Şimdiye kadar iade edilen: {total} tutarının {refunded} kadarı.",
+      "viewOrders": "Siparişlerinizi görüntüleyin",
+      "footer": "Para, ödeme yaptığınız karta veya hesaba geri gönderilir. Bankalar genellikle 5 ila 10 iş günü içinde gösterir."
     }
   }
 }
@@ -2034,6 +2100,28 @@ cat > src/messages/ar.json <<'EOF'
       "address": "عنوان التسليم",
       "viewOrders": "عرض طلباتك",
       "footer": "لديك سؤال؟ ما عليك سوى الرد على هذه الرسالة."
+    },
+    "confirmation": {
+      "subject": "{shop}: تم تأكيد الطلب {reference}",
+      "headline": "شكرًا لطلبك",
+      "order": "الطلب {reference}",
+      "subtotal": "المجموع الفرعي",
+      "shipping": "الشحن",
+      "discount": "الخصم",
+      "total": "الإجمالي",
+      "address": "عنوان التسليم",
+      "viewOrder": "عرض طلبك",
+      "footer": "سنراسلك مرة أخرى عند شحن طلبك."
+    },
+    "refund": {
+      "subject": "{shop}: استرداد {amount} للطلب {reference}",
+      "headlineFull": "تم استرداد قيمة طلبك",
+      "headlinePartial": "استردادك في الطريق",
+      "summaryFull": "استرددنا كامل المبلغ {total} للطلب {reference}.",
+      "summaryPartial": "استرددنا {amount} من الطلب {reference}.",
+      "refundedSoFar": "المسترد حتى الآن: {refunded} من {total}.",
+      "viewOrders": "عرض طلباتك",
+      "footer": "يعود المبلغ إلى البطاقة أو الحساب الذي دفعت به. تعرضه البنوك عادةً خلال 5 إلى 10 أيام عمل."
     }
   }
 }
