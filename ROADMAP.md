@@ -8,18 +8,15 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Stripe refunds from `/admin/orders`** (section 1). Marking an order
-   `refunded` changes only the label today. Add full and partial refunds
-   through the Stripe API.
-2. **Shipping notification email** (section 1). Email the customer via Resend
+1. **Shipping notification email** (section 1). Email the customer via Resend
    when the owner marks an order fulfilled or otherwise changes its status.
    The template and transport exist already; what's missing is the hook on
    status change.
-3. **Discount codes, then the email marketing builder** (section 2). Discount
+2. **Discount codes, then the email marketing builder** (section 2). Discount
    codes backed by Stripe coupons/promotion codes and applied at checkout,
    then the block-based campaign editor with an opt-in/unsubscribe
    subscriber list.
-4. **Translate the auth pages** (section 2b). Move the hardcoded English on
+3. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -54,12 +51,17 @@ details for each item are in the numbered sections below.
       optional, escaped HTML template with unit tests, `confirmation_sent_at`
       guards against double sends
 - [ ] Shipping notification email when the owner marks an order fulfilled
-- [x] Admin orders view, with status changes (fulfilled, cancelled, refunded)
+- [x] Admin orders view, with status changes (fulfilled, cancelled)
       recorded in the database only — done 2026-11-03 via `set_order_status()`
-- [ ] Refunds from the admin: a "refund" action that calls Stripe for the
-      full order or for chosen order items (partial refund), then records
-      the status. Today the status is only a label; the money has to be
-      refunded in the Stripe dashboard
+- [x] Refunds from the admin — done 2026-11-04: `/admin/orders/[id]` refunds
+      the rest of the order, chosen lines and quantities, a percentage of
+      the total or a typed amount, never more than what is left, after the
+      owner types REFUND. `begin_order_refund()` reserves the amount with
+      the order row locked, Stripe is called with the refund row id as the
+      idempotency key, `complete_order_refund()` records it and marks the
+      order `refunded` once nothing is left. The customer is emailed with
+      `SHOP_OWNER_EMAIL` in CC. `order_refunds` is the ledger; `refunded`
+      can no longer be picked by hand
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
 
 ## 2. Admin and store settings
@@ -206,9 +208,15 @@ Decided on 2026-11-02:
   but one of them gets an apology. Reserving at session creation with a
   timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
-- Marking an order `refunded` in the admin records the label only. No money
-  moves: refund it in the Stripe dashboard as well, until the refund action
-  in section 1 is built.
+- Refunds made in the Stripe dashboard (or disputes/chargebacks) are not
+  seen by the shop: the webhook only handles `checkout.session.completed`.
+  Handling `charge.refunded` and `charge.dispute.*` would keep
+  `refunded_cents` honest either way.
+- A refund does not put stock back. Restocking is a judgement call (was the
+  item returned?), so it is left to the owner in the product form for now.
+- Amounts are sent to Stripe as the stored cents. Zero-decimal currencies
+  (JPY, KRW) would be off by a factor of 100 throughout checkout and
+  refunds alike; nothing in the generator handles them yet.
 - Changing an order's status does not notify the customer; the shipping
   notification email in section 1 covers that.
 - The auth pages (sign-in, sign-up, email code, MFA) are English-only, even

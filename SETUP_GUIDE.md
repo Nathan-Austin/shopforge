@@ -143,7 +143,7 @@ NEXT_PUBLIC_SHOP_NAME=My Shop        # shown in the confirmation email
 RESEND_API_KEY=re_…                  # optional, see "Order confirmation emails"
 EMAIL_FROM=My Shop <orders@myshop.com>   # optional, must be a verified sender
 EMAIL_REPLY_TO=hello@myshop.com      # optional, where replies go
-SHOP_OWNER_EMAIL=you@myshop.com      # optional, blind copy of every order
+SHOP_OWNER_EMAIL=you@myshop.com      # optional, BCC on receipts, CC on refund emails
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 ```
 
@@ -181,6 +181,31 @@ select id, email, created_at from public.orders
 
 A provider outage never fails the webhook: the payment and the order are
 already real, so the order is kept and the failure is logged.
+
+### Refunds
+
+Open an order from `/<locale>/admin/orders` and use the refund form. You can
+refund the rest of the order, particular items and quantities, a percentage
+of the total, or an amount you type, never more than what is left. The
+button stays disabled until you type `REFUND`. The money goes back through
+Stripe to the card the customer paid with, using the order's payment
+intent, so refunds work for guest orders too.
+
+Every attempt is a row in `public.order_refunds` with the Stripe refund id,
+and `orders.refunded_cents` tracks the running total; the order's status
+becomes `refunded` only once the whole amount has gone back. The customer
+gets an email with the amount, the items if any, and your note, and
+`SHOP_OWNER_EMAIL` is visibly copied so the team can see it. With email not
+configured the refund still happens and the form says the customer was not
+notified.
+
+If a row stays `pending`, the app stopped between reserving the amount and
+hearing back from Stripe. Check the payment in the Stripe dashboard before
+trying again; the pending row stops counting against the order after an
+hour, and the Stripe call is idempotent per row, so a retry of the same
+attempt cannot refund twice.
+
+Refunds made directly in the Stripe dashboard are not reflected in the shop.
 
 ### The Stripe webhook
 
