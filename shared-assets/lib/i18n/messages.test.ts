@@ -27,7 +27,11 @@ function keyPaths(value: unknown, prefix = ''): string[] {
 }
 
 const files = readdirSync(MESSAGES_DIR).filter((file) => file.endsWith('.json'));
-const locales = files.map((file) => file.replace(/\.json$/, ''));
+const allLocales = files.map((file) => file.replace(/\.json$/, ''));
+// A language file ("de") is complete. A market file ("de-at") only
+// overrides its language, so it may be partial, but must not invent keys.
+const locales = allLocales.filter((locale) => !locale.includes('-'));
+const markets = allLocales.filter((locale) => locale.includes('-'));
 
 /** Namespaces the shipped components ask for by name. */
 const REQUIRED_NAMESPACES = [
@@ -73,7 +77,16 @@ describe('message files', () => {
     }
   });
 
-  it.each(locales)('%s has no empty strings', (locale) => {
+  it.each(markets)('%s only overrides keys its language has', (market) => {
+    const language = market.split('-')[0];
+    expect(locales, `${market} needs a ${language}.json to fall back to`).toContain(language);
+    const base = keyPaths(loadLocale(`${language}.json`));
+    const overrides = keyPaths(loadLocale(`${market}.json`)).filter((key) => key !== '');
+    const unknown = overrides.filter((key) => !base.includes(key));
+    expect(unknown, `${market} has keys ${language} does not`).toEqual([]);
+  });
+
+  it.each(allLocales)('%s has no empty strings', (locale) => {
     const messages = loadLocale(`${locale}.json`);
     const empties: string[] = [];
     const walk = (value: unknown, prefix: string) => {
