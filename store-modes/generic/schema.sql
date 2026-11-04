@@ -304,13 +304,17 @@ drop policy if exists "Products select all" on public.products;
 -- Storefront view: published, unarchived rows and no supplier fields.
 -- The view runs with its owner's rights, so it is readable without granting
 -- access to the underlying table. Category name and slug are joined in
--- because PostgREST cannot embed a relation through a view.
+-- because PostgREST cannot embed a relation through a view. SKU and barcode
+-- (GTIN) are public on purpose: Google Merchant Center wants them in the
+-- page's structured data and in feeds. Cost price stays private.
 drop view if exists public.products_public;
 create view public.products_public as
 select
   p.id,
   p.name,
   p.slug,
+  p.sku,
+  p.barcode,
   p.headline,
   p.description,
   p.details,

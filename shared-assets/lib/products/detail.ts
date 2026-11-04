@@ -19,6 +19,9 @@ export interface ProductDetailRow {
   id: string;
   name: string;
   slug: string;
+  /** Public for structured data and Merchant Center feeds. */
+  sku: string | null;
+  barcode: string | null;
   headline: string | null;
   description: string | null;
   details: string | null;
