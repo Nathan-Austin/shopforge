@@ -8,10 +8,9 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Discount codes, then the email marketing builder** (section 2). Discount
-   codes backed by Stripe coupons/promotion codes and applied at checkout,
-   then the block-based campaign editor with an opt-in/unsubscribe
-   subscriber list.
+1. **Email marketing builder** (section 2). The block-based campaign editor
+   with an opt-in/unsubscribe subscriber list, now that discount codes
+   exist to put in it.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -54,9 +53,8 @@ details for each item are in the numbered sections below.
       at `fulfilled`, never twice (`shipping_notified_at`), silent on
       flips back and forth; a failed send retries on the next arrival and
       the owner has a send/resend button. Cancellations stay quiet
-- [ ] Localize the order confirmation and refund emails the same way as the
-      shipping one (strings from an `Email.*` namespace). Today a German
-      customer gets an English receipt and a German shipping notice
+- [x] Localize the order confirmation and refund emails the same way as the
+      shipping one — done 2026-11-04
 - [ ] Other status emails behind a per-status switch (cancelled, delivered
       once a carrier integration can report it), each with its own
       once-only marker
@@ -98,9 +96,20 @@ details for each item are in the numbered sections below.
       how heat appears in the shop (word and number, word only, number only,
       chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
 - [ ] Theme tokens instead of hardcoded colours
-- [ ] Discount codes: an admin page to create and retire them, backed by
-      Stripe coupons/promotion codes, applied at checkout and recorded on
-      the order. Needed by the email marketing builder below
+- [x] Discount codes — done 2026-11-04: `/admin/discounts` creates percent,
+      amount and free-shipping codes with minimum, date window and usage
+      cap; percent/amount codes are mirrored as a Stripe coupon plus
+      promotion code and applied by Stripe at checkout, free shipping by
+      the shop; the customer applies a code on `/cart` or `/checkout`, it is
+      re-checked at payment, and the order snapshots `discount_code` and
+      `discount_cents`
+- [ ] Discount codes, follow-ups: per-customer limits (one use per email),
+      codes restricted to categories or products, automatic discounts with
+      no code, and syncing a code's Stripe-side redemption count back when
+      a promotion code is also used outside the shop
+- [ ] Localized order confirmation, refund and shipping emails — done
+      2026-11-04 for all three (strings in `Email.*`); listed here only so
+      the next email (marketing) follows the same pattern
 - [ ] Email marketing page in the admin: a block builder where the owner
       composes a campaign from image, text, button/link and discount-code
       blocks, previews it, and sends to a customer list. Needs the discount
@@ -242,8 +251,11 @@ Decided on 2026-11-02:
 - Only the shipped status emails the customer. The owner is not copied on
   shipping emails (they triggered them, and the orders page shows the
   state); receipts and refunds still copy `SHOP_OWNER_EMAIL`.
-- The order confirmation and refund emails are English-only; the shipping
-  email is the first localized one (see section 1).
+- Every customer email (receipt, shipping, refund) is sent in the locale
+  the customer checked out in, from the `Email.*` namespaces.
+- Promo codes are per order, not per customer: nothing stops the same
+  person using a code twice from two carts. The usage cap is the only
+  brake. Per-email limits are a listed follow-up.
 - The auth pages (sign-in, sign-up, email code, MFA) are English-only, even
   in a multilingual shop.
 - Money is entered in major units and stored as cents everywhere, but the

@@ -46,6 +46,11 @@ support for languages such as Arabic.
   in the language they shopped in, with the tracking number and a tracking
   link; flipping the status back and forth never emails twice, and the
   admin shows whether the customer was told
+- **Discount codes:** create percent, amount or free-shipping codes at
+  `/admin/discounts`, with a minimum order, a date window and a usage cap.
+  Percent and amount codes are mirrored as Stripe coupons and applied by
+  Stripe at checkout; customers enter codes on the cart or checkout page
+  and the order records what was taken off
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt

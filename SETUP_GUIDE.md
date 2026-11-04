@@ -182,6 +182,27 @@ select id, email, created_at from public.orders
 A provider outage never fails the webhook: the payment and the order are
 already real, so the order is kept and the failure is logged.
 
+### Discount codes
+
+`/<locale>/admin/discounts` creates promo codes. Three kinds:
+
+- **Percentage off** and **amount off** are created in Stripe as a coupon
+  plus a promotion code with the same restrictions, and Stripe applies them
+  to the checkout session, so Stripe's receipts and reports agree with the
+  shop's. Deleting such a code deletes the coupon; retiring it deactivates
+  the promotion code.
+- **Free shipping** has no Stripe counterpart (coupons cannot zero a
+  shipping rate); the shop sets the shipping rate to zero itself.
+
+Codes can carry a minimum order, a valid-from/until window and a maximum
+number of uses. Customers enter a code on the cart or checkout page; it is
+checked then and again when they pay, and every refusal says why (expired,
+below the minimum, and so on). The order records the code and the amount in
+`orders.discount_code` / `discount_cents`, and the receipt shows it.
+
+Amount codes and minimums need a currency; the form defaults to the one your
+products use. Codes are per order, not per customer.
+
 ### Shipping emails
 
 Setting an order's status to **Shipped** on `/<locale>/admin/orders` emails
