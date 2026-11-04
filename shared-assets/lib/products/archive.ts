@@ -17,6 +17,27 @@ export type ArchiveSort = (typeof ARCHIVE_SORTS)[number];
 
 export const DEFAULT_ARCHIVE_SORT: ArchiveSort = 'recent';
 
+/**
+ * "Popular" ranks by units sold, so it means nothing in a shop that has
+ * barely sold anything: with three orders the sort is noise. The option is
+ * hidden (and rejected from the URL) until the shop has sold this many
+ * units in total. A store that imports its order history clears the bar
+ * on day one.
+ */
+export const POPULARITY_MIN_UNITS = 100;
+
+export function popularityAvailable(unitsSold: number): boolean {
+  return Number.isFinite(unitsSold) && unitsSold >= POPULARITY_MIN_UNITS;
+}
+
+/** The sorts to offer: the mode's list, minus "popular" until it means something. */
+export function availableSorts(
+  modeSorts: readonly ArchiveSort[],
+  unitsSold: number
+): ArchiveSort[] {
+  return modeSorts.filter((sort) => sort !== 'popular' || popularityAvailable(unitsSold));
+}
+
 /** The archive's whole state. Empty string means "not filtering by this". */
 export interface ArchiveQuery {
   search: string;
@@ -96,7 +117,8 @@ export interface ArchiveProduct {
   category?: { id: string | number; slug: string } | null;
   chilliTypes?: { id: string | number; slug?: string }[];
   heatLevel?: string | number | null;
-  isFeatured?: boolean | null;
+  /** Units sold, from the product_sales view; what "popular" sorts by. */
+  salesCount?: number | null;
   /** ISO timestamp; what "newest" sorts by. */
   createdAt?: string | null;
 }
@@ -162,8 +184,8 @@ function toHeat(value: string | number | null | undefined): number | null {
  * A sorted copy.
  *
  * - recent: newest first by createdAt.
- * - popular: the shop has no sales counts, so "popular" is what the owner
- *   featured, then newest within each group.
+ * - popular: most units sold first (see POPULARITY_MIN_UNITS for when the
+ *   option is offered at all), ties broken by newest.
  * - mild-first / hot-first: by heat level, products without one last either
  *   way, ties broken by newest.
  */
@@ -177,8 +199,7 @@ export function sortArchive<T extends ArchiveProduct>(
   switch (sort) {
     case 'popular':
       return sorted.sort(
-        (a, b) =>
-          Number(b.isFeatured === true) - Number(a.isFeatured === true) || byNewest(a, b)
+        (a, b) => (b.salesCount ?? 0) - (a.salesCount ?? 0) || byNewest(a, b)
       );
     case 'mild-first':
       return sorted.sort((a, b) => {

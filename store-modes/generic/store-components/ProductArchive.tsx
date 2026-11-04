@@ -15,8 +15,19 @@ import {
 import type { StoreProduct, Category } from './types';
 import ProductCard from './ProductCard';
 
-/** Sorts this store mode offers; the heat sorts are chilli-only. */
+/**
+ * Sorts this store mode offers; the heat sorts are chilli-only. "popular"
+ * is dropped by availableSorts() until the shop has enough sales to rank.
+ */
 export const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = ['recent', 'popular'];
+
+/** Message key under SauceArchive.search.filters for each sort. */
+const SORT_LABEL_KEYS: Record<ArchiveSort, string> = {
+  recent: 'sortNewest',
+  popular: 'sortPopular',
+  'mild-first': 'sortMildToHot',
+  'hot-first': 'sortHotToMild'
+};
 
 const PAGE_SIZE = 12;
 
@@ -26,6 +37,8 @@ interface ProductArchiveProps {
   locale: string;
   /** Parsed server-side from the page's searchParams. */
   initialQuery: ArchiveQuery;
+  /** From availableSorts(): the mode's sorts, minus any not yet meaningful. */
+  sortOptions: ArchiveSort[];
 }
 
 /**
@@ -38,7 +51,8 @@ export default function ProductArchive({
   products,
   categories,
   locale,
-  initialQuery
+  initialQuery,
+  sortOptions
 }: ProductArchiveProps) {
   const t = useTranslations('SauceArchive');
   const pathname = usePathname();
@@ -101,8 +115,11 @@ export default function ProductArchive({
                 onChange={(e) => update({ sort: e.target.value as ArchiveSort })}
                 className="mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-700"
               >
-                <option value="recent">{t('search.filters.sortNewest')}</option>
-                <option value="popular">{t('search.filters.sortPopular')}</option>
+                {sortOptions.map((sort) => (
+                  <option key={sort} value={sort}>
+                    {t(`search.filters.${SORT_LABEL_KEYS[sort]}`)}
+                  </option>
+                ))}
               </select>
             </label>
 

@@ -28,7 +28,8 @@ export interface StoreProduct {
   brand?: StoreBrand | null;
   stock?: number;
   is_active?: boolean;
-  isFeatured?: boolean | null;
+  /** Units sold, from the product_sales view; drives the "popular" sort. */
+  salesCount?: number | null;
   /** ISO timestamp; what the archive's "newest" sort orders by. */
   createdAt?: string | null;
   /** Cart variant options and availability, for the card's add-to-cart. */

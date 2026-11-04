@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
-import { parseArchiveQuery } from '@/lib/products/archive';
+import { availableSorts, parseArchiveQuery } from '@/lib/products/archive';
 import { many } from '@/lib/supabase/relations';
 import { createClient } from '@/lib/supabase/server';
 import ProductArchive, { ARCHIVE_SORT_OPTIONS } from './ProductArchive';
@@ -40,7 +40,6 @@ interface ProductRow {
   brand_name: string | null;
   brand_slug: string | null;
   heat_level: number | null;
-  is_featured: boolean | null;
   created_at: string | null;
 }
 
@@ -57,20 +56,37 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
   // products_public is the storefront view: published, unarchived rows
   // with no supplier fields. The chilli-type links come from their own
   // world-readable tables, in one query for the whole catalogue.
-  const [{ data: productRows }, { data: categoryRows }, { data: chilliTypeRows }, { data: linkRows }] =
-    await Promise.all([
-      supabase
-        .from('products_public')
-        .select(
-          'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, heat_level, is_featured, created_at'
-        )
-        .order('created_at', { ascending: false }),
-      supabase.from('categories').select('id, name, slug').order('name'),
-      supabase.from('chilli_types').select('id, name, slug, heat_level').order('name'),
-      supabase
-        .from('products_chilli_types')
-        .select('product_id, chilli_types ( id, name, slug, heat_level )')
-    ]);
+  const [
+    { data: productRows },
+    { data: categoryRows },
+    { data: chilliTypeRows },
+    { data: linkRows },
+    { data: salesRows }
+  ] = await Promise.all([
+    supabase
+      .from('products_public')
+      .select(
+        'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, heat_level, created_at'
+      )
+      .order('created_at', { ascending: false }),
+    supabase.from('categories').select('id, name, slug').order('name'),
+    supabase.from('chilli_types').select('id, name, slug, heat_level').order('name'),
+    supabase
+      .from('products_chilli_types')
+      .select('product_id, chilli_types ( id, name, slug, heat_level )'),
+    // Units sold per product (an aggregate view, no order data). Drives the
+    // "popular" sort, which stays hidden until the shop has sold enough for
+    // it to mean anything.
+    supabase.from('product_sales').select('product_id, units_sold')
+  ]);
+
+  const salesByProduct = new Map<string, number>();
+  let unitsSold = 0;
+  for (const row of (salesRows ?? []) as { product_id: string; units_sold: number }[]) {
+    salesByProduct.set(row.product_id, row.units_sold);
+    unitsSold += row.units_sold;
+  }
+  const sortOptions = availableSorts(ARCHIVE_SORT_OPTIONS, unitsSold);
 
   const chilliTypes: ChilliType[] = ((chilliTypeRows ?? []) as ChilliTypeRow[]).map(
     (row) => ({ id: row.id, name: row.name, slug: row.slug, heatLevel: row.heat_level })
@@ -108,7 +124,7 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     brand: row.brand_id
       ? { id: row.brand_id, name: row.brand_name ?? '', slug: row.brand_slug ?? '' }
       : null,
-    isFeatured: row.is_featured,
+    salesCount: salesByProduct.get(row.id) ?? 0,
     createdAt: row.created_at,
     sizeOptions: row.size_options,
     colorOptions: row.color_options,
@@ -140,7 +156,8 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
       chilliTypes={chilliTypes}
       categories={categories}
       locale={locale}
-      initialQuery={parseArchiveQuery(searchParams, ARCHIVE_SORT_OPTIONS)}
+      initialQuery={parseArchiveQuery(searchParams, sortOptions)}
+      sortOptions={sortOptions}
     />
   );
 }

@@ -634,3 +634,20 @@ grant execute on function public.set_order_status(uuid, text) to authenticated;
 -- owner can see which orders were never confirmed.
 alter table public.orders
   add column if not exists confirmation_sent_at timestamptz;
+
+-- Units sold per product, for the shop's "popular" sort. An aggregate only:
+-- no order, customer or price data leaves the orders tables. Paid and
+-- fulfilled orders count; cancelled and refunded ones do not. Like
+-- products_public, the view runs with its owner's rights so it is readable
+-- without opening the orders tables. A store that imports its order history
+-- into orders/order_items gets a working "popular" sort straight away.
+drop view if exists public.product_sales;
+create view public.product_sales as
+select oi.product_id, sum(oi.quantity)::integer as units_sold
+  from public.order_items oi
+  join public.orders o on o.id = oi.order_id
+ where o.status in ('paid', 'fulfilled')
+   and oi.product_id is not null
+ group by oi.product_id;
+
+grant select on public.product_sales to anon, authenticated;

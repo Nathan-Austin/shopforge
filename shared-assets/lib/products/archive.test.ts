@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   ARCHIVE_SORTS,
   archiveQueryString,
+  availableSorts,
+  POPULARITY_MIN_UNITS,
+  popularityAvailable,
   DEFAULT_ARCHIVE_SORT,
   EMPTY_ARCHIVE_QUERY,
   filterArchive,
@@ -111,7 +114,7 @@ const sauces: (ArchiveProduct & { name: string })[] = [
     category: { id: 1, slug: 'fruit-forward' },
     chilliTypes: [{ id: 'a', slug: 'jalapeno' }],
     heatLevel: 2,
-    isFeatured: false,
+    salesCount: 5,
     createdAt: '2026-01-03T00:00:00Z'
   },
   {
@@ -121,7 +124,7 @@ const sauces: (ArchiveProduct & { name: string })[] = [
     category: { id: 2, slug: 'smoky' },
     chilliTypes: [{ id: 'b', slug: 'habanero' }],
     heatLevel: 6,
-    isFeatured: true,
+    salesCount: 40,
     createdAt: '2026-01-01T00:00:00Z'
   },
   {
@@ -131,7 +134,7 @@ const sauces: (ArchiveProduct & { name: string })[] = [
     category: { id: 2, slug: 'smoky' },
     chilliTypes: [{ id: 'c', slug: 'carolina-reaper' }],
     heatLevel: 10,
-    isFeatured: false,
+    salesCount: 5,
     createdAt: '2026-01-02T00:00:00Z'
   },
   {
@@ -211,7 +214,7 @@ describe('sortArchive', () => {
     ]);
   });
 
-  it('puts featured products first for popular, newest within each group', () => {
+  it('puts the best sellers first for popular, newest among equals, unsold last', () => {
     expect(names(sortArchive(sauces, 'popular'))).toEqual([
       'Smoke Show',
       'Mango Mild',
@@ -248,5 +251,36 @@ describe('sortArchive', () => {
     for (const sort of ARCHIVE_SORTS) {
       expect(sortArchive(sauces, sort)).toHaveLength(sauces.length);
     }
+  });
+});
+
+describe('popularityAvailable', () => {
+  it('needs the minimum number of units sold', () => {
+    expect(popularityAvailable(0)).toBe(false);
+    expect(popularityAvailable(POPULARITY_MIN_UNITS - 1)).toBe(false);
+    expect(popularityAvailable(POPULARITY_MIN_UNITS)).toBe(true);
+    expect(popularityAvailable(Number.NaN)).toBe(false);
+  });
+});
+
+describe('availableSorts', () => {
+  it('hides popular in a shop that has not sold enough', () => {
+    expect(availableSorts(['recent', 'popular', 'hot-first'], 3)).toEqual([
+      'recent',
+      'hot-first'
+    ]);
+  });
+
+  it('offers popular once the shop has the sales history', () => {
+    expect(availableSorts(['recent', 'popular'], POPULARITY_MIN_UNITS)).toEqual([
+      'recent',
+      'popular'
+    ]);
+  });
+
+  it('means a ?sort=popular link falls back to the default until then', () => {
+    expect(parseArchiveQuery({ sort: 'popular' }, availableSorts(['recent', 'popular'], 0)).sort).toBe(
+      DEFAULT_ARCHIVE_SORT
+    );
   });
 });
