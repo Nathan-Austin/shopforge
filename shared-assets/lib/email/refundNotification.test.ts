@@ -75,6 +75,7 @@ describe('renderRefundNotification', () => {
 
   it('formats money in the locale', () => {
     const email = renderRefundNotification(partial, 'de');
-    expect(email.subject).toContain('10,00 €');
+    // Intl puts a non-breaking space before the euro sign in German.
+    expect(email.subject).toMatch(/10,00\s€/);
   });
 });
