@@ -61,8 +61,10 @@ describe('feedItem', () => {
 
   it('falls back to the title when there is no description and clips long titles', () => {
     const item = feedItem({ ...product, description: null, title: 'x'.repeat(200) });
+    // Titles are capped at 150 characters; descriptions at 5000, so the
+    // fallback keeps the whole title.
     expect(item).toMatch(/<g:title>x{149}…<\/g:title>/);
-    expect(item).toMatch(/<g:description>x{149}…<\/g:description>/);
+    expect(item).toMatch(/<g:description>x{200}<\/g:description>/);
   });
 });
 
