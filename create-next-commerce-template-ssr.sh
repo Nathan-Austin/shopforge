@@ -624,6 +624,9 @@ cat > src/messages/en.json <<'EOF'
     "startShopping": "Start shopping",
     "orderNumber": "Order {number}",
     "total": "Total",
+    "shippedOn": "Shipped on {date}",
+    "trackingNumber": "Tracking number {number}",
+    "track": "Track your parcel",
     "refundedAmount": "{amount} refunded",
     "status": {
       "pending": "Pending",
@@ -737,6 +740,22 @@ cat > src/messages/en.json <<'EOF'
       "order": "Order {number}",
       "status": "Status",
       "save": "Save",
+      "tracking": "Tracking (optional, saved when the status is Shipped)",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking number",
+      "trackingUrl": "Tracking link",
+      "trackingUrlHint": "Leave empty to use the carrier's page for known carriers.",
+      "autoEmailHint": "Setting the status to Shipped emails the customer once. Changing it back and forth does not email again.",
+      "shippedOn": "Shipped {date}",
+      "customerNotified": "Customer emailed {date}",
+      "customerNotNotified": "Customer not emailed about shipping",
+      "sendShippingEmail": "Send shipping email",
+      "resendShippingEmail": "Resend shipping email",
+      "shippingEmailSent": "Shipping email sent to {email}.",
+      "shippingEmailOff": "Email is not configured, so no shipping email was sent.",
+      "shippingEmailFailed": "The shipping email could not be sent: {error}",
+      "statusSaved": "Status saved.",
+      "statusFailed": "The status could not be saved: {error}",
       "total": "Total",
       "refundedSoFar": "{amount} refunded",
       "details": "Details and refunds",
@@ -924,6 +943,21 @@ cat > src/messages/en.json <<'EOF'
     "createAccount": "Create account",
     "savedToAccount": "This order is saved to your account.",
     "addressAtStripe": "You will enter your delivery address on the secure payment page."
+  },
+  "Email": {
+    "shipping": {
+      "subject": "{shop}: order {reference} has shipped",
+      "headline": "Your order is on its way",
+      "intro": "Good news: order {reference} has been handed to the carrier.",
+      "tracking": "Tracking",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking number",
+      "track": "Track your parcel",
+      "items": "In the parcel",
+      "address": "Delivering to",
+      "viewOrders": "View your orders",
+      "footer": "Questions? Just reply to this email."
+    }
   }
 }
 EOF
@@ -949,6 +983,9 @@ cat > src/messages/de.json <<'EOF'
     "startShopping": "Jetzt einkaufen",
     "orderNumber": "Bestellung {number}",
     "total": "Gesamt",
+    "shippedOn": "Versandt am {date}",
+    "trackingNumber": "Sendungsnummer {number}",
+    "track": "Sendung verfolgen",
     "refundedAmount": "{amount} erstattet",
     "status": {
       "pending": "Ausstehend",
@@ -1062,6 +1099,22 @@ cat > src/messages/de.json <<'EOF'
       "order": "Bestellung {number}",
       "status": "Status",
       "save": "Speichern",
+      "tracking": "Sendungsverfolgung (optional, wird beim Status „Versandt“ gespeichert)",
+      "carrier": "Versanddienst",
+      "trackingNumber": "Sendungsnummer",
+      "trackingUrl": "Tracking-Link",
+      "trackingUrlHint": "Leer lassen, um bei bekannten Diensten deren Seite zu verwenden.",
+      "autoEmailHint": "Der Status „Versandt“ benachrichtigt den Kunden einmal per E-Mail. Ein Hin- und Herwechseln löst keine weitere E-Mail aus.",
+      "shippedOn": "Versandt {date}",
+      "customerNotified": "Kunde benachrichtigt {date}",
+      "customerNotNotified": "Kunde nicht über den Versand benachrichtigt",
+      "sendShippingEmail": "Versand-E-Mail senden",
+      "resendShippingEmail": "Versand-E-Mail erneut senden",
+      "shippingEmailSent": "Versand-E-Mail an {email} gesendet.",
+      "shippingEmailOff": "E-Mail ist nicht eingerichtet, es wurde keine Versand-E-Mail gesendet.",
+      "shippingEmailFailed": "Die Versand-E-Mail konnte nicht gesendet werden: {error}",
+      "statusSaved": "Status gespeichert.",
+      "statusFailed": "Der Status konnte nicht gespeichert werden: {error}",
       "total": "Gesamt",
       "refundedSoFar": "{amount} erstattet",
       "details": "Details und Erstattungen",
@@ -1249,6 +1302,21 @@ cat > src/messages/de.json <<'EOF'
     "createAccount": "Konto erstellen",
     "savedToAccount": "Diese Bestellung ist in Ihrem Konto gespeichert.",
     "addressAtStripe": "Ihre Lieferadresse geben Sie auf der sicheren Zahlungsseite ein."
+  },
+  "Email": {
+    "shipping": {
+      "subject": "{shop}: Bestellung {reference} ist unterwegs",
+      "headline": "Ihre Bestellung ist unterwegs",
+      "intro": "Gute Nachrichten: Bestellung {reference} wurde dem Versanddienst übergeben.",
+      "tracking": "Sendungsverfolgung",
+      "carrier": "Versanddienst",
+      "trackingNumber": "Sendungsnummer",
+      "track": "Sendung verfolgen",
+      "items": "Im Paket",
+      "address": "Lieferung an",
+      "viewOrders": "Ihre Bestellungen ansehen",
+      "footer": "Fragen? Antworten Sie einfach auf diese E-Mail."
+    }
   }
 }
 EOF
@@ -1274,6 +1342,9 @@ cat > src/messages/tr.json <<'EOF'
     "startShopping": "Alışverişe başla",
     "orderNumber": "Sipariş {number}",
     "total": "Toplam",
+    "shippedOn": "{date} tarihinde kargolandı",
+    "trackingNumber": "Takip numarası {number}",
+    "track": "Kargonuzu takip edin",
     "refundedAmount": "{amount} iade edildi",
     "status": {
       "pending": "Beklemede",
@@ -1387,6 +1458,22 @@ cat > src/messages/tr.json <<'EOF'
       "order": "Sipariş {number}",
       "status": "Durum",
       "save": "Kaydet",
+      "tracking": "Kargo takibi (isteğe bağlı, durum Kargolandı olduğunda kaydedilir)",
+      "carrier": "Kargo firması",
+      "trackingNumber": "Takip numarası",
+      "trackingUrl": "Takip bağlantısı",
+      "trackingUrlHint": "Bilinen firmalar için boş bırakın; firmanın sayfası kullanılır.",
+      "autoEmailHint": "Durumu Kargolandı yapmak müşteriye bir kez e-posta gönderir. İleri geri değiştirmek yeniden e-posta göndermez.",
+      "shippedOn": "Kargolandı {date}",
+      "customerNotified": "Müşteriye e-posta gönderildi {date}",
+      "customerNotNotified": "Müşteriye kargo e-postası gönderilmedi",
+      "sendShippingEmail": "Kargo e-postası gönder",
+      "resendShippingEmail": "Kargo e-postasını yeniden gönder",
+      "shippingEmailSent": "Kargo e-postası {email} adresine gönderildi.",
+      "shippingEmailOff": "E-posta yapılandırılmadığı için kargo e-postası gönderilmedi.",
+      "shippingEmailFailed": "Kargo e-postası gönderilemedi: {error}",
+      "statusSaved": "Durum kaydedildi.",
+      "statusFailed": "Durum kaydedilemedi: {error}",
       "total": "Toplam",
       "refundedSoFar": "{amount} iade edildi",
       "details": "Ayrıntılar ve iadeler",
@@ -1574,6 +1661,21 @@ cat > src/messages/tr.json <<'EOF'
     "createAccount": "Hesap oluştur",
     "savedToAccount": "Bu sipariş hesabınıza kaydedildi.",
     "addressAtStripe": "Teslimat adresinizi güvenli ödeme sayfasında gireceksiniz."
+  },
+  "Email": {
+    "shipping": {
+      "subject": "{shop}: {reference} numaralı siparişiniz kargolandı",
+      "headline": "Siparişiniz yolda",
+      "intro": "İyi haber: {reference} numaralı siparişiniz kargo firmasına teslim edildi.",
+      "tracking": "Kargo takibi",
+      "carrier": "Kargo firması",
+      "trackingNumber": "Takip numarası",
+      "track": "Kargonuzu takip edin",
+      "items": "Pakette neler var",
+      "address": "Teslimat adresi",
+      "viewOrders": "Siparişlerinizi görüntüleyin",
+      "footer": "Sorunuz mu var? Bu e-postayı yanıtlamanız yeterli."
+    }
   }
 }
 EOF
@@ -1599,6 +1701,9 @@ cat > src/messages/ar.json <<'EOF'
     "startShopping": "ابدأ التسوق",
     "orderNumber": "الطلب {number}",
     "total": "الإجمالي",
+    "shippedOn": "تم الشحن في {date}",
+    "trackingNumber": "رقم التتبع {number}",
+    "track": "تتبّع طردك",
     "refundedAmount": "تم استرداد {amount}",
     "status": {
       "pending": "قيد الانتظار",
@@ -1712,6 +1817,22 @@ cat > src/messages/ar.json <<'EOF'
       "order": "الطلب {number}",
       "status": "الحالة",
       "save": "حفظ",
+      "tracking": "التتبع (اختياري، يُحفظ عندما تكون الحالة «تم الشحن»)",
+      "carrier": "شركة الشحن",
+      "trackingNumber": "رقم التتبع",
+      "trackingUrl": "رابط التتبع",
+      "trackingUrlHint": "اتركه فارغًا لاستخدام صفحة شركة الشحن للشركات المعروفة.",
+      "autoEmailHint": "تغيير الحالة إلى «تم الشحن» يرسل رسالة واحدة إلى العميل. التبديل ذهابًا وإيابًا لا يرسل رسالة أخرى.",
+      "shippedOn": "تم الشحن {date}",
+      "customerNotified": "تم إشعار العميل {date}",
+      "customerNotNotified": "لم يتم إشعار العميل بالشحن",
+      "sendShippingEmail": "إرسال رسالة الشحن",
+      "resendShippingEmail": "إعادة إرسال رسالة الشحن",
+      "shippingEmailSent": "تم إرسال رسالة الشحن إلى {email}.",
+      "shippingEmailOff": "البريد الإلكتروني غير مُعدّ، لذا لم تُرسل رسالة الشحن.",
+      "shippingEmailFailed": "تعذّر إرسال رسالة الشحن: {error}",
+      "statusSaved": "تم حفظ الحالة.",
+      "statusFailed": "تعذّر حفظ الحالة: {error}",
       "total": "الإجمالي",
       "refundedSoFar": "تم استرداد {amount}",
       "details": "التفاصيل وعمليات الاسترداد",
@@ -1899,6 +2020,21 @@ cat > src/messages/ar.json <<'EOF'
     "createAccount": "إنشاء حساب",
     "savedToAccount": "تم حفظ هذا الطلب في حسابك.",
     "addressAtStripe": "ستدخل عنوان التسليم في صفحة الدفع الآمنة."
+  },
+  "Email": {
+    "shipping": {
+      "subject": "{shop}: تم شحن الطلب {reference}",
+      "headline": "طلبك في الطريق إليك",
+      "intro": "خبر سار: تم تسليم الطلب {reference} إلى شركة الشحن.",
+      "tracking": "التتبع",
+      "carrier": "شركة الشحن",
+      "trackingNumber": "رقم التتبع",
+      "track": "تتبّع طردك",
+      "items": "محتويات الطرد",
+      "address": "عنوان التسليم",
+      "viewOrders": "عرض طلباتك",
+      "footer": "لديك سؤال؟ ما عليك سوى الرد على هذه الرسالة."
+    }
   }
 }
 EOF

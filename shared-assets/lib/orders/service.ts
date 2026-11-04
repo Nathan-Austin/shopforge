@@ -46,7 +46,13 @@ export interface Order {
   refundedCents: number;
   stripeSessionId: string;
   stripePaymentIntentId: string | null;
+  /** Locale the customer checked out in; null for orders before it was recorded. */
+  locale: string | null;
   shipping: OrderAddress;
+  tracking: { carrier: string | null; number: string | null; url: string | null };
+  shippedAt: string | null;
+  /** When the customer was emailed that the order shipped; null if never. */
+  shippingNotifiedAt: string | null;
   items: OrderItem[];
   createdAt: string;
 }
@@ -54,7 +60,8 @@ export interface Order {
 const ORDER_COLUMNS = `
   id, user_id, email, status, currency, subtotal_cents, shipping_cents,
   total_cents, refunded_cents, stripe_session_id, stripe_payment_intent_id,
-  shipping_name, shipping_line1,
+  locale, tracking_carrier, tracking_number, tracking_url, shipped_at,
+  shipping_notified_at, shipping_name, shipping_line1,
   shipping_line2, shipping_city, shipping_postal_code, shipping_region,
   shipping_country, created_at,
   order_items ( id, product_id, product_name, unit_price_cents, quantity,
@@ -83,6 +90,12 @@ interface OrderRow {
   refunded_cents: number | null;
   stripe_session_id: string;
   stripe_payment_intent_id: string | null;
+  locale: string | null;
+  tracking_carrier: string | null;
+  tracking_number: string | null;
+  tracking_url: string | null;
+  shipped_at: string | null;
+  shipping_notified_at: string | null;
   shipping_name: string | null;
   shipping_line1: string | null;
   shipping_line2: string | null;
@@ -107,6 +120,14 @@ function toOrder(row: OrderRow): Order {
     refundedCents: row.refunded_cents ?? 0,
     stripeSessionId: row.stripe_session_id,
     stripePaymentIntentId: row.stripe_payment_intent_id,
+    locale: row.locale,
+    tracking: {
+      carrier: row.tracking_carrier,
+      number: row.tracking_number,
+      url: row.tracking_url
+    },
+    shippedAt: row.shipped_at,
+    shippingNotifiedAt: row.shipping_notified_at,
     shipping: {
       name: row.shipping_name,
       line1: row.shipping_line1,

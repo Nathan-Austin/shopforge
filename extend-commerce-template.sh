@@ -509,6 +509,8 @@ export async function POST(request: Request) {
           typeof session.payment_intent === 'string'
             ? session.payment_intent
             : session.payment_intent?.id ?? null,
+        // So later emails (shipping, refunds) are in the customer's language.
+        locale: session.metadata?.locale || null,
         ...shippingSnapshot(session)
       })
       .select('id')
