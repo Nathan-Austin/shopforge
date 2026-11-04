@@ -169,6 +169,19 @@ details for each item are in the numbered sections below.
 
 ## Notes for future turns
 
+Dependency audit, 2026-11-04: the generator installs the latest of
+everything at generation time, and on this date that meant Next 16.4,
+React 19.3, stripe 23.1 (API 2025-09-30.clover shapes), @supabase/supabase-js
+2.118, @supabase/ssr 0.12, next-intl 4.14, zod 4.6, Tailwind 4.3, Vitest 5.1,
+Supabase CLI 3.0. Nothing was behind. Changes made: Node 20.9 is checked up
+front; create-next-app gets every option stated (saved preferences could
+otherwise change a scaffold); the Supabase CLI is run as `npx supabase@3`
+with `db push --remote --yes`; the admin guard uses `getClaims()` /
+`getUser()` instead of `getSession()`; `z.email()` replaces the deprecated
+`z.string().email()`; the webhook accepts both the old and the new
+Checkout Session address shape. Still pinned by create-next-app itself:
+ESLint 9 (deprecated upstream, ESLint 10 exists) and `@types/node` 20.
+
 Decided on 2026-11-03:
 
 - Guest checkout stays open, and a guest's orders are attached to an account

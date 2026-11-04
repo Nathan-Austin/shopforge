@@ -20,9 +20,11 @@ empty Supabase project to a deployment on Vercel. For a short overview, see the
 
 ## 1. Install the tools
 
-- **Node.js 20 or newer:** [nodejs.org](https://nodejs.org)
+- **Node.js 20.9 or newer** (Next.js 16's minimum): [nodejs.org](https://nodejs.org)
 - **pnpm:** `corepack enable pnpm`
-- **Supabase CLI:** `npm i -g supabase`, or let the script use `npx supabase`
+- **Supabase CLI:** nothing to install; the script runs `npx supabase@3`. If you
+  use the CLI yourself, note that v3 is local-by-default: hosted commands
+  need `--remote`, and unattended ones `--yes`
 - **Git**
 
 Clone shopforge somewhere permanent. Your shop is generated into a separate
@@ -251,6 +253,13 @@ decremented and the cart is emptied by the webhook, not by the browser
 returning from checkout. Without it, payments still succeed but no order is
 written, nothing is deducted and carts stay full.
 
+When you create the endpoint, set its **API version** to the latest (the
+default is your account's version, which can be years old). The shop reads
+the payload with current field names; it also understands the pre-2025
+address shape, but newer fields such as discounts are only guaranteed on a
+current version. The server-side calls the shop makes to Stripe always use
+the version pinned by the `stripe` package, independent of this setting.
+
 In the Stripe dashboard, add an endpoint at
 `https://your-site/api/webhooks/stripe` subscribed to
 `checkout.session.completed`, and copy its signing secret into
@@ -330,8 +339,12 @@ git push -u origin main
 ## Troubleshooting
 
 **`supabase link` fails or can't find the project.** The CLI is logged in to a
-Supabase account that can't see this project. Run `npx supabase login` with the
-account that owns it, then re-run the script.
+Supabase account that can't see this project. Run `npx supabase@3 login` with
+the account that owns it, then re-run the script.
+
+**`db push` says it succeeded but nothing changed in the project.** Supabase
+CLI v3 targets the local database unless you pass `--remote`; the script does,
+but a hand-typed `npx supabase db push` does not reach the hosted project.
 
 **You lost the phone with the admin authenticator.** There are no recovery
 codes yet. In the Supabase dashboard open **Authentication → Users**, find
@@ -366,5 +379,5 @@ this, run `pnpm approve-builds` in the shop, or add the package to
 exists and is public, and that you're signed in as the shop owner.
 
 **Changing the schema later.** Add a new file under `supabase/migrations/` in
-your shop and run `npx supabase db push`. The files in shopforge's
+your shop and run `npx supabase@3 db push --remote`. The files in shopforge's
 `store-modes/` only affect shops generated afterwards.

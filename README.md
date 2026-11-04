@@ -85,7 +85,7 @@ support for languages such as Arabic.
 
 ## Requirements
 
-- Node.js 20 or newer and [pnpm](https://pnpm.io) (`corepack enable pnpm`)
+- Node.js 20.9 or newer and [pnpm](https://pnpm.io) (`corepack enable pnpm`)
 - A free [Supabase](https://supabase.com) project
 - A [Stripe](https://stripe.com) account (test keys are fine to start)
 - A [Vercel](https://vercel.com) account to deploy (optional)
