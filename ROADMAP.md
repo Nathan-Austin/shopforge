@@ -89,6 +89,10 @@ details for each item are in the numbered sections below.
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
       hardcoded `src/lib/shipping/config.ts`
+- [ ] Shop currency as a generator choice: ask for it in the CLI (default
+      EUR), seed products and the admin form with it, and use it as the
+      default for amount discount codes and minimums. One currency per shop
+      is the decision (2026-11-04); today it is per product and free text
 - [ ] Admin UI for `src/lib/products/config.ts`: tick which product fields the
       shop manages, without editing the file. The columns already all exist,
       so this needs no migration
