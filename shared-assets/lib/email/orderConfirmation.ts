@@ -1,10 +1,10 @@
 /**
  * The order confirmation email.
  *
- * A pure function: it takes the order and returns the subject, HTML and
- * plain text. No network, no environment, so it can be unit tested and
- * previewed. Everything that came from a customer or a product name is
- * escaped before it reaches the HTML.
+ * A pure function: it takes the order and the translated wording and
+ * returns the subject, HTML and plain text. No network, no environment, so
+ * it can be unit tested and previewed. Everything that came from a
+ * customer or a product name is escaped before it reaches the HTML.
  */
 
 import { formatPrice } from '../format';
@@ -32,6 +32,9 @@ export interface ConfirmationOrder {
   currency: string;
   subtotalCents: number;
   shippingCents: number;
+  /** Taken off by a promo code; shown as a line when above zero. */
+  discountCents?: number;
+  discountCode?: string | null;
   totalCents: number;
   items: ConfirmationItem[];
   shipping?: ConfirmationAddress | null;
@@ -70,11 +73,37 @@ export interface RenderedEmail {
   text: string;
 }
 
+/**
+ * Translated wording, from the Email.confirmation namespace. Placeholders
+ * are already filled in by the caller, so the template stays pure.
+ */
+export interface ConfirmationEmailStrings {
+  subject: string;
+  headline: string;
+  /** e.g. "Order A1B2C3D4" */
+  orderLabel: string;
+  subtotal: string;
+  shipping: string;
+  discount: string;
+  total: string;
+  addressHeading: string;
+  viewOrder: string;
+  footer: string;
+}
+
+const RTL = new Set(['ar', 'fa', 'he', 'ur']);
+
 export function renderOrderConfirmation(
   order: ConfirmationOrder,
+  strings: ConfirmationEmailStrings,
   locale = 'en'
 ): RenderedEmail {
   const money = (cents: number) => formatPrice(cents, order.currency, locale);
+  const dir = RTL.has(locale.split('-')[0]) ? 'rtl' : 'ltr';
+  const discount = order.discountCents ?? 0;
+  const discountLabel = order.discountCode
+    ? `${strings.discount} (${order.discountCode})`
+    : strings.discount;
 
   const itemRows = order.items
     .map((item) => {
@@ -95,23 +124,29 @@ export function renderOrderConfirmation(
 
   const address = order.shipping ? addressLines(order.shipping) : [];
   const addressHtml = address.length
-    ? `<h2 style="font-size:14px;text-transform:uppercase;color:#666;margin:24px 0 8px;">Delivery address</h2>
+    ? `<h2 style="font-size:14px;text-transform:uppercase;color:#666;margin:24px 0 8px;">${escapeHtml(strings.addressHeading)}</h2>
        <p style="margin:0;line-height:1.5;">${address.map(escapeHtml).join('<br>')}</p>`
     : '';
 
   const buttonHtml = order.orderUrl
     ? `<p style="margin:24px 0;">
-         <a href="${escapeHtml(order.orderUrl)}" style="background:#111;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">View your order</a>
+         <a href="${escapeHtml(order.orderUrl)}" style="background:#111;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(strings.viewOrder)}</a>
        </p>`
     : '';
 
+  const discountRow =
+    discount > 0
+      ? `
+          <tr><td style="padding:2px 0;color:#666;">${escapeHtml(discountLabel)}</td><td style="padding:2px 0;text-align:end;">−${escapeHtml(money(discount))}</td></tr>`
+      : '';
+
   const html = `<!doctype html>
-<html>
+<html dir="${dir}" lang="${escapeHtml(locale)}">
   <body style="margin:0;padding:24px;background:#f6f6f6;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#111;">
     <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;padding:24px;">
-      <h1 style="font-size:20px;margin:0 0 8px;">Thank you for your order</h1>
+      <h1 style="font-size:20px;margin:0 0 8px;">${escapeHtml(strings.headline)}</h1>
       <p style="margin:0 0 4px;color:#444;">${escapeHtml(order.shopName)}</p>
-      <p style="margin:0 0 24px;color:#666;">Order ${escapeHtml(order.reference)}</p>
+      <p style="margin:0 0 24px;color:#666;">${escapeHtml(strings.orderLabel)}</p>
 
       <table style="width:100%;border-collapse:collapse;font-size:15px;">
         <tbody>${itemRows}
@@ -120,26 +155,24 @@ export function renderOrderConfirmation(
 
       <table style="width:100%;border-collapse:collapse;font-size:15px;margin-top:12px;">
         <tbody>
-          <tr><td style="padding:2px 0;color:#666;">Subtotal</td><td style="padding:2px 0;text-align:right;">${escapeHtml(money(order.subtotalCents))}</td></tr>
-          <tr><td style="padding:2px 0;color:#666;">Shipping</td><td style="padding:2px 0;text-align:right;">${escapeHtml(money(order.shippingCents))}</td></tr>
-          <tr><td style="padding:8px 0 0;font-weight:bold;">Total</td><td style="padding:8px 0 0;text-align:right;font-weight:bold;">${escapeHtml(money(order.totalCents))}</td></tr>
+          <tr><td style="padding:2px 0;color:#666;">${escapeHtml(strings.subtotal)}</td><td style="padding:2px 0;text-align:end;">${escapeHtml(money(order.subtotalCents))}</td></tr>${discountRow}
+          <tr><td style="padding:2px 0;color:#666;">${escapeHtml(strings.shipping)}</td><td style="padding:2px 0;text-align:end;">${escapeHtml(money(order.shippingCents))}</td></tr>
+          <tr><td style="padding:8px 0 0;font-weight:bold;">${escapeHtml(strings.total)}</td><td style="padding:8px 0 0;text-align:end;font-weight:bold;">${escapeHtml(money(order.totalCents))}</td></tr>
         </tbody>
       </table>
 
       ${addressHtml}
       ${buttonHtml}
 
-      <p style="margin:24px 0 0;color:#888;font-size:13px;">
-        We will email you again when your order ships.
-      </p>
+      <p style="margin:24px 0 0;color:#888;font-size:13px;">${escapeHtml(strings.footer)}</p>
     </div>
   </body>
 </html>`;
 
   const textLines = [
-    'Thank you for your order',
+    strings.headline,
     order.shopName,
-    `Order ${order.reference}`,
+    strings.orderLabel,
     '',
     ...order.items.map((item) => {
       const variant = variantLabel(item);
@@ -148,22 +181,18 @@ export function renderOrderConfirmation(
       )}`;
     }),
     '',
-    `Subtotal: ${money(order.subtotalCents)}`,
-    `Shipping: ${money(order.shippingCents)}`,
-    `Total: ${money(order.totalCents)}`
+    `${strings.subtotal}: ${money(order.subtotalCents)}`
   ];
+  if (discount > 0) textLines.push(`${discountLabel}: -${money(discount)}`);
+  textLines.push(`${strings.shipping}: ${money(order.shippingCents)}`, `${strings.total}: ${money(order.totalCents)}`);
 
   if (address.length) {
-    textLines.push('', 'Delivery address:', ...address);
+    textLines.push('', `${strings.addressHeading}:`, ...address);
   }
   if (order.orderUrl) {
-    textLines.push('', `View your order: ${order.orderUrl}`);
+    textLines.push('', `${strings.viewOrder}: ${order.orderUrl}`);
   }
-  textLines.push('', 'We will email you again when your order ships.');
+  textLines.push('', strings.footer);
 
-  return {
-    subject: `${order.shopName}: order ${order.reference} confirmed`,
-    html,
-    text: textLines.join('\n')
-  };
+  return { subject: strings.subject, html, text: textLines.join('\n') };
 }

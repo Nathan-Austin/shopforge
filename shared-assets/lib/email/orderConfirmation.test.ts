@@ -3,14 +3,30 @@ import { describe, expect, it } from 'vitest';
 import {
   escapeHtml,
   renderOrderConfirmation,
+  type ConfirmationEmailStrings,
   type ConfirmationOrder
 } from './orderConfirmation';
 
 /**
  * The confirmation email carries a customer's own address and product names
  * straight into HTML, so these tests pin the escaping as well as the
- * arithmetic a customer would check against their bank statement.
+ * arithmetic a customer would check against their bank statement. The
+ * wording comes in as strings (Email.confirmation in the shop), so a fixture
+ * stands in for the translations here.
  */
+
+const strings: ConfirmationEmailStrings = {
+  subject: 'Test Shop: order A1B2C3D4 confirmed',
+  headline: 'Thank you for your order',
+  orderLabel: 'Order A1B2C3D4',
+  subtotal: 'Subtotal',
+  shipping: 'Shipping',
+  discount: 'Discount',
+  total: 'Total',
+  addressHeading: 'Delivery address',
+  viewOrder: 'View your order',
+  footer: 'We will email you again when your order ships.'
+};
 
 const baseOrder: ConfirmationOrder = {
   reference: 'A1B2C3D4',
@@ -51,74 +67,76 @@ describe('escapeHtml', () => {
 });
 
 describe('renderOrderConfirmation', () => {
-  it('names the shop and the order in the subject', () => {
-    const { subject } = renderOrderConfirmation(baseOrder);
-    expect(subject).toBe('Test Shop: order A1B2C3D4 confirmed');
+  it('uses the translated wording as given', () => {
+    const email = renderOrderConfirmation(baseOrder, strings);
+    expect(email.subject).toBe('Test Shop: order A1B2C3D4 confirmed');
+    expect(email.html).toContain('Thank you for your order');
+    expect(email.text).toContain('Order A1B2C3D4');
+    expect(email.text).toContain('We will email you again when your order ships.');
   });
 
-  it('lists every item with its line total', () => {
-    const { text } = renderOrderConfirmation(baseOrder);
-    expect(text).toContain('2 x Ghost Pepper Sauce');
-    expect(text).toContain('1 x Apron (L / Red)');
+  it('lists every item with its line total and variant', () => {
+    const email = renderOrderConfirmation(baseOrder, strings);
+    expect(email.text).toContain('2 x Ghost Pepper Sauce  €20.00');
+    expect(email.text).toContain('1 x Apron (L / Red)  €5.00');
+    expect(email.html).toContain('L / Red');
   });
 
   it('shows subtotal, shipping and total', () => {
-    const { text } = renderOrderConfirmation(baseOrder);
-    expect(text).toMatch(/Subtotal: .*25[.,]00/);
-    expect(text).toMatch(/Shipping: .*5[.,]00/);
-    expect(text).toMatch(/Total: .*30[.,]00/);
+    const email = renderOrderConfirmation(baseOrder, strings);
+    expect(email.text).toContain('Subtotal: €25.00');
+    expect(email.text).toContain('Shipping: €5.00');
+    expect(email.text).toContain('Total: €30.00');
+    expect(email.html).not.toContain('Discount');
   });
 
-  it('includes the delivery address', () => {
-    const { text, html } = renderOrderConfirmation(baseOrder);
-    expect(text).toContain('1 High Street');
-    expect(html).toContain('10115 Berlin');
+  it('adds a discount line, with the code, when one was applied', () => {
+    const email = renderOrderConfirmation(
+      { ...baseOrder, discountCents: 250, discountCode: 'WELCOME10', totalCents: 2750 },
+      strings
+    );
+    expect(email.text).toContain('Discount (WELCOME10): -€2.50');
+    expect(email.html).toContain('Discount (WELCOME10)');
+    expect(email.html).toContain('−€2.50');
   });
 
-  it('omits the address block when there is no address', () => {
-    const { html } = renderOrderConfirmation({ ...baseOrder, shipping: null });
-    expect(html).not.toContain('Delivery address');
+  it('includes the delivery address and the order link when given', () => {
+    const email = renderOrderConfirmation(
+      { ...baseOrder, orderUrl: 'https://shop.example/en/account/orders' },
+      strings
+    );
+    expect(email.text).toContain('Jo Smith');
+    expect(email.text).toContain('10115 Berlin');
+    expect(email.text).toContain('View your order: https://shop.example/en/account/orders');
+    expect(email.html).toContain('href="https://shop.example/en/account/orders"');
   });
 
-  it('omits the button when the shop does not know its own URL', () => {
-    const { html } = renderOrderConfirmation(baseOrder);
-    expect(html).not.toContain('View your order</a>');
+  it('leaves the address and link out when there are none', () => {
+    const email = renderOrderConfirmation({ ...baseOrder, shipping: null }, strings);
+    expect(email.html).not.toContain('Delivery address');
+    expect(email.html).not.toContain('href=');
   });
 
-  it('links to the order when a URL is given', () => {
-    const { html, text } = renderOrderConfirmation({
-      ...baseOrder,
-      orderUrl: 'https://shop.example/en/account/orders'
-    });
-    expect(html).toContain('href="https://shop.example/en/account/orders"');
-    expect(text).toContain('https://shop.example/en/account/orders');
+  it('escapes product names and address lines in the HTML', () => {
+    const email = renderOrderConfirmation(
+      {
+        ...baseOrder,
+        items: [{ productName: '<img src=x onerror=alert(1)>', unitPriceCents: 100, quantity: 1 }],
+        shipping: { name: 'Jo "The Hammer" <Smith>', line1: 'Street & Co' }
+      },
+      strings
+    );
+    expect(email.html).not.toContain('<img');
+    expect(email.html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(email.html).toContain('Jo &quot;The Hammer&quot; &lt;Smith&gt;');
+    expect(email.html).toContain('Street &amp; Co');
+    expect(email.text).toContain('<img src=x onerror=alert(1)>');
   });
 
-  it('escapes a product name that contains markup', () => {
-    const { html } = renderOrderConfirmation({
-      ...baseOrder,
-      items: [
-        {
-          productName: '<img src=x onerror=alert(1)>',
-          unitPriceCents: 100,
-          quantity: 1
-        }
-      ]
-    });
-    expect(html).not.toContain('<img src=x');
-    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
-  });
-
-  it('escapes markup in the delivery address', () => {
-    const { html } = renderOrderConfirmation({
-      ...baseOrder,
-      shipping: { ...baseOrder.shipping, line1: '<b>1 High Street</b>' }
-    });
-    expect(html).toContain('&lt;b&gt;1 High Street&lt;/b&gt;');
-  });
-
-  it('formats money in the given locale', () => {
-    const { text } = renderOrderConfirmation(baseOrder, 'de');
-    expect(text).toContain('30,00');
+  it('formats money in the locale and sets the document direction', () => {
+    const de = renderOrderConfirmation(baseOrder, strings, 'de');
+    expect(de.text).toMatch(/Total: 30,00\s€/);
+    expect(de.html).toContain('<html dir="ltr" lang="de">');
+    expect(renderOrderConfirmation(baseOrder, strings, 'ar').html).toContain('dir="rtl"');
   });
 });
