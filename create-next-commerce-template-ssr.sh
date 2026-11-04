@@ -3152,6 +3152,9 @@ EOF
 # layout (the next-intl setup), so there is one <html> with the right lang,
 # not one nested in another. "/" is redirected to a locale by the proxy.
 rm -f src/app/layout.tsx src/app/page.tsx
+# create-next-app already generated route types for those two files into
+# .next/types; stale, they fail tsc. The build regenerates them.
+rm -rf .next
 mkdir -p src/app/[locale]
 cat > src/app/[locale]/layout.tsx <<'EOF'
 import { NextIntlClientProvider } from 'next-intl';
