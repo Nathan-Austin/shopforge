@@ -77,6 +77,13 @@ export default async function AdminOrderPage({
             <td className="pt-2 font-semibold">{t('orders.total')}</td>
             <td className="pt-2 text-right font-semibold">{money(order.totalCents)}</td>
           </tr>
+          {order.discountCents > 0 && (
+            <tr className="text-emerald-700">
+              <td colSpan={2} className="pt-1 text-right">
+                {t('orders.discount', { code: order.discountCode ?? '' })}: −{money(order.discountCents)}
+              </td>
+            </tr>
+          )}
           {order.refundedCents > 0 && (
             <tr className="text-red-700">
               <td colSpan={2} className="pt-1 text-right">

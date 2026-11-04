@@ -253,6 +253,14 @@ export default async function AdminOrdersPage({
                       {formatPrice(order.totalCents, order.currency, locale)}
                     </td>
                   </tr>
+                  {order.discountCents > 0 && (
+                    <tr className="font-normal text-emerald-700">
+                      <td colSpan={2} className="pt-1 text-right">
+                        {t('orders.discount', { code: order.discountCode ?? '' })}: −
+                        {formatPrice(order.discountCents, order.currency, locale)}
+                      </td>
+                    </tr>
+                  )}
                   {order.refundedCents > 0 && (
                     <tr className="font-normal text-red-700">
                       <td colSpan={2} className="pt-1 text-right">

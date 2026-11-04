@@ -12,7 +12,8 @@ const NAV_ITEMS = [
   { key: 'dashboard', path: '' },
   { key: 'products', path: '/products' },
   { key: 'newProduct', path: '/products/new' },
-  { key: 'orders', path: '/orders' }
+  { key: 'orders', path: '/orders' },
+  { key: 'discounts', path: '/discounts' }
 ];
 
 export default async function AdminLayout({ children, params }: AdminLayoutProps) {
