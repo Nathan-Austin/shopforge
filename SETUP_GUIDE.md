@@ -146,6 +146,7 @@ RESEND_API_KEY=re_…                  # optional, see "Order confirmation email
 EMAIL_FROM=My Shop <orders@myshop.com>   # optional, must be a verified sender
 EMAIL_REPLY_TO=hello@myshop.com      # optional, where replies go
 SHOP_OWNER_EMAIL=you@myshop.com      # optional, BCC on receipts, CC on refund emails
+NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=…  # optional, Search Console HTML-tag code
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 ```
 
@@ -183,6 +184,34 @@ select id, email, created_at from public.orders
 
 A provider outage never fails the webhook: the payment and the order are
 already real, so the order is kept and the failure is logged.
+
+### Search engines and Google Merchant Center
+
+Every public page already carries a self-referencing canonical link, the
+full `hreflang` set (every locale plus `x-default`) and JSON-LD structured
+data; cart, checkout, account, auth and admin are `noindex`. What you still
+have to do:
+
+1. Set `NEXT_PUBLIC_SITE_URL` to the exact production origin. Every
+   canonical, hreflang, sitemap and feed URL is built from it.
+2. Verify the site in Search Console (HTML tag method) and put the code in
+   `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`; the tag is rendered on every page.
+3. Submit `https://your-shop/sitemap.xml` in Search Console.
+4. In Merchant Center, claim the verified site, then add a product source per
+   target country: either "from your online store" (Google reads the product
+   pages' structured data) or "from a file at a URL" pointing at
+   `https://your-shop/api/feeds/google/<locale>.xml`, one per locale. Turn on
+   automatic item updates. `/<locale>/admin/seo` lists these URLs.
+5. Fill in brand, SKU and barcode (GTIN) on products. Prices and currency on
+   the pages must match the feed for each target country.
+
+Locales are given to the generator as `de` (a language) or `de-at` (a
+market). A market's `src/messages/de-at.json` starts empty and only needs
+the strings that differ from `de.json`. Optional: `NEXT_PUBLIC_RETURN_DAYS`
+(and `NEXT_PUBLIC_RETURN_FEES=free|customer`) emits a return policy in the
+structured data; leave it unset and configure returns in Merchant Center
+instead, which Google prefers. The research behind all of this, with
+sources, is in `docs/international-seo.md`.
 
 ### Discount codes
 

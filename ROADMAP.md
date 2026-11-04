@@ -133,6 +133,28 @@ details for each item are in the numbered sections below.
       dashboard is the recovery path for now
 - [ ] Account page beyond orders: addresses, email change, delete account
 
+## 2c. International SEO and Merchant Center
+
+- [x] Country-language market locales (`de-at`) with message fallback,
+      lowercase URL prefixes, correct `html lang` — done 2026-11-04
+- [x] Canonical, full hreflang set with `x-default`, `noindex` on private
+      pages, `robots.txt`, multi-locale `sitemap.xml` — done 2026-11-04
+- [x] JSON-LD: `OnlineStore`, `WebSite`, `BreadcrumbList`, `ItemList`,
+      `Product`/`Offer`/`Brand` with GTIN, SKU, availability, shipping —
+      done 2026-11-04; visible breadcrumbs on the product page
+- [x] Merchant Center feed per locale and `/admin/seo` — done 2026-11-04
+- [ ] Per-market prices and currency (needs the shop-currency choice above
+      first); until then a non-euro market cannot pass Merchant Center review
+- [ ] Merchant API sync from the admin (service account + merchant id;
+      create the data source once, upsert on save, delete on archive)
+- [ ] `ProductGroup` variant markup once variants carry their own SKU/price
+- [ ] Reviews and `AggregateRating` on product pages
+- [ ] Translated slugs per locale
+- [ ] Locale switcher in the header with a non-blocking "also available in"
+      hint (Google's preferred alternative to redirects)
+- [ ] UCP / agentic checkout eligibility attributes in the feed when Google
+      opens it beyond the US early-access programme
+
 ## 3. Languages
 
 - [ ] Full `de`, `tr` and `ar` translations

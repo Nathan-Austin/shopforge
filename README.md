@@ -22,7 +22,18 @@ support for languages such as Arabic.
   signs in with a password and, by default, a code from an authenticator app
 - **Database:** profiles, addresses, brands, categories, products, cart
   items and orders, with row-level security and seed data
-- **Languages:** any set of locales via `next-intl`, with RTL layout for Arabic
+- **Languages and markets:** any set of locales via `next-intl`, as
+  languages (`de`) or language-country markets (`de-at`, `en-de`) under
+  lowercase URL prefixes, with RTL layout for Arabic. A market inherits its
+  language's text and overrides only what differs
+- **International SEO built in:** self-referencing canonical, the full
+  hreflang set with `x-default` on every indexable page, `noindex` on the
+  private ones, `robots.txt`, a multi-locale `sitemap.xml`, and JSON-LD
+  (`OnlineStore`, `WebSite`, `BreadcrumbList`, `ItemList`, `Product` with
+  `Offer`, `Brand`, GTIN and SKU) that meets Google's merchant-listing
+  requirements. A Merchant Center feed per locale and an admin page that
+  says what to paste where. Background and sources in
+  [docs/international-seo.md](docs/international-seo.md)
 - **Product fields you choose:** pick from ~32 fields at generation time
   (headline, SKU, stock, compare-at price, net content, allergens, nutrition,
   tags, SEO and more). Every column exists in the database either way, so

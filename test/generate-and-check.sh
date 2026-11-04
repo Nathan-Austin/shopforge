@@ -2,10 +2,12 @@
 # Generates a store without touching Supabase, then runs the checks a first
 # deploy on Vercel would: install, type-check, lint and build.
 #
-#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--admin-mfa=required|off] [--keep]
+#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--admin-mfa=required|off] [--locales=en,de,ar] [--suffix=name] [--keep]
 #
-# The store is written to test-<mode>/ in the repository root (gitignored)
-# and removed afterwards unless --keep is given. Needs Node, pnpm and python3.
+# The store is written to test-<mode><suffix>/ in the repository root
+# (gitignored) and removed afterwards unless --keep is given. --locales
+# takes the generator's locale list (markets like de-at included). Needs
+# Node, pnpm and python3.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -13,6 +15,8 @@ MODE="generic"
 SHIPPING="form"
 AUTH="password"
 ADMIN_MFA="required"
+LOCALES="en,de,ar"
+SUFFIX=""
 KEEP="false"
 for arg in "$@"; do
   case $arg in
@@ -20,19 +24,21 @@ for arg in "$@"; do
     --shipping=*) SHIPPING="${arg#--shipping=}" ;;
     --auth=*) AUTH="${arg#--auth=}" ;;
     --admin-mfa=*) ADMIN_MFA="${arg#--admin-mfa=}" ;;
+    --locales=*) LOCALES="${arg#--locales=}" ;;
+    --suffix=*) SUFFIX="-${arg#--suffix=}" ;;
     --keep) KEEP="true" ;;
     *) echo "Unknown argument: $arg" >&2; exit 2 ;;
   esac
 done
 
-APP="test-$MODE"
+APP="test-$MODE$SUFFIX"
 cd "$ROOT"
 rm -rf "$APP"
 
 step() { echo; echo "=== $*"; }
 
-step "Generate ($MODE, customer sign-in: $AUTH, admin 2FA: $ADMIN_MFA)"
-SHOPFORGE_CUSTOMER_AUTH="$AUTH" SHOPFORGE_ADMIN_MFA="$ADMIN_MFA" ./create-next-commerce-template-ssr.sh "$APP" en "en,de,ar" --mode="$MODE" --skip-supabase
+step "Generate ($MODE, locales: $LOCALES, customer sign-in: $AUTH, admin 2FA: $ADMIN_MFA)"
+SHOPFORGE_CUSTOMER_AUTH="$AUTH" SHOPFORGE_ADMIN_MFA="$ADMIN_MFA" ./create-next-commerce-template-ssr.sh "$APP" en "$LOCALES" --mode="$MODE" --skip-supabase
 
 cd "$APP"
 
@@ -69,7 +75,7 @@ fi
 
 # The storefront routes the product cards link to. A page file in the wrong
 # folder would not fail the build either, so check the route table.
-for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]"; do
+for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]" "/sitemap.xml" "/robots.txt" "/api/feeds/google/\[locale\]"; do
   if ! grep -qE "ƒ +$route\$" "$BUILD_LOG"; then
     echo "❌ Build output has no $route route." >&2
     exit 1
