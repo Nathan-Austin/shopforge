@@ -259,7 +259,10 @@ export function webSiteJsonLd(input: { name: string; url: string; inLanguage: st
  * product name containing "</script>" cannot end the block early.
  */
 export function serializeJsonLd(value: JsonLdObject): string {
-  return JSON.stringify(value).replace(/</g, '\\u003c').replace(/ /g, '\\u2028').replace(/ /g, '\\u2029');
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 }
 
 /**
