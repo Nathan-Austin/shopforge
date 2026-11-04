@@ -3293,7 +3293,9 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import CartLines from '@/components/cart/CartLines';
+import DiscountCodeForm from '@/components/cart/DiscountCodeForm';
 import { getCart } from '@/lib/cart/service';
+import { resolveCartDiscount } from '@/lib/discounts/service';
 import { formatPrice } from '@/lib/format';
 
 export default async function CartPage({
@@ -3305,6 +3307,12 @@ export default async function CartPage({
   const t = await getTranslations({ locale, namespace: 'Cart' });
   const cart = await getCart();
   const blocked = cart.lines.some((line) => !line.available);
+  // The applied promo code, re-checked against the cart as it is now.
+  const promo = await resolveCartDiscount({
+    subtotalCents: cart.totals.subtotalCents,
+    currency: cart.currency
+  });
+  const money = (cents: number) => formatPrice(cents, cart.currency, locale);
 
   if (cart.lines.length === 0) {
     return (
@@ -3324,13 +3332,43 @@ export default async function CartPage({
 
       <CartLines locale={locale} lines={cart.lines} />
 
-      <div className="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
-        <span className="text-lg font-semibold">{t('subtotal')}</span>
-        <span className="text-lg font-bold">
-          {formatPrice(cart.totals.subtotalCents, cart.currency, locale)}
-        </span>
+      <div className="mt-6 border-t border-gray-200 pt-4">
+        <DiscountCodeForm
+          locale={locale}
+          appliedCode={promo.appliedCode}
+          problem={promo.check && !promo.check.ok ? promo.check : null}
+          currency={cart.currency}
+        />
       </div>
-      <p className="mt-1 text-sm text-gray-500">{t('shippingAtCheckout')}</p>
+
+      <dl className="mt-4 space-y-1 border-t border-gray-200 pt-4 text-sm">
+        <div className="flex items-center justify-between">
+          <dt className="font-semibold">{t('subtotal')}</dt>
+          <dd>{money(cart.totals.subtotalCents)}</dd>
+        </div>
+        {promo.outcome.discountCents > 0 && promo.discount && (
+          <div className="flex items-center justify-between text-emerald-700">
+            <dt>{t('discount.line', { code: promo.discount.code })}</dt>
+            <dd>−{money(promo.outcome.discountCents)}</dd>
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <dt className="text-gray-600">{t('discount.shipping')}</dt>
+          <dd>
+            {promo.outcome.shippingDiscountCents > 0 && promo.discount ? (
+              <span className="text-emerald-700">
+                {t('discount.freeShipping', { code: promo.discount.code })}
+              </span>
+            ) : (
+              money(promo.outcome.shippingCents)
+            )}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+          <dt className="text-lg font-semibold">{t('discount.total')}</dt>
+          <dd className="text-lg font-bold">{money(promo.outcome.totalCents)}</dd>
+        </div>
+      </dl>
       {blocked && (
         <p className="mt-2 text-sm text-red-700">{t('removeUnavailable')}</p>
       )}
