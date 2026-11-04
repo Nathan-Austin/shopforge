@@ -1,7 +1,12 @@
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
+import { NOINDEX } from '@/lib/seo/alternates';
 import { requireShopOwner } from './lib/auth';
+
+/** The admin is never indexed. */
+export const metadata: Metadata = NOINDEX;
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -13,7 +18,8 @@ const NAV_ITEMS = [
   { key: 'products', path: '/products' },
   { key: 'newProduct', path: '/products/new' },
   { key: 'orders', path: '/orders' },
-  { key: 'discounts', path: '/discounts' }
+  { key: 'discounts', path: '/discounts' },
+  { key: 'seo', path: '/seo' }
 ];
 
 export default async function AdminLayout({ children, params }: AdminLayoutProps) {

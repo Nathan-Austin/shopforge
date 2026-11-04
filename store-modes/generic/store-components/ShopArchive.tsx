@@ -1,6 +1,9 @@
 import { getTranslations } from 'next-intl/server';
 
+import JsonLd from '@/components/seo/JsonLd';
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
+import { localizedUrl } from '@/lib/seo/alternates';
+import { itemListJsonLd } from '@/lib/seo/jsonld';
 import {
   availableSorts,
   categoriesInUse,
@@ -128,13 +131,28 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     return <p className="py-8 text-gray-600">{t('empty')}</p>;
   }
 
+  // The grid as an ItemList of detail-page URLs: what Google reads on a
+  // category page (full Product markup belongs on the detail pages).
+  const tShop = await getTranslations({ locale, namespace: 'Shop' });
+  const itemList = itemListJsonLd({
+    name: tShop('title'),
+    url: localizedUrl(locale, '/shop'),
+    items: products.map((product) => ({
+      name: product.name,
+      url: localizedUrl(locale, `/shop/${product.slug}`)
+    }))
+  });
+
   return (
-    <ProductArchive
+    <>
+      <JsonLd data={itemList} />
+      <ProductArchive
       products={products}
       categories={categories}
       locale={locale}
       initialQuery={parseArchiveQuery(searchParams, sortOptions)}
       sortOptions={sortOptions}
-    />
+      />
+    </>
   );
 }
