@@ -181,10 +181,12 @@ import { headers } from 'next/headers';
 import { z } from 'zod';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
-import { calculateShippingCost, SHIPPING_RATE_LABEL } from '@/lib/checkout/pricing';
+import { SHIPPING_RATE_LABEL } from '@/lib/checkout/pricing';
 import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
 import { getCart } from '@/lib/cart/service';
 import { getCartSessionId } from '@/lib/cart/session';
+import { resolveCartDiscount } from '@/lib/discounts/service';
+import { clearAppliedDiscountCode } from '@/lib/discounts/session';
 import { createClient } from '@/lib/supabase/server';
 import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 
@@ -276,7 +278,27 @@ export async function POST(request: Request) {
     }));
 
     const packageWeight = calculatePackageWeight(shippingItems);
-    const shippingCostCents = calculateShippingCost(subtotalCents);
+
+    // The promo code, re-checked at the moment of payment. A code that has
+    // stopped counting since it was applied is dropped and the customer is
+    // sent back to see the new total rather than charged something else.
+    const promo = await resolveCartDiscount({ subtotalCents, currency: cart.currency });
+    if (promo.appliedCode && !(promo.check?.ok ?? false)) {
+      await clearAppliedDiscountCode();
+      return NextResponse.json(
+        { error: 'Promo code no longer applies', code: 'discount_invalid' },
+        { status: 409 }
+      );
+    }
+    const discount = promo.check?.ok ? promo.discount : null;
+    // Percent and amount codes are applied by Stripe (so its receipt and
+    // reporting agree with ours); free shipping is applied here by zeroing
+    // the shipping rate, which a Stripe coupon cannot do.
+    const stripeDiscounts =
+      discount && discount.kind !== 'free_shipping' && discount.stripePromotionCodeId
+        ? [{ promotion_code: discount.stripePromotionCodeId }]
+        : undefined;
+    const shippingCostCents = promo.outcome.shippingCents;
 
     const headersList = await headers();
     const origin = process.env.NEXT_PUBLIC_SITE_URL || headersList.get('origin');
@@ -310,6 +332,7 @@ export async function POST(request: Request) {
           },
         },
       }],
+      ...(stripeDiscounts ? { discounts: stripeDiscounts } : {}),
       success_url: `${origin}/${payload.locale}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/${payload.locale}/checkout/cancel`,
       // Everything the webhook needs to write the order. Stripe echoes
@@ -321,6 +344,11 @@ export async function POST(request: Request) {
         user_id: user?.id ?? '',
         locale: payload.locale,
         package_weight_kg: packageWeight.toString(),
+        // The webhook records the code on the order and counts the use.
+        // shipping_discount_cents is what a free-shipping code saved;
+        // goods discounts are read from Stripe's own total_details.
+        discount_code: discount?.code ?? '',
+        shipping_discount_cents: promo.outcome.shippingDiscountCents.toString(),
         ...(address
           ? {
               shipping_name: `${address.firstName} ${address.lastName}`,
@@ -513,6 +541,12 @@ export async function POST(request: Request) {
             : session.payment_intent?.id ?? null,
         // So later emails (shipping, refunds) are in the customer's language.
         locale: session.metadata?.locale || null,
+        // Goods discount as Stripe applied it, plus any shipping a
+        // free-shipping code saved (which Stripe never saw as a discount).
+        discount_code: session.metadata?.discount_code || null,
+        discount_cents:
+          (session.total_details?.amount_discount ?? 0) +
+          (Number.parseInt(session.metadata?.shipping_discount_cents ?? '0', 10) || 0),
         ...shippingSnapshot(session)
       })
       .select('id')
@@ -554,6 +588,16 @@ export async function POST(request: Request) {
       console.error(`Order ${order.id} was paid but its cart ${cartSessionId} was empty`);
     }
 
+    // 2b. Count the code's use, so a limited code stops when it should.
+    if (session.metadata?.discount_code) {
+      const { error: redemptionError } = await supabase.rpc('record_discount_redemption', {
+        p_code: session.metadata.discount_code
+      });
+      if (redemptionError) {
+        console.error(`Could not count the use of ${session.metadata.discount_code}:`, redemptionError.message);
+      }
+    }
+
     // 3. The confirmation email. Best effort: a shop with no provider
     //    configured sends nothing, and a provider outage must not fail the
     //    webhook, because the payment and the order are already real.
@@ -586,6 +630,10 @@ export async function POST(request: Request) {
           currency: (session.currency ?? 'eur').toUpperCase(),
           subtotalCents: session.amount_subtotal ?? 0,
           shippingCents: session.shipping_cost?.amount_total ?? 0,
+          discountCents:
+            (session.total_details?.amount_discount ?? 0) +
+            (Number.parseInt(session.metadata?.shipping_discount_cents ?? '0', 10) || 0),
+          discountCode: session.metadata?.discount_code || null,
           totalCents: session.amount_total ?? 0,
           items: orderItems,
           shipping: {
@@ -674,8 +722,10 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
 import CheckoutForm from '@/components/cart/CheckoutForm';
+import DiscountCodeForm from '@/components/cart/DiscountCodeForm';
 import { createClient } from '@/lib/supabase/server';
 import { getCart } from '@/lib/cart/service';
+import { resolveCartDiscount } from '@/lib/discounts/service';
 import { formatPrice } from '@/lib/format';
 
 export default async function CheckoutPage({
@@ -694,6 +744,11 @@ export default async function CheckoutPage({
 
   const t = await getTranslations({ locale, namespace: 'Checkout' });
   const cart = await getCart();
+  const promo = await resolveCartDiscount({
+    subtotalCents: cart.totals.subtotalCents,
+    currency: cart.currency
+  });
+  const money = (cents: number) => formatPrice(cents, cart.currency, locale);
 
   if (cart.lines.length === 0 || cart.lines.some((line) => !line.available)) {
     return (
@@ -711,14 +766,41 @@ export default async function CheckoutPage({
     <main className="mx-auto max-w-2xl p-6">
       <h1 className="mb-4 text-2xl font-bold">{t('title')}</h1>
 
-      <div className="mb-6 rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold">{t('subtotal')}</span>
-          <span className="font-bold">
-            {formatPrice(cart.totals.subtotalCents, cart.currency, locale)}
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-gray-500">{t('shippingNote')}</p>
+      <div className="mb-6 space-y-3 rounded-lg border border-gray-200 p-4">
+        <dl className="space-y-1 text-sm">
+          <div className="flex items-center justify-between">
+            <dt className="font-semibold">{t('subtotal')}</dt>
+            <dd>{money(cart.totals.subtotalCents)}</dd>
+          </div>
+          {promo.outcome.discountCents > 0 && promo.discount && (
+            <div className="flex items-center justify-between text-emerald-700">
+              <dt>{t('discount', { code: promo.discount.code })}</dt>
+              <dd>−{money(promo.outcome.discountCents)}</dd>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <dt className="text-gray-600">{t('shippingCost')}</dt>
+            <dd>
+              {promo.outcome.shippingDiscountCents > 0 && promo.discount ? (
+                <span className="text-emerald-700">
+                  {t('freeShipping', { code: promo.discount.code })}
+                </span>
+              ) : (
+                money(promo.outcome.shippingCents)
+              )}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+            <dt className="font-semibold">{t('total')}</dt>
+            <dd className="font-bold">{money(promo.outcome.totalCents)}</dd>
+          </div>
+        </dl>
+        <DiscountCodeForm
+          locale={locale}
+          appliedCode={promo.appliedCode}
+          problem={promo.check && !promo.check.ok ? promo.check : null}
+          currency={cart.currency}
+        />
       </div>
 
       <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} />
@@ -818,6 +900,12 @@ export default async function CheckoutSuccessPage({
               <dt className="text-gray-600">{t('subtotal')}</dt>
               <dd>{formatPrice(order.subtotalCents, order.currency, locale)}</dd>
             </div>
+            {order.discountCents > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <dt>{t('discount', { code: order.discountCode ?? '' })}</dt>
+                <dd>−{formatPrice(order.discountCents, order.currency, locale)}</dd>
+              </div>
+            )}
             <div className="flex justify-between">
               <dt className="text-gray-600">{t('shippingCost')}</dt>
               <dd>{formatPrice(order.shippingCents, order.currency, locale)}</dd>
@@ -1024,6 +1112,12 @@ export default async function AccountOrdersPage({
                   </li>
                 ))}
               </ul>
+              {order.discountCents > 0 && (
+                <div className="mt-2 flex justify-between text-sm text-emerald-700">
+                  <span>{t('discount', { code: order.discountCode ?? '' })}</span>
+                  <span>−{formatPrice(order.discountCents, order.currency, locale)}</span>
+                </div>
+              )}
               <div className="mt-3 flex justify-between border-t border-gray-200 pt-2 text-sm font-semibold">
                 <span>{t('total')}</span>
                 <span>{formatPrice(order.totalCents, order.currency, locale)}</span>
@@ -1049,6 +1143,7 @@ cat > src/components/cart/CheckoutForm.tsx <<'EOF'
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
@@ -1080,6 +1175,7 @@ export default function CheckoutForm({
   defaultEmail: string;
 }) {
   const t = useTranslations('Checkout');
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1101,6 +1197,12 @@ export default function CheckoutForm({
       const result = await response.json();
 
       if (!response.ok || !result.url) {
+        const body = (await response.json().catch(() => null)) as { code?: string } | null;
+        if (response.status === 409 && body?.code === 'discount_invalid') {
+          setError(t('discountInvalid'));
+          router.refresh();
+          return;
+        }
         setError(response.status === 409 ? t('stockChanged') : t('failed'));
         setLoading(false);
         return;
