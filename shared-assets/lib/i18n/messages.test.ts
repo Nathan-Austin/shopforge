@@ -38,6 +38,7 @@ const REQUIRED_NAMESPACES = [
   'Auth',
   'Nav',
   'Admin',
+  'Home',
   'Shop',
   'Product',
   'Cart',

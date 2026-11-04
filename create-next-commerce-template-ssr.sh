@@ -660,7 +660,8 @@ cat > src/messages/en.json <<'EOF'
     "Shop": "Shop",
     "Cart": "Cart",
     "Checkout": "Checkout",
-    "Account": "Account"
+    "Account": "Account",
+    "Home": "Home"
   },
   "Account": {
     "ordersTitle": "Your orders",
@@ -797,7 +798,8 @@ cat > src/messages/en.json <<'EOF'
       "products": "Products",
       "newProduct": "New product",
       "orders": "Orders",
-      "discounts": "Discount codes"
+      "discounts": "Discount codes",
+      "seo": "Search & Merchant Center"
     },
     "stats": {
       "products": "Products",
@@ -956,6 +958,31 @@ cat > src/messages/en.json <<'EOF'
         "in_use": "This code has been used, so it cannot be deleted. Retire it instead.",
         "not_found": "Code not found.",
         "not_authorized": "You are not allowed to do that."
+      }
+    },
+    "seo": {
+      "heading": "Search and Merchant Center",
+      "subheading": "What Google needs from this shop, and where to paste it. Every public page already carries canonical, hreflang and structured data; this page is the operational side.",
+      "siteUrl": "Public site URL",
+      "siteUrlHint": "Set NEXT_PUBLIC_SITE_URL in the environment. Every canonical link, hreflang link, sitemap entry and feed URL is built from it, so it must be the exact production origin.",
+      "verification": "Google site verification",
+      "verified": "Meta tag is rendered (NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION is set).",
+      "notVerified": "Not set. Add the HTML-tag verification code from Search Console as NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION.",
+      "sitemap": "Sitemap",
+      "sitemapHint": "Submit this in Search Console. It lists every locale version of every indexable page with hreflang alternates.",
+      "feeds": "Merchant Center product feeds",
+      "feedsHint": "One feed per locale. In Merchant Center add a product source from a file hosted at a URL, one per target country and language, and point it here. Google fetches it every 24 hours. Turn on automatic item updates so the page's structured data corrects a stale price instead of the item being disapproved.",
+      "feedFor": "Feed for {locale}",
+      "locales": "Locales",
+      "localesHint": "Each one is a URL prefix with its own canonical and hreflang set. A language-country locale (de-at) inherits its language's text and only overrides what differs.",
+      "checklist": "Checklist",
+      "steps": {
+        "verify": "Verify the site in Search Console and claim it in Merchant Center with the same Google account.",
+        "sitemap": "Submit the sitemap in Search Console.",
+        "feeds": "Add one product source per target country in Merchant Center using the feed URLs above, or let Merchant Center read the product pages' structured data directly.",
+        "identifiers": "Fill in brand, SKU and barcode (GTIN) on products: Google disapproves products with invalid identifiers and ranks ones without them lower.",
+        "shipping": "Configure shipping and return policies in Merchant Center; it prefers those over structured data.",
+        "currency": "Prices and currency on the pages must match the feed for each target country. Never switch currency by visitor location."
       }
     },
     "products": {
@@ -1121,6 +1148,11 @@ cat > src/messages/en.json <<'EOF'
       "viewOrders": "View your orders",
       "footer": "The money goes back to the card or account you paid with. Banks usually show it within 5 to 10 working days."
     }
+  },
+  "Home": {
+    "__after__": "Nav",
+    "tagline": "Welcome to {shop}",
+    "browse": "Browse the shop"
   }
 }
 EOF
@@ -1138,7 +1170,8 @@ cat > src/messages/de.json <<'EOF'
     "Shop": "Shop",
     "Cart": "Warenkorb",
     "Checkout": "Kasse",
-    "Account": "Konto"
+    "Account": "Konto",
+    "Home": "Startseite"
   },
   "Account": {
     "ordersTitle": "Ihre Bestellungen",
@@ -1275,7 +1308,8 @@ cat > src/messages/de.json <<'EOF'
       "products": "Products",
       "newProduct": "New product",
       "orders": "Bestellungen",
-      "discounts": "Gutscheincodes"
+      "discounts": "Gutscheincodes",
+      "seo": "Suche & Merchant Center"
     },
     "stats": {
       "products": "Products",
@@ -1434,6 +1468,31 @@ cat > src/messages/de.json <<'EOF'
         "in_use": "Dieser Code wurde bereits eingelöst und kann nicht gelöscht werden. Ziehen Sie ihn stattdessen zurück.",
         "not_found": "Code nicht gefunden.",
         "not_authorized": "Dazu sind Sie nicht berechtigt."
+      }
+    },
+    "seo": {
+      "heading": "Suche und Merchant Center",
+      "subheading": "Was Google von diesem Shop braucht und wo es einzutragen ist. Jede öffentliche Seite trägt bereits Canonical, hreflang und strukturierte Daten; diese Seite ist die operative Seite davon.",
+      "siteUrl": "Öffentliche Site-URL",
+      "siteUrlHint": "NEXT_PUBLIC_SITE_URL in der Umgebung setzen. Jeder Canonical-Link, hreflang-Link, Sitemap-Eintrag und jede Feed-URL wird daraus gebildet; es muss der exakte Produktions-Origin sein.",
+      "verification": "Google-Website-Bestätigung",
+      "verified": "Meta-Tag wird ausgegeben (NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ist gesetzt).",
+      "notVerified": "Nicht gesetzt. Den HTML-Tag-Bestätigungscode aus der Search Console als NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION hinterlegen.",
+      "sitemap": "Sitemap",
+      "sitemapHint": "In der Search Console einreichen. Sie enthält jede Sprachversion jeder indexierbaren Seite mit hreflang-Alternativen.",
+      "feeds": "Merchant-Center-Produktfeeds",
+      "feedsHint": "Ein Feed pro Locale. Im Merchant Center eine Produktquelle aus einer per URL gehosteten Datei anlegen, eine pro Zielland und Sprache, und hierher zeigen lassen. Google ruft sie alle 24 Stunden ab. Automatische Artikelaktualisierungen einschalten, damit die strukturierten Daten der Seite einen veralteten Preis korrigieren, statt dass der Artikel abgelehnt wird.",
+      "feedFor": "Feed für {locale}",
+      "locales": "Locales",
+      "localesHint": "Jede ist ein URL-Präfix mit eigenem Canonical und hreflang-Set. Eine Sprache-Land-Locale (de-at) erbt die Texte ihrer Sprache und überschreibt nur, was abweicht.",
+      "checklist": "Checkliste",
+      "steps": {
+        "verify": "Die Site in der Search Console bestätigen und mit demselben Google-Konto im Merchant Center beanspruchen.",
+        "sitemap": "Die Sitemap in der Search Console einreichen.",
+        "feeds": "Im Merchant Center pro Zielland eine Produktquelle mit den obigen Feed-URLs anlegen, oder das Merchant Center die strukturierten Daten der Produktseiten direkt lesen lassen.",
+        "identifiers": "Marke, SKU und Barcode (GTIN) bei den Produkten pflegen: Google lehnt Produkte mit ungültigen Kennungen ab und stuft solche ohne Kennung schlechter ein.",
+        "shipping": "Versand- und Rückgaberichtlinien im Merchant Center konfigurieren; es bevorzugt diese gegenüber strukturierten Daten.",
+        "currency": "Preise und Währung auf den Seiten müssen dem Feed des jeweiligen Ziellands entsprechen. Die Währung nie nach Besucherstandort umschalten."
       }
     },
     "products": {
@@ -1599,6 +1658,11 @@ cat > src/messages/de.json <<'EOF'
       "viewOrders": "Ihre Bestellungen ansehen",
       "footer": "Das Geld geht auf die Karte oder das Konto zurück, mit dem Sie bezahlt haben. Banken zeigen es meist innerhalb von 5 bis 10 Werktagen an."
     }
+  },
+  "Home": {
+    "__after__": "Nav",
+    "tagline": "Willkommen bei {shop}",
+    "browse": "Zum Shop"
   }
 }
 EOF
@@ -1616,7 +1680,8 @@ cat > src/messages/tr.json <<'EOF'
     "Shop": "Mağaza",
     "Cart": "Sepet",
     "Checkout": "Ödeme",
-    "Account": "Hesap"
+    "Account": "Hesap",
+    "Home": "Ana sayfa"
   },
   "Account": {
     "ordersTitle": "Siparişleriniz",
@@ -1753,7 +1818,8 @@ cat > src/messages/tr.json <<'EOF'
       "products": "Products",
       "newProduct": "New product",
       "orders": "Siparişler",
-      "discounts": "İndirim kodları"
+      "discounts": "İndirim kodları",
+      "seo": "Arama ve Merchant Center"
     },
     "stats": {
       "products": "Products",
@@ -1912,6 +1978,31 @@ cat > src/messages/tr.json <<'EOF'
         "in_use": "Bu kod kullanılmış, bu yüzden silinemez. Bunun yerine kaldırın.",
         "not_found": "Kod bulunamadı.",
         "not_authorized": "Bunu yapma yetkiniz yok."
+      }
+    },
+    "seo": {
+      "heading": "Arama ve Merchant Center",
+      "subheading": "Google'ın bu mağazadan beklediği şeyler ve nereye yapıştırılacağı. Her herkese açık sayfa zaten canonical, hreflang ve yapılandırılmış veri taşıyor; bu sayfa işin operasyonel tarafı.",
+      "siteUrl": "Herkese açık site URL'si",
+      "siteUrlHint": "Ortamda NEXT_PUBLIC_SITE_URL değerini ayarlayın. Her canonical bağlantı, hreflang bağlantısı, site haritası girdisi ve feed URL'si bundan üretilir; tam üretim origin'i olmalıdır.",
+      "verification": "Google site doğrulaması",
+      "verified": "Meta etiketi üretiliyor (NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ayarlı).",
+      "notVerified": "Ayarlı değil. Search Console'daki HTML etiketi doğrulama kodunu NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION olarak ekleyin.",
+      "sitemap": "Site haritası",
+      "sitemapHint": "Bunu Search Console'a gönderin. Dizine eklenebilir her sayfanın her dil sürümünü hreflang alternatifleriyle listeler.",
+      "feeds": "Merchant Center ürün feed'leri",
+      "feedsHint": "Her locale için bir feed. Merchant Center'da URL'de barındırılan bir dosyadan ürün kaynağı ekleyin, hedef ülke ve dil başına bir tane, ve buraya yönlendirin. Google 24 saatte bir çeker. Sayfanın yapılandırılmış verisinin eski fiyatı düzeltmesi için otomatik ürün güncellemelerini açın; böylece ürün reddedilmez.",
+      "feedFor": "{locale} için feed",
+      "locales": "Locale'ler",
+      "localesHint": "Her biri kendi canonical ve hreflang setine sahip bir URL önekidir. Dil-ülke locale'i (de-at) dilinin metnini devralır ve yalnızca farklı olanı geçersiz kılar.",
+      "checklist": "Kontrol listesi",
+      "steps": {
+        "verify": "Siteyi Search Console'da doğrulayın ve aynı Google hesabıyla Merchant Center'da sahiplenin.",
+        "sitemap": "Site haritasını Search Console'a gönderin.",
+        "feeds": "Yukarıdaki feed URL'leriyle Merchant Center'da hedef ülke başına bir ürün kaynağı ekleyin veya Merchant Center'ın ürün sayfalarının yapılandırılmış verisini doğrudan okumasına izin verin.",
+        "identifiers": "Ürünlerde marka, SKU ve barkod (GTIN) bilgilerini doldurun: Google geçersiz tanımlayıcılı ürünleri reddeder, tanımlayıcısızları daha düşük sıralar.",
+        "shipping": "Kargo ve iade politikalarını Merchant Center'da yapılandırın; yapılandırılmış veriye tercih eder.",
+        "currency": "Sayfalardaki fiyat ve para birimi, her hedef ülke için feed ile eşleşmelidir. Para birimini asla ziyaretçi konumuna göre değiştirmeyin."
       }
     },
     "products": {
@@ -2077,6 +2168,11 @@ cat > src/messages/tr.json <<'EOF'
       "viewOrders": "Siparişlerinizi görüntüleyin",
       "footer": "Para, ödeme yaptığınız karta veya hesaba geri gönderilir. Bankalar genellikle 5 ila 10 iş günü içinde gösterir."
     }
+  },
+  "Home": {
+    "__after__": "Nav",
+    "tagline": "{shop} mağazasına hoş geldiniz",
+    "browse": "Mağazaya göz atın"
   }
 }
 EOF
@@ -2094,7 +2190,8 @@ cat > src/messages/ar.json <<'EOF'
     "Shop": "المتجر",
     "Cart": "السلة",
     "Checkout": "الدفع",
-    "Account": "الحساب"
+    "Account": "الحساب",
+    "Home": "الرئيسية"
   },
   "Account": {
     "ordersTitle": "طلباتك",
@@ -2231,7 +2328,8 @@ cat > src/messages/ar.json <<'EOF'
       "products": "Products",
       "newProduct": "New product",
       "orders": "الطلبات",
-      "discounts": "رموز الخصم"
+      "discounts": "رموز الخصم",
+      "seo": "البحث وMerchant Center"
     },
     "stats": {
       "products": "Products",
@@ -2390,6 +2488,31 @@ cat > src/messages/ar.json <<'EOF'
         "in_use": "استُخدم هذا الرمز، لذا لا يمكن حذفه. أوقفه بدلًا من ذلك.",
         "not_found": "الرمز غير موجود.",
         "not_authorized": "غير مسموح لك بذلك."
+      }
+    },
+    "seo": {
+      "heading": "البحث وMerchant Center",
+      "subheading": "ما يحتاجه Google من هذا المتجر وأين يُلصق. كل صفحة عامة تحمل بالفعل canonical وhreflang وبيانات منظمة؛ هذه الصفحة هي الجانب التشغيلي.",
+      "siteUrl": "عنوان الموقع العام",
+      "siteUrlHint": "اضبط NEXT_PUBLIC_SITE_URL في البيئة. يُبنى منه كل رابط canonical وhreflang وكل إدخال في خريطة الموقع وكل عنوان خلاصة، لذا يجب أن يكون أصل الإنتاج بالضبط.",
+      "verification": "التحقق من الموقع لدى Google",
+      "verified": "وسم meta يُعرض (NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION مضبوط).",
+      "notVerified": "غير مضبوط. أضف رمز التحقق بوسم HTML من Search Console كقيمة NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION.",
+      "sitemap": "خريطة الموقع",
+      "sitemapHint": "أرسلها في Search Console. تسرد كل نسخة لغوية من كل صفحة قابلة للفهرسة مع بدائل hreflang.",
+      "feeds": "خلاصات منتجات Merchant Center",
+      "feedsHint": "خلاصة واحدة لكل لغة. في Merchant Center أضف مصدر منتجات من ملف مستضاف على عنوان URL، واحد لكل بلد ولغة مستهدفين، ووجّهه إلى هنا. يجلبه Google كل 24 ساعة. فعّل التحديثات التلقائية للمنتجات حتى تصحّح البيانات المنظمة للصفحة السعر القديم بدلًا من رفض المنتج.",
+      "feedFor": "خلاصة {locale}",
+      "locales": "اللغات",
+      "localesHint": "كل واحدة بادئة URL لها canonical ومجموعة hreflang خاصة. لغة-بلد (de-at) ترث نصوص لغتها ولا تتجاوز إلا ما يختلف.",
+      "checklist": "قائمة التحقق",
+      "steps": {
+        "verify": "تحقق من الموقع في Search Console وطالب به في Merchant Center بحساب Google نفسه.",
+        "sitemap": "أرسل خريطة الموقع في Search Console.",
+        "feeds": "أضف مصدر منتجات واحدًا لكل بلد مستهدف في Merchant Center باستخدام عناوين الخلاصات أعلاه، أو دع Merchant Center يقرأ البيانات المنظمة لصفحات المنتجات مباشرة.",
+        "identifiers": "املأ العلامة التجارية وSKU والباركود (GTIN) للمنتجات: يرفض Google المنتجات ذات المعرّفات غير الصالحة ويرتّب المنتجات بلا معرّفات أدنى.",
+        "shipping": "اضبط سياسات الشحن والإرجاع في Merchant Center؛ فهو يفضّلها على البيانات المنظمة.",
+        "currency": "يجب أن تطابق الأسعار والعملة في الصفحات الخلاصة لكل بلد مستهدف. لا تبدّل العملة أبدًا حسب موقع الزائر."
       }
     },
     "products": {
@@ -2555,6 +2678,11 @@ cat > src/messages/ar.json <<'EOF'
       "viewOrders": "عرض طلباتك",
       "footer": "يعود المبلغ إلى البطاقة أو الحساب الذي دفعت به. تعرضه البنوك عادةً خلال 5 إلى 10 أيام عمل."
     }
+  },
+  "Home": {
+    "__after__": "Nav",
+    "tagline": "مرحبًا بك في {shop}",
+    "browse": "تصفّح المتجر"
   }
 }
 EOF
