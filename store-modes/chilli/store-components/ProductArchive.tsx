@@ -17,17 +17,6 @@ import type { StoreProduct, ChilliType, Category } from './types';
 import ProductCard from './ProductCard';
 import Chip from './Chip';
 
-/**
- * Sorts this store mode offers, including the heat sorts. "popular" is
- * dropped by availableSorts() until the shop has enough sales to rank.
- */
-export const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = [
-  'recent',
-  'popular',
-  'mild-first',
-  'hot-first'
-];
-
 /** Message key under SauceArchive.search.filters for each sort. */
 const SORT_LABEL_KEYS: Record<ArchiveSort, string> = {
   recent: 'sortNewest',

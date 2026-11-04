@@ -5,11 +5,12 @@ import {
   availableSorts,
   categoriesInUse,
   chilliTypesInUse,
-  parseArchiveQuery
+  parseArchiveQuery,
+  type ArchiveSort
 } from '@/lib/products/archive';
 import { many } from '@/lib/supabase/relations';
 import { createClient } from '@/lib/supabase/server';
-import ProductArchive, { ARCHIVE_SORT_OPTIONS } from './ProductArchive';
+import ProductArchive from './ProductArchive';
 import type { StoreProduct, Category, ChilliType } from './types';
 
 /**
@@ -54,6 +55,15 @@ interface ChilliTypeRow {
   slug: string;
   heat_level: number | null;
 }
+
+/**
+ * Sorts this store mode offers, including the heat sorts.
+ * "popular" is dropped by availableSorts() until the shop has enough sales
+ * to rank. Defined here, not in ProductArchive: that file is 'use client',
+ * and a server component importing a value from it gets a client reference,
+ * not the array.
+ */
+const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = ['recent', 'popular', 'mild-first', 'hot-first'];
 
 export default async function ShopArchive({ locale, searchParams }: ShopArchiveProps) {
   const supabase = await createClient();

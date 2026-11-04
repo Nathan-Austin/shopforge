@@ -15,12 +15,6 @@ import {
 import type { StoreProduct, Category } from './types';
 import ProductCard from './ProductCard';
 
-/**
- * Sorts this store mode offers; the heat sorts are chilli-only. "popular"
- * is dropped by availableSorts() until the shop has enough sales to rank.
- */
-export const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = ['recent', 'popular'];
-
 /** Message key under SauceArchive.search.filters for each sort. */
 const SORT_LABEL_KEYS: Record<ArchiveSort, string> = {
   recent: 'sortNewest',

@@ -1,9 +1,14 @@
 import { getTranslations } from 'next-intl/server';
 
 import { maxAllowedQuantity } from '@/lib/cart/pricing';
-import { availableSorts, categoriesInUse, parseArchiveQuery } from '@/lib/products/archive';
+import {
+  availableSorts,
+  categoriesInUse,
+  parseArchiveQuery,
+  type ArchiveSort
+} from '@/lib/products/archive';
 import { createClient } from '@/lib/supabase/server';
-import ProductArchive, { ARCHIVE_SORT_OPTIONS } from './ProductArchive';
+import ProductArchive from './ProductArchive';
 import type { StoreProduct, Category } from './types';
 
 /**
@@ -39,6 +44,15 @@ interface ProductRow {
   brand_slug: string | null;
   created_at: string | null;
 }
+
+/**
+ * Sorts this store mode offers; the heat sorts are chilli-only.
+ * "popular" is dropped by availableSorts() until the shop has enough sales
+ * to rank. Defined here, not in ProductArchive: that file is 'use client',
+ * and a server component importing a value from it gets a client reference,
+ * not the array.
+ */
+const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = ['recent', 'popular'];
 
 export default async function ShopArchive({ locale, searchParams }: ShopArchiveProps) {
   const supabase = await createClient();
