@@ -52,12 +52,16 @@ step "Unit tests"
 pnpm test
 
 step "Build"
-pnpm build 2>&1 | tee /tmp/shopforge-build-$MODE.log
+# A per-run log: a fixed /tmp path is overwritten when two generators run
+# at once (a CI matrix, or two checkouts on one machine), and the route
+# checks below would then read someone else's build.
+BUILD_LOG=$(mktemp -t "shopforge-build-$MODE.XXXXXX")
+pnpm build 2>&1 | tee "$BUILD_LOG"
 
 # The proxy (locale routing) is registered by file convention, and a
 # misplaced src/proxy.ts is ignored without any warning, so assert the
 # build actually picked it up.
-if ! grep -q "Proxy (Middleware)" "/tmp/shopforge-build-$MODE.log"; then
+if ! grep -q "Proxy (Middleware)" "$BUILD_LOG"; then
   echo "❌ Build output has no proxy: locale routing would not run." >&2
   echo "   Expected src/proxy.ts to be picked up by Next." >&2
   exit 1
@@ -65,8 +69,8 @@ fi
 
 # The storefront routes the product cards link to. A page file in the wrong
 # folder would not fail the build either, so check the route table.
-for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]"; do
-  if ! grep -qE "ƒ +$route\$" "/tmp/shopforge-build-$MODE.log"; then
+for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]"; do
+  if ! grep -qE "ƒ +$route\$" "$BUILD_LOG"; then
     echo "❌ Build output has no $route route." >&2
     exit 1
   fi
@@ -76,6 +80,7 @@ cd "$ROOT"
 if [ "$KEEP" != "true" ]; then
   rm -rf "$APP"
 fi
+rm -f "$BUILD_LOG"
 
 echo
 echo "✅ $MODE store generated, type-checked, linted and built."
