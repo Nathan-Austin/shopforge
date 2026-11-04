@@ -44,6 +44,9 @@ export interface Order {
   totalCents: number;
   /** What has gone back to the customer so far, in cents. */
   refundedCents: number;
+  /** Promo code used at checkout, and what it took off (goods or shipping). */
+  discountCode: string | null;
+  discountCents: number;
   stripeSessionId: string;
   stripePaymentIntentId: string | null;
   /** Locale the customer checked out in; null for orders before it was recorded. */
@@ -59,7 +62,8 @@ export interface Order {
 
 const ORDER_COLUMNS = `
   id, user_id, email, status, currency, subtotal_cents, shipping_cents,
-  total_cents, refunded_cents, stripe_session_id, stripe_payment_intent_id,
+  total_cents, refunded_cents, discount_code, discount_cents,
+  stripe_session_id, stripe_payment_intent_id,
   locale, tracking_carrier, tracking_number, tracking_url, shipped_at,
   shipping_notified_at, shipping_name, shipping_line1,
   shipping_line2, shipping_city, shipping_postal_code, shipping_region,
@@ -88,6 +92,8 @@ interface OrderRow {
   shipping_cents: number;
   total_cents: number;
   refunded_cents: number | null;
+  discount_code: string | null;
+  discount_cents: number | null;
   stripe_session_id: string;
   stripe_payment_intent_id: string | null;
   locale: string | null;
@@ -118,6 +124,8 @@ function toOrder(row: OrderRow): Order {
     shippingCents: row.shipping_cents,
     totalCents: row.total_cents,
     refundedCents: row.refunded_cents ?? 0,
+    discountCode: row.discount_code,
+    discountCents: row.discount_cents ?? 0,
     stripeSessionId: row.stripe_session_id,
     stripePaymentIntentId: row.stripe_payment_intent_id,
     locale: row.locale,
