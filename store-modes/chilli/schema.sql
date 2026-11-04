@@ -683,18 +683,21 @@ grant execute on function public.set_order_status(uuid, text) to authenticated;
 alter table public.orders
   add column if not exists confirmation_sent_at timestamptz;
 
--- Units sold per product, for the shop's "popular" sort. An aggregate only:
--- no order, customer or price data leaves the orders tables. Paid and
--- fulfilled orders count; cancelled and refunded ones do not. Like
--- products_public, the view runs with its owner's rights so it is readable
--- without opening the orders tables. A store that imports its order history
--- into orders/order_items gets a working "popular" sort straight away.
+-- Units sold per product over the last 90 days, for the shop's "popular"
+-- sort. A rolling window, so a bestseller from two years ago does not sit
+-- at the top forever. An aggregate only: no order, customer or price data
+-- leaves the orders tables. Paid and fulfilled orders count; cancelled and
+-- refunded ones do not. Like products_public, the view runs with its
+-- owner's rights so it is readable without opening the orders tables. A
+-- store that imports its recent order history into orders/order_items gets
+-- a working "popular" sort straight away.
 drop view if exists public.product_sales;
 create view public.product_sales as
 select oi.product_id, sum(oi.quantity)::integer as units_sold
   from public.order_items oi
   join public.orders o on o.id = oi.order_id
  where o.status in ('paid', 'fulfilled')
+   and o.created_at > now() - interval '90 days'
    and oi.product_id is not null
  group by oi.product_id;
 

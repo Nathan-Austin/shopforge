@@ -21,8 +21,8 @@ export const DEFAULT_ARCHIVE_SORT: ArchiveSort = 'recent';
  * "Popular" ranks by units sold, so it means nothing in a shop that has
  * barely sold anything: with three orders the sort is noise. The option is
  * hidden (and rejected from the URL) until the shop has sold this many
- * units in total. A store that imports its order history clears the bar
- * on day one.
+ * units in the last 90 days (the product_sales view's rolling window). A
+ * store that imports its recent order history clears the bar on day one.
  */
 export const POPULARITY_MIN_UNITS = 100;
 
