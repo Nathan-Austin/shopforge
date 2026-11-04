@@ -624,6 +624,7 @@ cat > src/messages/en.json <<'EOF'
     "startShopping": "Start shopping",
     "orderNumber": "Order {number}",
     "total": "Total",
+    "discount": "Discount ({code})",
     "shippedOn": "Shipped on {date}",
     "trackingNumber": "Tracking number {number}",
     "track": "Track your parcel",
@@ -716,7 +717,31 @@ cat > src/messages/en.json <<'EOF'
     "subtotal": "Subtotal",
     "shippingAtCheckout": "Shipping is calculated at checkout.",
     "checkout": "Checkout",
-    "continueShopping": "Continue shopping"
+    "continueShopping": "Continue shopping",
+    "discount": {
+      "label": "Promo code",
+      "placeholder": "Enter code",
+      "apply": "Apply",
+      "applying": "Checking...",
+      "remove": "Remove",
+      "applied": "Code {code} applied",
+      "line": "Discount ({code})",
+      "shipping": "Shipping",
+      "freeShipping": "Free with {code}",
+      "total": "Total",
+      "errors": {
+        "invalid_format": "That doesn't look like a code. Codes are 3 to 32 letters, numbers, dashes or underscores.",
+        "not_found": "We don't recognise that code. Check the spelling and try again.",
+        "inactive": "That code is no longer active.",
+        "not_started": "That code isn't valid yet.",
+        "expired": "That code has expired.",
+        "exhausted": "That code has been used as many times as it can be.",
+        "min_subtotal": "That code needs an order of at least {minimum}.",
+        "currency_mismatch": "That code is for a different currency.",
+        "nothing_to_discount": "Shipping is already free on this order, so that code wouldn't change anything.",
+        "failed": "We couldn't apply that code just now. Please try again."
+      }
+    }
   },
   "Admin": {
     "title": "Store admin",
@@ -727,7 +752,8 @@ cat > src/messages/en.json <<'EOF'
       "dashboard": "Dashboard",
       "products": "Products",
       "newProduct": "New product",
-      "orders": "Orders"
+      "orders": "Orders",
+      "discounts": "Discount codes"
     },
     "stats": {
       "products": "Products",
@@ -757,6 +783,7 @@ cat > src/messages/en.json <<'EOF'
       "statusSaved": "Status saved.",
       "statusFailed": "The status could not be saved: {error}",
       "total": "Total",
+      "discount": "Discount ({code})",
       "refundedSoFar": "{amount} refunded",
       "details": "Details and refunds",
       "empty": "No orders yet."
@@ -819,6 +846,73 @@ cat > src/messages/en.json <<'EOF'
       },
       "customerEmailed": "Customer emailed",
       "customerNotEmailed": "Customer not emailed"
+    },
+    "discounts": {
+      "heading": "Discount codes",
+      "subheading": "Percent and amount codes are created in Stripe too and applied by Stripe at checkout. Free-shipping codes are applied by the shop. A code is checked when the customer enters it and again when they pay.",
+      "newHeading": "New code",
+      "code": "Code",
+      "codeHint": "3 to 32 letters, numbers, dashes or underscores. Customers type it exactly; case does not matter.",
+      "kind": "Type",
+      "kinds": {
+        "percent": "Percentage off",
+        "amount": "Amount off",
+        "free_shipping": "Free shipping"
+      },
+      "percent": "Percent off",
+      "amount": "Amount off",
+      "currency": "Currency (three letters, e.g. EUR)",
+      "minSubtotal": "Minimum order (optional)",
+      "startsAt": "Valid from (optional)",
+      "endsAt": "Valid until (optional)",
+      "maxRedemptions": "Maximum uses (optional)",
+      "create": "Create code",
+      "creating": "Creating...",
+      "created": "Code {code} created.",
+      "empty": "No codes yet.",
+      "columns": {
+        "code": "Code",
+        "value": "Value",
+        "restrictions": "Restrictions",
+        "uses": "Uses",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "scheduled": "Scheduled",
+        "expired": "Expired",
+        "exhausted": "Used up",
+        "retired": "Retired"
+      },
+      "retire": "Retire",
+      "reactivate": "Reactivate",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this code? Only codes that were never used can be deleted.",
+      "retired": "Code {code} retired. Customers can no longer use it.",
+      "reactivated": "Code {code} is active again.",
+      "deleted": "Code {code} deleted.",
+      "usesOf": "{count} of {max}",
+      "minLabel": "min. {amount}",
+      "from": "from {date}",
+      "until": "until {date}",
+      "noRestrictions": "None",
+      "errors": {
+        "code_format": "Codes are 3 to 32 letters, numbers, dashes or underscores.",
+        "kind": "Choose a type.",
+        "percent": "Enter a percentage above 0 and up to 100.",
+        "amount": "Enter an amount above zero, e.g. 5 or 7.50.",
+        "currency": "Enter a three-letter currency code, e.g. EUR. Amount codes and minimums need one.",
+        "min_subtotal": "Enter the minimum as an amount, e.g. 20 or 20.00.",
+        "dates": "Check the dates: the end must be after the start.",
+        "max_redemptions": "Enter a whole number above zero.",
+        "duplicate": "That code already exists.",
+        "stripe": "Stripe refused the code: {message}",
+        "failed": "The code could not be saved: {message}",
+        "in_use": "This code has been used, so it cannot be deleted. Retire it instead.",
+        "not_found": "Code not found.",
+        "not_authorized": "You are not allowed to do that."
+      }
     },
     "products": {
       "heading": "Product catalogue",
@@ -936,6 +1030,9 @@ cat > src/messages/en.json <<'EOF'
     "orderNumber": "Order {number}",
     "items": "Items",
     "shippingCost": "Shipping",
+    "discount": "Discount ({code})",
+    "freeShipping": "Free shipping ({code})",
+    "discountInvalid": "Your promo code no longer applies and has been removed. Please check your total before paying.",
     "total": "Total",
     "shipTo": "Delivering to",
     "createAccountTitle": "Keep track of this order",
@@ -1005,6 +1102,7 @@ cat > src/messages/de.json <<'EOF'
     "startShopping": "Jetzt einkaufen",
     "orderNumber": "Bestellung {number}",
     "total": "Gesamt",
+    "discount": "Rabatt ({code})",
     "shippedOn": "Versandt am {date}",
     "trackingNumber": "Sendungsnummer {number}",
     "track": "Sendung verfolgen",
@@ -1097,7 +1195,31 @@ cat > src/messages/de.json <<'EOF'
     "subtotal": "Zwischensumme",
     "shippingAtCheckout": "Versandkosten werden an der Kasse berechnet.",
     "checkout": "Zur Kasse",
-    "continueShopping": "Weiter einkaufen"
+    "continueShopping": "Weiter einkaufen",
+    "discount": {
+      "label": "Gutscheincode",
+      "placeholder": "Code eingeben",
+      "apply": "Einlösen",
+      "applying": "Wird geprüft...",
+      "remove": "Entfernen",
+      "applied": "Code {code} eingelöst",
+      "line": "Rabatt ({code})",
+      "shipping": "Versand",
+      "freeShipping": "Kostenlos mit {code}",
+      "total": "Gesamt",
+      "errors": {
+        "invalid_format": "Das sieht nicht nach einem Code aus. Codes bestehen aus 3 bis 32 Buchstaben, Ziffern, Binde- oder Unterstrichen.",
+        "not_found": "Diesen Code kennen wir nicht. Bitte prüfen Sie die Schreibweise.",
+        "inactive": "Dieser Code ist nicht mehr aktiv.",
+        "not_started": "Dieser Code ist noch nicht gültig.",
+        "expired": "Dieser Code ist abgelaufen.",
+        "exhausted": "Dieser Code wurde bereits so oft eingelöst wie möglich.",
+        "min_subtotal": "Dieser Code gilt erst ab einem Bestellwert von {minimum}.",
+        "currency_mismatch": "Dieser Code gilt für eine andere Währung.",
+        "nothing_to_discount": "Der Versand ist bei dieser Bestellung bereits kostenlos, der Code würde nichts ändern.",
+        "failed": "Der Code konnte gerade nicht eingelöst werden. Bitte versuchen Sie es erneut."
+      }
+    }
   },
   "Admin": {
     "title": "Store admin",
@@ -1108,7 +1230,8 @@ cat > src/messages/de.json <<'EOF'
       "dashboard": "Dashboard",
       "products": "Products",
       "newProduct": "New product",
-      "orders": "Bestellungen"
+      "orders": "Bestellungen",
+      "discounts": "Gutscheincodes"
     },
     "stats": {
       "products": "Products",
@@ -1138,6 +1261,7 @@ cat > src/messages/de.json <<'EOF'
       "statusSaved": "Status gespeichert.",
       "statusFailed": "Der Status konnte nicht gespeichert werden: {error}",
       "total": "Gesamt",
+      "discount": "Rabatt ({code})",
       "refundedSoFar": "{amount} erstattet",
       "details": "Details und Erstattungen",
       "empty": "Noch keine Bestellungen."
@@ -1200,6 +1324,73 @@ cat > src/messages/de.json <<'EOF'
       },
       "customerEmailed": "Kunde benachrichtigt",
       "customerNotEmailed": "Kunde nicht benachrichtigt"
+    },
+    "discounts": {
+      "heading": "Gutscheincodes",
+      "subheading": "Prozent- und Betragscodes werden auch in Stripe angelegt und dort beim Bezahlen angewendet. Codes für kostenlosen Versand wendet der Shop selbst an. Ein Code wird bei der Eingabe und erneut beim Bezahlen geprüft.",
+      "newHeading": "Neuer Code",
+      "code": "Code",
+      "codeHint": "3 bis 32 Buchstaben, Ziffern, Binde- oder Unterstriche. Kunden geben ihn genau so ein; Groß- und Kleinschreibung ist egal.",
+      "kind": "Art",
+      "kinds": {
+        "percent": "Prozent Rabatt",
+        "amount": "Betrag Rabatt",
+        "free_shipping": "Kostenloser Versand"
+      },
+      "percent": "Prozent",
+      "amount": "Betrag",
+      "currency": "Währung (drei Buchstaben, z. B. EUR)",
+      "minSubtotal": "Mindestbestellwert (optional)",
+      "startsAt": "Gültig ab (optional)",
+      "endsAt": "Gültig bis (optional)",
+      "maxRedemptions": "Maximale Einlösungen (optional)",
+      "create": "Code anlegen",
+      "creating": "Wird angelegt...",
+      "created": "Code {code} angelegt.",
+      "empty": "Noch keine Codes.",
+      "columns": {
+        "code": "Code",
+        "value": "Wert",
+        "restrictions": "Einschränkungen",
+        "uses": "Einlösungen",
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "status": {
+        "active": "Aktiv",
+        "scheduled": "Geplant",
+        "expired": "Abgelaufen",
+        "exhausted": "Aufgebraucht",
+        "retired": "Zurückgezogen"
+      },
+      "retire": "Zurückziehen",
+      "reactivate": "Reaktivieren",
+      "delete": "Löschen",
+      "deleteConfirm": "Diesen Code löschen? Nur nie eingelöste Codes können gelöscht werden.",
+      "retired": "Code {code} zurückgezogen. Kunden können ihn nicht mehr verwenden.",
+      "reactivated": "Code {code} ist wieder aktiv.",
+      "deleted": "Code {code} gelöscht.",
+      "usesOf": "{count} von {max}",
+      "minLabel": "mind. {amount}",
+      "from": "ab {date}",
+      "until": "bis {date}",
+      "noRestrictions": "Keine",
+      "errors": {
+        "code_format": "Codes bestehen aus 3 bis 32 Buchstaben, Ziffern, Binde- oder Unterstrichen.",
+        "kind": "Wählen Sie eine Art.",
+        "percent": "Geben Sie einen Prozentsatz über 0 und bis 100 ein.",
+        "amount": "Geben Sie einen Betrag über null ein, z. B. 5 oder 7,50.",
+        "currency": "Geben Sie einen dreistelligen Währungscode ein, z. B. EUR. Betragscodes und Mindestwerte brauchen einen.",
+        "min_subtotal": "Geben Sie den Mindestwert als Betrag ein, z. B. 20 oder 20,00.",
+        "dates": "Prüfen Sie die Daten: das Ende muss nach dem Beginn liegen.",
+        "max_redemptions": "Geben Sie eine ganze Zahl über null ein.",
+        "duplicate": "Diesen Code gibt es bereits.",
+        "stripe": "Stripe hat den Code abgelehnt: {message}",
+        "failed": "Der Code konnte nicht gespeichert werden: {message}",
+        "in_use": "Dieser Code wurde bereits eingelöst und kann nicht gelöscht werden. Ziehen Sie ihn stattdessen zurück.",
+        "not_found": "Code nicht gefunden.",
+        "not_authorized": "Dazu sind Sie nicht berechtigt."
+      }
     },
     "products": {
       "heading": "Product catalogue",
@@ -1317,6 +1508,9 @@ cat > src/messages/de.json <<'EOF'
     "orderNumber": "Bestellung {number}",
     "items": "Artikel",
     "shippingCost": "Versand",
+    "discount": "Rabatt ({code})",
+    "freeShipping": "Kostenloser Versand ({code})",
+    "discountInvalid": "Ihr Gutscheincode gilt nicht mehr und wurde entfernt. Bitte prüfen Sie die Summe, bevor Sie bezahlen.",
     "total": "Gesamt",
     "shipTo": "Lieferung an",
     "createAccountTitle": "Bestellung im Blick behalten",
@@ -1386,6 +1580,7 @@ cat > src/messages/tr.json <<'EOF'
     "startShopping": "Alışverişe başla",
     "orderNumber": "Sipariş {number}",
     "total": "Toplam",
+    "discount": "İndirim ({code})",
     "shippedOn": "{date} tarihinde kargolandı",
     "trackingNumber": "Takip numarası {number}",
     "track": "Kargonuzu takip edin",
@@ -1478,7 +1673,31 @@ cat > src/messages/tr.json <<'EOF'
     "subtotal": "Ara toplam",
     "shippingAtCheckout": "Kargo ücreti ödeme adımında hesaplanır.",
     "checkout": "Ödemeye geç",
-    "continueShopping": "Alışverişe devam et"
+    "continueShopping": "Alışverişe devam et",
+    "discount": {
+      "label": "Promosyon kodu",
+      "placeholder": "Kodu girin",
+      "apply": "Uygula",
+      "applying": "Kontrol ediliyor...",
+      "remove": "Kaldır",
+      "applied": "{code} kodu uygulandı",
+      "line": "İndirim ({code})",
+      "shipping": "Kargo",
+      "freeShipping": "{code} ile ücretsiz",
+      "total": "Toplam",
+      "errors": {
+        "invalid_format": "Bu bir koda benzemiyor. Kodlar 3 ila 32 harf, rakam, tire veya alt çizgiden oluşur.",
+        "not_found": "Bu kodu tanımıyoruz. Yazımı kontrol edip tekrar deneyin.",
+        "inactive": "Bu kod artık geçerli değil.",
+        "not_started": "Bu kod henüz geçerli değil.",
+        "expired": "Bu kodun süresi dolmuş.",
+        "exhausted": "Bu kod kullanılabileceği kadar kullanılmış.",
+        "min_subtotal": "Bu kod için en az {minimum} tutarında sipariş gerekiyor.",
+        "currency_mismatch": "Bu kod farklı bir para birimi için.",
+        "nothing_to_discount": "Bu siparişte kargo zaten ücretsiz, bu kod bir şey değiştirmez.",
+        "failed": "Kod şu anda uygulanamadı. Lütfen tekrar deneyin."
+      }
+    }
   },
   "Admin": {
     "title": "Store admin",
@@ -1489,7 +1708,8 @@ cat > src/messages/tr.json <<'EOF'
       "dashboard": "Dashboard",
       "products": "Products",
       "newProduct": "New product",
-      "orders": "Siparişler"
+      "orders": "Siparişler",
+      "discounts": "İndirim kodları"
     },
     "stats": {
       "products": "Products",
@@ -1519,6 +1739,7 @@ cat > src/messages/tr.json <<'EOF'
       "statusSaved": "Durum kaydedildi.",
       "statusFailed": "Durum kaydedilemedi: {error}",
       "total": "Toplam",
+      "discount": "İndirim ({code})",
       "refundedSoFar": "{amount} iade edildi",
       "details": "Ayrıntılar ve iadeler",
       "empty": "Henüz sipariş yok."
@@ -1581,6 +1802,73 @@ cat > src/messages/tr.json <<'EOF'
       },
       "customerEmailed": "Müşteriye e-posta gönderildi",
       "customerNotEmailed": "Müşteriye e-posta gönderilmedi"
+    },
+    "discounts": {
+      "heading": "İndirim kodları",
+      "subheading": "Yüzde ve tutar kodları Stripe'ta da oluşturulur ve ödeme sırasında Stripe tarafından uygulanır. Ücretsiz kargo kodlarını mağaza uygular. Kod, müşteri girdiğinde ve ödeme yaparken tekrar kontrol edilir.",
+      "newHeading": "Yeni kod",
+      "code": "Kod",
+      "codeHint": "3 ila 32 harf, rakam, tire veya alt çizgi. Müşteriler aynen yazar; büyük-küçük harf fark etmez.",
+      "kind": "Tür",
+      "kinds": {
+        "percent": "Yüzde indirim",
+        "amount": "Tutar indirimi",
+        "free_shipping": "Ücretsiz kargo"
+      },
+      "percent": "Yüzde",
+      "amount": "Tutar",
+      "currency": "Para birimi (üç harf, ör. EUR)",
+      "minSubtotal": "Minimum sipariş (isteğe bağlı)",
+      "startsAt": "Başlangıç (isteğe bağlı)",
+      "endsAt": "Bitiş (isteğe bağlı)",
+      "maxRedemptions": "Maksimum kullanım (isteğe bağlı)",
+      "create": "Kod oluştur",
+      "creating": "Oluşturuluyor...",
+      "created": "{code} kodu oluşturuldu.",
+      "empty": "Henüz kod yok.",
+      "columns": {
+        "code": "Kod",
+        "value": "Değer",
+        "restrictions": "Kısıtlamalar",
+        "uses": "Kullanım",
+        "status": "Durum",
+        "actions": "İşlemler"
+      },
+      "status": {
+        "active": "Aktif",
+        "scheduled": "Planlandı",
+        "expired": "Süresi doldu",
+        "exhausted": "Tükendi",
+        "retired": "Kaldırıldı"
+      },
+      "retire": "Kaldır",
+      "reactivate": "Yeniden etkinleştir",
+      "delete": "Sil",
+      "deleteConfirm": "Bu kod silinsin mi? Yalnızca hiç kullanılmamış kodlar silinebilir.",
+      "retired": "{code} kodu kaldırıldı. Müşteriler artık kullanamaz.",
+      "reactivated": "{code} kodu yeniden aktif.",
+      "deleted": "{code} kodu silindi.",
+      "usesOf": "{count} / {max}",
+      "minLabel": "en az {amount}",
+      "from": "{date} itibarıyla",
+      "until": "{date} tarihine kadar",
+      "noRestrictions": "Yok",
+      "errors": {
+        "code_format": "Kodlar 3 ila 32 harf, rakam, tire veya alt çizgiden oluşur.",
+        "kind": "Bir tür seçin.",
+        "percent": "0'dan büyük ve en fazla 100 olan bir yüzde girin.",
+        "amount": "Sıfırdan büyük bir tutar girin, ör. 5 veya 7,50.",
+        "currency": "Üç harfli bir para birimi kodu girin, ör. EUR. Tutar kodları ve minimumlar için gereklidir.",
+        "min_subtotal": "Minimumu tutar olarak girin, ör. 20 veya 20,00.",
+        "dates": "Tarihleri kontrol edin: bitiş, başlangıçtan sonra olmalı.",
+        "max_redemptions": "Sıfırdan büyük bir tam sayı girin.",
+        "duplicate": "Bu kod zaten var.",
+        "stripe": "Stripe kodu reddetti: {message}",
+        "failed": "Kod kaydedilemedi: {message}",
+        "in_use": "Bu kod kullanılmış, bu yüzden silinemez. Bunun yerine kaldırın.",
+        "not_found": "Kod bulunamadı.",
+        "not_authorized": "Bunu yapma yetkiniz yok."
+      }
     },
     "products": {
       "heading": "Product catalogue",
@@ -1698,6 +1986,9 @@ cat > src/messages/tr.json <<'EOF'
     "orderNumber": "Sipariş {number}",
     "items": "Ürünler",
     "shippingCost": "Kargo",
+    "discount": "İndirim ({code})",
+    "freeShipping": "Ücretsiz kargo ({code})",
+    "discountInvalid": "Promosyon kodunuz artık geçerli değil ve kaldırıldı. Ödemeden önce toplamı kontrol edin.",
     "total": "Toplam",
     "shipTo": "Teslimat adresi",
     "createAccountTitle": "Bu siparişi takip edin",
@@ -1767,6 +2058,7 @@ cat > src/messages/ar.json <<'EOF'
     "startShopping": "ابدأ التسوق",
     "orderNumber": "الطلب {number}",
     "total": "الإجمالي",
+    "discount": "الخصم ({code})",
     "shippedOn": "تم الشحن في {date}",
     "trackingNumber": "رقم التتبع {number}",
     "track": "تتبّع طردك",
@@ -1859,7 +2151,31 @@ cat > src/messages/ar.json <<'EOF'
     "subtotal": "المجموع الفرعي",
     "shippingAtCheckout": "يتم احتساب الشحن عند الدفع.",
     "checkout": "إتمام الشراء",
-    "continueShopping": "متابعة التسوق"
+    "continueShopping": "متابعة التسوق",
+    "discount": {
+      "label": "رمز الخصم",
+      "placeholder": "أدخل الرمز",
+      "apply": "تطبيق",
+      "applying": "جارٍ التحقق...",
+      "remove": "إزالة",
+      "applied": "تم تطبيق الرمز {code}",
+      "line": "الخصم ({code})",
+      "shipping": "الشحن",
+      "freeShipping": "مجاني مع {code}",
+      "total": "الإجمالي",
+      "errors": {
+        "invalid_format": "لا يبدو هذا رمزًا. تتكون الرموز من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية.",
+        "not_found": "لا نتعرف على هذا الرمز. تحقق من كتابته وحاول مجددًا.",
+        "inactive": "لم يعد هذا الرمز فعّالًا.",
+        "not_started": "هذا الرمز غير صالح بعد.",
+        "expired": "انتهت صلاحية هذا الرمز.",
+        "exhausted": "استُخدم هذا الرمز أقصى عدد ممكن من المرات.",
+        "min_subtotal": "يتطلب هذا الرمز طلبًا بقيمة {minimum} على الأقل.",
+        "currency_mismatch": "هذا الرمز لعملة مختلفة.",
+        "nothing_to_discount": "الشحن مجاني بالفعل لهذا الطلب، لذا لن يغيّر هذا الرمز شيئًا.",
+        "failed": "تعذّر تطبيق الرمز الآن. يرجى المحاولة مرة أخرى."
+      }
+    }
   },
   "Admin": {
     "title": "Store admin",
@@ -1870,7 +2186,8 @@ cat > src/messages/ar.json <<'EOF'
       "dashboard": "Dashboard",
       "products": "Products",
       "newProduct": "New product",
-      "orders": "الطلبات"
+      "orders": "الطلبات",
+      "discounts": "رموز الخصم"
     },
     "stats": {
       "products": "Products",
@@ -1900,6 +2217,7 @@ cat > src/messages/ar.json <<'EOF'
       "statusSaved": "تم حفظ الحالة.",
       "statusFailed": "تعذّر حفظ الحالة: {error}",
       "total": "الإجمالي",
+      "discount": "الخصم ({code})",
       "refundedSoFar": "تم استرداد {amount}",
       "details": "التفاصيل وعمليات الاسترداد",
       "empty": "لا توجد طلبات بعد."
@@ -1962,6 +2280,73 @@ cat > src/messages/ar.json <<'EOF'
       },
       "customerEmailed": "تم إشعار العميل",
       "customerNotEmailed": "لم يتم إشعار العميل"
+    },
+    "discounts": {
+      "heading": "رموز الخصم",
+      "subheading": "تُنشأ رموز النسبة والمبلغ في Stripe أيضًا ويطبّقها Stripe عند الدفع. أما رموز الشحن المجاني فيطبّقها المتجر. يُتحقق من الرمز عند إدخاله ومرة أخرى عند الدفع.",
+      "newHeading": "رمز جديد",
+      "code": "الرمز",
+      "codeHint": "من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية. يكتبه العملاء كما هو؛ لا فرق بين الأحرف الكبيرة والصغيرة.",
+      "kind": "النوع",
+      "kinds": {
+        "percent": "خصم بنسبة مئوية",
+        "amount": "خصم بمبلغ",
+        "free_shipping": "شحن مجاني"
+      },
+      "percent": "النسبة",
+      "amount": "المبلغ",
+      "currency": "العملة (ثلاثة أحرف، مثل EUR)",
+      "minSubtotal": "الحد الأدنى للطلب (اختياري)",
+      "startsAt": "صالح من (اختياري)",
+      "endsAt": "صالح حتى (اختياري)",
+      "maxRedemptions": "الحد الأقصى للاستخدام (اختياري)",
+      "create": "إنشاء الرمز",
+      "creating": "جارٍ الإنشاء...",
+      "created": "تم إنشاء الرمز {code}.",
+      "empty": "لا توجد رموز بعد.",
+      "columns": {
+        "code": "الرمز",
+        "value": "القيمة",
+        "restrictions": "القيود",
+        "uses": "الاستخدامات",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "active": "فعّال",
+        "scheduled": "مجدول",
+        "expired": "منتهٍ",
+        "exhausted": "مستنفد",
+        "retired": "متوقف"
+      },
+      "retire": "إيقاف",
+      "reactivate": "إعادة التفعيل",
+      "delete": "حذف",
+      "deleteConfirm": "هل تريد حذف هذا الرمز؟ لا يمكن حذف إلا الرموز التي لم تُستخدم قط.",
+      "retired": "تم إيقاف الرمز {code}. لم يعد بإمكان العملاء استخدامه.",
+      "reactivated": "الرمز {code} فعّال من جديد.",
+      "deleted": "تم حذف الرمز {code}.",
+      "usesOf": "{count} من {max}",
+      "minLabel": "الحد الأدنى {amount}",
+      "from": "من {date}",
+      "until": "حتى {date}",
+      "noRestrictions": "لا شيء",
+      "errors": {
+        "code_format": "تتكون الرموز من 3 إلى 32 حرفًا أو رقمًا أو شرطة أو شرطة سفلية.",
+        "kind": "اختر نوعًا.",
+        "percent": "أدخل نسبة أكبر من 0 وحتى 100.",
+        "amount": "أدخل مبلغًا أكبر من صفر، مثل 5 أو 7.50.",
+        "currency": "أدخل رمز عملة من ثلاثة أحرف، مثل EUR. رموز المبلغ والحدود الدنيا تحتاج إليه.",
+        "min_subtotal": "أدخل الحد الأدنى كمبلغ، مثل 20 أو 20.00.",
+        "dates": "تحقق من التواريخ: يجب أن تكون النهاية بعد البداية.",
+        "max_redemptions": "أدخل عددًا صحيحًا أكبر من صفر.",
+        "duplicate": "هذا الرمز موجود بالفعل.",
+        "stripe": "رفض Stripe الرمز: {message}",
+        "failed": "تعذّر حفظ الرمز: {message}",
+        "in_use": "استُخدم هذا الرمز، لذا لا يمكن حذفه. أوقفه بدلًا من ذلك.",
+        "not_found": "الرمز غير موجود.",
+        "not_authorized": "غير مسموح لك بذلك."
+      }
     },
     "products": {
       "heading": "Product catalogue",
@@ -2079,6 +2464,9 @@ cat > src/messages/ar.json <<'EOF'
     "orderNumber": "الطلب {number}",
     "items": "المنتجات",
     "shippingCost": "الشحن",
+    "discount": "الخصم ({code})",
+    "freeShipping": "شحن مجاني ({code})",
+    "discountInvalid": "لم يعد رمز الخصم ساريًا وتمت إزالته. يرجى مراجعة الإجمالي قبل الدفع.",
     "total": "الإجمالي",
     "shipTo": "التسليم إلى",
     "createAccountTitle": "تابع هذا الطلب",
