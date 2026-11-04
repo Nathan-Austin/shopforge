@@ -63,6 +63,19 @@ details for each item are in the numbered sections below.
       `SHOP_OWNER_EMAIL` in CC. `order_refunds` is the ledger; `refunded`
       can no longer be picked by hand
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
+- [ ] Webhook handlers for `charge.refunded` and `charge.dispute.*`, so a
+      refund made in the Stripe dashboard, or a chargeback, is reflected in
+      `refunded_cents` and the order status. Disputes are the one the owner
+      really needs to hear about
+- [ ] Optional restock on refund: a checkbox on the refund form that puts
+      the refunded units back into stock
+- [ ] "Reconcile with Stripe" for a refund row stuck in `pending` (the app
+      died between reserving and Stripe answering): look the attempt up by
+      idempotency key / metadata and complete or fail the row
+- [ ] Zero-decimal currencies (JPY, KRW, ...): amounts are sent to Stripe as
+      stored cents everywhere, which is off by 100 for these
+- [ ] Numbered migration files for changes after `0001_init.sql`, so a live
+      store can be upgraded without re-running the whole (idempotent) schema
 
 ## 2. Admin and store settings
 
@@ -195,9 +208,9 @@ Decided on 2026-11-02:
 - The product page shows every public field except `video_url`; brand and
   category are plain text there because there are no brand or category pages
   to link to yet.
-- "Popular" on `/shop` sorts featured-first: there are no per-product sales
-  counts to rank by yet. Deriving popularity from `order_items` would give
-  it real meaning.
+- "Popular" on `/shop` ranks by units sold in the last 90 days
+  (`product_sales` view) and is hidden until the shop has sold 100 units in
+  that window (`POPULARITY_MIN_UNITS`).
 - Only `size_options` and `color_options` are cart-selectable variants
   (`cart_items.selected_size` / `selected_color`). Weight and volume are
   display facts (`net_content`, `weight_grams`), not variants; a product
