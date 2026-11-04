@@ -42,6 +42,10 @@ support for languages such as Arabic.
 - **Order confirmation email:** optional. With a Resend key and a verified
   sender, the webhook emails the customer their receipt the moment payment
   clears, and can blind-copy the owner. Without one the shop sends nothing
+- **Shipping emails:** marking an order shipped emails the customer once,
+  in the language they shopped in, with the tracking number and a tracking
+  link; flipping the status back and forth never emails twice, and the
+  admin shows whether the customer was told
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt
@@ -66,9 +70,9 @@ support for languages such as Arabic.
   variants, quantity, product facts, and heat in chilli mode). The brand
   showcase component is copied into `src/components/store/` for you to
   wire in.
-- **Orders after the sale:** refunds are built in (below), but status
-  changes such as "shipped" don't notify the customer yet, and a refund
-  does not restock the items.
+- **Orders after the sale:** refunds and shipping emails are built in
+  (below); a refund does not restock the items, and only "shipped" emails
+  the customer.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
   placeholder values in `src/lib/shipping/config.ts`. The countries you
   deliver to are a placeholder list in `src/lib/checkout/config.ts`; the

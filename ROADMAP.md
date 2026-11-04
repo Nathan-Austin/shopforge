@@ -8,15 +8,11 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Shipping notification email** (section 1). Email the customer via Resend
-   when the owner marks an order fulfilled or otherwise changes its status.
-   The template and transport exist already; what's missing is the hook on
-   status change.
-2. **Discount codes, then the email marketing builder** (section 2). Discount
+1. **Discount codes, then the email marketing builder** (section 2). Discount
    codes backed by Stripe coupons/promotion codes and applied at checkout,
    then the block-based campaign editor with an opt-in/unsubscribe
    subscriber list.
-3. **Translate the auth pages** (section 2b). Move the hardcoded English on
+2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -50,7 +46,20 @@ details for each item are in the numbered sections below.
 - [x] Order confirmation email — done 2026-11-03: Resend via the webhook,
       optional, escaped HTML template with unit tests, `confirmation_sent_at`
       guards against double sends
-- [ ] Shipping notification email when the owner marks an order fulfilled
+- [x] Shipping notification email — done 2026-11-04: marking an order
+      Shipped emails the customer once, in the locale they checked out in
+      (`orders.locale`, stamped by the webhook), with carrier, tracking
+      number and a tracking link (typed, or derived for common carriers).
+      `notificationForStatusChange()` is the guard: only the first arrival
+      at `fulfilled`, never twice (`shipping_notified_at`), silent on
+      flips back and forth; a failed send retries on the next arrival and
+      the owner has a send/resend button. Cancellations stay quiet
+- [ ] Localize the order confirmation and refund emails the same way as the
+      shipping one (strings from an `Email.*` namespace). Today a German
+      customer gets an English receipt and a German shipping notice
+- [ ] Other status emails behind a per-status switch (cancelled, delivered
+      once a carrier integration can report it), each with its own
+      once-only marker
 - [x] Admin orders view, with status changes (fulfilled, cancelled)
       recorded in the database only — done 2026-11-03 via `set_order_status()`
 - [x] Refunds from the admin — done 2026-11-04: `/admin/orders/[id]` refunds
@@ -230,8 +239,11 @@ Decided on 2026-11-02:
 - Amounts are sent to Stripe as the stored cents. Zero-decimal currencies
   (JPY, KRW) would be off by a factor of 100 throughout checkout and
   refunds alike; nothing in the generator handles them yet.
-- Changing an order's status does not notify the customer; the shipping
-  notification email in section 1 covers that.
+- Only the shipped status emails the customer. The owner is not copied on
+  shipping emails (they triggered them, and the orders page shows the
+  state); receipts and refunds still copy `SHOP_OWNER_EMAIL`.
+- The order confirmation and refund emails are English-only; the shipping
+  email is the first localized one (see section 1).
 - The auth pages (sign-in, sign-up, email code, MFA) are English-only, even
   in a multilingual shop.
 - Money is entered in major units and stored as cents everywhere, but the

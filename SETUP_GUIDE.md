@@ -182,6 +182,22 @@ select id, email, created_at from public.orders
 A provider outage never fails the webhook: the payment and the order are
 already real, so the order is kept and the failure is logged.
 
+### Shipping emails
+
+Setting an order's status to **Shipped** on `/<locale>/admin/orders` emails
+the customer once, in the language they checked out in, with whatever
+tracking you entered next to the status: carrier, tracking number and an
+optional link. Leave the link empty for DHL, DPD, GLS, Hermes, UPS, FedEx,
+USPS, Royal Mail, An Post, La Poste, PostNL, PTT and Aramex and the carrier's
+own tracking page is used.
+
+The email goes at most once per order: `orders.shipping_notified_at` is set
+when it is sent, and changing the status back and forth afterwards does not
+email again. If the first send fails (provider down, email not configured)
+nothing is recorded, so the next time the order arrives at Shipped it tries
+again, and the orders page shows "Customer not emailed" with a button to
+send it by hand. The owner is not copied on shipping emails.
+
 ### Refunds
 
 Open an order from `/<locale>/admin/orders` and use the refund form. You can
