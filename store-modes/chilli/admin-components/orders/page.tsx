@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-import { listOrders, orderReference, ORDER_STATUSES } from '@/lib/orders/service';
+import { listOrders, orderReference, MANUAL_ORDER_STATUSES } from '@/lib/orders/service';
 import { formatPrice } from '@/lib/format';
 import { requireShopOwner } from '../lib/auth';
 import { updateOrderStatus } from '../actions/updateOrderStatus';
@@ -51,6 +52,12 @@ export default async function AdminOrdersPage({
                     {dateFormat.format(new Date(order.createdAt))}
                   </p>
                   <p className="mt-1 text-sm">{order.email}</p>
+                  <Link
+                    href={`/${locale}/admin/orders/${order.id}`}
+                    className="mt-1 inline-block text-sm font-medium text-emerald-700 underline"
+                  >
+                    {t('orders.details')}
+                  </Link>
                   {order.shipping.line1 && (
                     <address className="mt-2 text-sm not-italic text-stone-600">
                       {order.shipping.name && <div>{order.shipping.name}</div>}
@@ -75,9 +82,13 @@ export default async function AdminOrdersPage({
                     id={`status-${order.id}`}
                     name="status"
                     defaultValue={order.status}
-                    className="rounded-md border border-border bg-white px-2 py-1"
+                    disabled={order.status === 'refunded'}
+                    className="rounded-md border border-border bg-white px-2 py-1 disabled:opacity-60"
                   >
-                    {ORDER_STATUSES.map((status) => (
+                    {order.status === 'refunded' && (
+                      <option value="refunded">{tStatus('status.refunded')}</option>
+                    )}
+                    {MANUAL_ORDER_STATUSES.map((status) => (
                       <option key={status} value={status}>
                         {tStatus(`status.${status}`)}
                       </option>
@@ -118,6 +129,15 @@ export default async function AdminOrdersPage({
                       {formatPrice(order.totalCents, order.currency, locale)}
                     </td>
                   </tr>
+                  {order.refundedCents > 0 && (
+                    <tr className="font-normal text-red-700">
+                      <td colSpan={2} className="pt-1 text-right">
+                        {t('orders.refundedSoFar', {
+                          amount: formatPrice(order.refundedCents, order.currency, locale)
+                        })}
+                      </td>
+                    </tr>
+                  )}
                 </tfoot>
               </table>
             </li>

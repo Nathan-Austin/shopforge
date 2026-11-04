@@ -981,6 +981,13 @@ export default async function AccountOrdersPage({
                 <span>{t('total')}</span>
                 <span>{formatPrice(order.totalCents, order.currency, locale)}</span>
               </div>
+              {order.refundedCents > 0 && (
+                <p className="mt-1 text-right text-sm text-red-700">
+                  {t('refundedAmount', {
+                    amount: formatPrice(order.refundedCents, order.currency, locale)
+                  })}
+                </p>
+              )}
             </li>
           ))}
         </ul>
@@ -1137,6 +1144,6 @@ EOF
 echo "✨ All components and libraries updated to production-grade."
 echo "💡 Next steps:"
 echo "   • Put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in .env.local"
-echo "   • For order confirmation emails, set RESEND_API_KEY and EMAIL_FROM (optional)"
+echo "   • For order confirmation and refund emails, set RESEND_API_KEY and EMAIL_FROM (optional)"
 echo "   • Point a Stripe webhook at /api/webhooks/stripe for checkout.session.completed"
 echo "   • Set your rates in src/lib/shipping/config.ts"
