@@ -4,7 +4,14 @@ set -e
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 if ! command -v node >/dev/null 2>&1; then
-  echo "❌ Node.js is required (please install Node 18+)." >&2
+  echo "❌ Node.js is required (Next.js 16 needs Node 20.9 or newer)." >&2
+  exit 1
+fi
+
+# Next 16 refuses to run on anything older than 20.9, so fail here with a
+# clear message rather than halfway through the scaffold.
+if ! node -e 'const [maj, min] = process.versions.node.split(".").map(Number); process.exit(maj > 20 || (maj === 20 && min >= 9) ? 0 : 1)'; then
+  echo "❌ Node.js $(node -p 'process.versions.node') is too old: Next.js 16 needs 20.9 or newer." >&2
   exit 1
 fi
 
@@ -21,7 +28,7 @@ fi
 STORE_MODE="chilli"
 # --skip-supabase: don't touch the Supabase CLI (no init/link/push) and fill
 # .env.local with placeholder values. Used for tests and CI; the migrations
-# are still written so they can be pushed later with `npx supabase db push`.
+# are still written so they can be pushed later with `npx supabase@3 db push --remote`.
 SKIP_SUPABASE="${SHOPFORGE_SKIP_SUPABASE:-false}"
 POSITIONAL=()
 for arg in "$@"; do
@@ -39,8 +46,12 @@ for arg in "$@"; do
 done
 set -- "${POSITIONAL[@]}"
 
-if [ "$SKIP_SUPABASE" != "true" ] && ! npx --yes supabase --help >/dev/null 2>&1; then
-  echo "❌ Supabase CLI not found. Install via npm: npm i -g supabase." >&2
+# The Supabase CLI is run through npx at a pinned major so the flags below
+# match whatever is (or isn't) installed globally. v3 is local-by-default and
+# asks before touching a hosted project, hence --remote and --yes on push.
+SUPABASE_CLI="npx --yes supabase@3"
+if [ "$SKIP_SUPABASE" != "true" ] && ! $SUPABASE_CLI --version >/dev/null 2>&1; then
+  echo "❌ Could not run the Supabase CLI (npx supabase@3). Check your network and npm setup." >&2
   exit 1
 fi
 
@@ -60,6 +71,10 @@ fi
 echo "🚀 Creating Next.js + Tailwind + Supabase (SSR) eCommerce Template: $APP_NAME"
 
 # 1) Scaffold real Next.js app via official CLI (prevents Tailwind breakage)
+# Every option is stated: --yes falls back to preferences saved from an
+# earlier interactive run, so an unstated option could differ per machine.
+# Cache Components stay off (every page reads cookies; see ROADMAP), the
+# React Compiler is still opt-in upstream, and AGENTS.md is Next's own file.
 pnpm create next-app@latest $APP_NAME \
   --typescript \
   --tailwind \
@@ -67,6 +82,11 @@ pnpm create next-app@latest $APP_NAME \
   --app \
   --src-dir \
   --import-alias "@/*" \
+  --turbopack \
+  --no-react-compiler \
+  --no-cache-components \
+  --no-agents-md \
+  --no-agent-feedback \
   --yes
 
 cd "$APP_NAME"
@@ -431,7 +451,7 @@ if [ "$SKIP_SUPABASE" = "true" ]; then
   mkdir -p supabase
 else
   echo "🧩 Initializing Supabase..."
-  npx supabase init
+  $SUPABASE_CLI init
 fi
 
 echo "🔐 Configuring Supabase credentials..."
@@ -487,18 +507,18 @@ if [ "$SKIP_SUPABASE" = "true" ]; then
 else
 echo "🔗 Linking Supabase project..."
 # Attempt to list projects to check login status
-if ! npx supabase projects list >/dev/null 2>&1; then
+if ! $SUPABASE_CLI projects list >/dev/null 2>&1; then
   echo "🔑 Not logged into Supabase. Please log in."
-  npx supabase login
+  $SUPABASE_CLI login
 else
   # Check if the project ref is accessible with the current login
-  if ! npx supabase projects list | grep -q "$SUPABASE_PROJECT_REF"; then
+  if ! $SUPABASE_CLI projects list | grep -q "$SUPABASE_PROJECT_REF"; then
     echo "⚠️  Current Supabase account doesn't have access to project $SUPABASE_PROJECT_REF."
     echo "   The project may belong to a different Supabase account."
     read -r -p "Log out and log in with the correct account? [Y/n]: " login_again
     if [[ $login_again =~ ^[Yy]$ ]] || [ -z "$login_again" ]; then
-      npx supabase logout
-      npx supabase login
+      $SUPABASE_CLI logout
+      $SUPABASE_CLI login
     else
       echo "⚠️  Continuing with current account, but 'supabase link' may fail."
     fi
@@ -506,7 +526,7 @@ else
 fi
 
 # Link the project (will prompt for database password)
-npx supabase link --project-ref "$SUPABASE_PROJECT_REF"
+$SUPABASE_CLI link --project-ref "$SUPABASE_PROJECT_REF"
 fi
 
 echo "📝 Preparing database migrations (${STORE_MODE})..."
@@ -561,10 +581,10 @@ SQL
 
 if [ "$SKIP_SUPABASE" = "true" ]; then
   echo "🗄️ Migrations written to supabase/migrations (not pushed: --skip-supabase)."
-  echo "   Later: fill in .env.local, then 'npx supabase init && npx supabase link --project-ref <ref> && npx supabase db push'."
+  echo "   Later: fill in .env.local, then 'npx supabase@3 init && npx supabase@3 link --project-ref <ref> && npx supabase@3 db push --remote'."
 else
   echo "🗄️ Pushing all migrations to Supabase..."
-  npx supabase db push --yes
+  $SUPABASE_CLI db push --remote --yes
 fi
 
 # Note: Buckets and Storage RLS are difficult to manage via CLI for remote projects.
@@ -3407,8 +3427,8 @@ import { createClient } from '@/lib/supabase/server';
 export default async function CheckoutPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect(`/${locale}/auth/sign-in`);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect(`/${locale}/auth/sign-in`);
 
   return <div className="p-6"><h1 className="text-2xl font-bold">Checkout</h1></div>;
 }
