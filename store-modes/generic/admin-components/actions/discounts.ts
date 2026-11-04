@@ -89,7 +89,7 @@ export async function createDiscount(
       stripeCouponId = coupon.id;
 
       const promotion = await stripe.promotionCodes.create({
-        coupon: coupon.id,
+        promotion: { type: 'coupon', coupon: coupon.id },
         code: row.code,
         active: true,
         ...(row.max_redemptions ? { max_redemptions: row.max_redemptions } : {}),
