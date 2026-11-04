@@ -176,3 +176,49 @@ export function refundedQuantities(
   }
   return totals;
 }
+
+/** Form field names shared by the refund form and the server action. */
+export const REFUND_FIELDS = {
+  kind: 'kind',
+  /** Per-line unit count: `item_<orderItemId>`. */
+  itemPrefix: 'item_',
+  percent: 'percent',
+  amount: 'amount',
+  reason: 'reason',
+  confirm: 'confirm'
+} as const;
+
+/**
+ * Reads the owner's request out of the submitted form. Only the fields for
+ * the chosen kind are read, so a stale percentage cannot leak into an
+ * item refund. Quantities and the amount are parsed, not trusted.
+ */
+export function refundRequestFromForm(formData: FormData): RefundRequest {
+  const kindValue = formData.get(REFUND_FIELDS.kind)?.toString() as RefundKind | undefined;
+  const kind: RefundKind = kindValue && REFUND_KINDS.includes(kindValue) ? kindValue : 'full';
+
+  switch (kind) {
+    case 'items': {
+      const items: { orderItemId: string; quantity: number }[] = [];
+      for (const [name, value] of formData.entries()) {
+        if (!name.startsWith(REFUND_FIELDS.itemPrefix)) continue;
+        const quantity = Number.parseInt(value.toString(), 10);
+        items.push({
+          orderItemId: name.slice(REFUND_FIELDS.itemPrefix.length),
+          quantity: Number.isFinite(quantity) ? quantity : 0
+        });
+      }
+      return { kind, items };
+    }
+    case 'percent': {
+      const raw = formData.get(REFUND_FIELDS.percent)?.toString().trim().replace(',', '.') ?? '';
+      const percent = raw === '' ? null : Number(raw);
+      return { kind, percent: percent !== null && Number.isFinite(percent) ? percent : null };
+    }
+    case 'amount':
+      return { kind, amountCents: parseMajorAmount(formData.get(REFUND_FIELDS.amount)?.toString()) };
+    case 'full':
+    default:
+      return { kind: 'full' };
+  }
+}

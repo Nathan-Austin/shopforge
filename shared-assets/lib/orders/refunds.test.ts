@@ -5,6 +5,7 @@ import {
   parseMajorAmount,
   planRefund,
   refundedQuantities,
+  refundRequestFromForm,
   remainingRefundableCents,
   type RefundableOrder
 } from './refunds';
@@ -227,5 +228,59 @@ describe('refundedQuantities', () => {
     expect(totals.get('sauce')).toBe(2);
     expect(totals.get('apron')).toBe(1);
     expect(totals.get('other')).toBeUndefined();
+  });
+});
+
+describe('refundRequestFromForm', () => {
+  const form = (entries: Record<string, string>) => {
+    const data = new FormData();
+    for (const [key, value] of Object.entries(entries)) data.append(key, value);
+    return data;
+  };
+
+  it('defaults to a full refund', () => {
+    expect(refundRequestFromForm(form({}))).toEqual({ kind: 'full' });
+    expect(refundRequestFromForm(form({ kind: 'bogus' }))).toEqual({ kind: 'full' });
+  });
+
+  it('collects per-line quantities for an item refund, ignoring other fields', () => {
+    expect(
+      refundRequestFromForm(
+        form({ kind: 'items', item_sauce: '2', item_apron: '0', item_x: 'abc', percent: '50' })
+      )
+    ).toEqual({
+      kind: 'items',
+      items: [
+        { orderItemId: 'sauce', quantity: 2 },
+        { orderItemId: 'apron', quantity: 0 },
+        { orderItemId: 'x', quantity: 0 }
+      ]
+    });
+  });
+
+  it('parses the percentage, comma decimals included', () => {
+    expect(refundRequestFromForm(form({ kind: 'percent', percent: '12,5' }))).toEqual({
+      kind: 'percent',
+      percent: 12.5
+    });
+    expect(refundRequestFromForm(form({ kind: 'percent', percent: '' }))).toEqual({
+      kind: 'percent',
+      percent: null
+    });
+    expect(refundRequestFromForm(form({ kind: 'percent', percent: 'lots' }))).toEqual({
+      kind: 'percent',
+      percent: null
+    });
+  });
+
+  it('parses the amount as cents', () => {
+    expect(refundRequestFromForm(form({ kind: 'amount', amount: '12.50' }))).toEqual({
+      kind: 'amount',
+      amountCents: 1250
+    });
+    expect(refundRequestFromForm(form({ kind: 'amount', amount: '-1' }))).toEqual({
+      kind: 'amount',
+      amountCents: null
+    });
   });
 });

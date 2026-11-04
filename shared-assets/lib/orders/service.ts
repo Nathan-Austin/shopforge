@@ -42,7 +42,10 @@ export interface Order {
   subtotalCents: number;
   shippingCents: number;
   totalCents: number;
+  /** What has gone back to the customer so far, in cents. */
+  refundedCents: number;
   stripeSessionId: string;
+  stripePaymentIntentId: string | null;
   shipping: OrderAddress;
   items: OrderItem[];
   createdAt: string;
@@ -50,7 +53,8 @@ export interface Order {
 
 const ORDER_COLUMNS = `
   id, user_id, email, status, currency, subtotal_cents, shipping_cents,
-  total_cents, stripe_session_id, shipping_name, shipping_line1,
+  total_cents, refunded_cents, stripe_session_id, stripe_payment_intent_id,
+  shipping_name, shipping_line1,
   shipping_line2, shipping_city, shipping_postal_code, shipping_region,
   shipping_country, created_at,
   order_items ( id, product_id, product_name, unit_price_cents, quantity,
@@ -76,7 +80,9 @@ interface OrderRow {
   subtotal_cents: number;
   shipping_cents: number;
   total_cents: number;
+  refunded_cents: number | null;
   stripe_session_id: string;
+  stripe_payment_intent_id: string | null;
   shipping_name: string | null;
   shipping_line1: string | null;
   shipping_line2: string | null;
@@ -98,7 +104,9 @@ function toOrder(row: OrderRow): Order {
     subtotalCents: row.subtotal_cents,
     shippingCents: row.shipping_cents,
     totalCents: row.total_cents,
+    refundedCents: row.refunded_cents ?? 0,
     stripeSessionId: row.stripe_session_id,
+    stripePaymentIntentId: row.stripe_payment_intent_id,
     shipping: {
       name: row.shipping_name,
       line1: row.shipping_line1,
@@ -129,6 +137,15 @@ export function orderReference(order: Pick<Order, 'id'>): string {
 /** Every status an order can be in, in lifecycle order. */
 export const ORDER_STATUSES = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+/**
+ * Statuses the owner may set by hand. 'refunded' is not one of them: it is
+ * set by the refund flow once the whole amount has gone back through Stripe.
+ */
+export const MANUAL_ORDER_STATUSES: readonly OrderStatus[] = ['pending', 'paid', 'fulfilled', 'cancelled'];
+
+/** Statuses an order can be refunded from. */
+export const REFUNDABLE_ORDER_STATUSES: readonly OrderStatus[] = ['paid', 'fulfilled'];
 
 /**
  * Orders visible to the caller, newest first. Runs through the caller's own
@@ -167,4 +184,104 @@ export async function getOrderByStripeSession(sessionId: string): Promise<Order 
 
   if (error || !data) return null;
   return toOrder(data as unknown as OrderRow);
+}
+
+/** One order by id, through the caller's client (RLS applies). */
+export async function getOrderById(
+  supabase: SupabaseClient,
+  orderId: string
+): Promise<Order | null> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(ORDER_COLUMNS)
+    .eq('id', orderId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return toOrder(data as unknown as OrderRow);
+}
+
+export interface OrderRefundItem {
+  orderItemId: string;
+  productName: string;
+  quantity: number;
+  amountCents: number;
+}
+
+export interface OrderRefund {
+  id: string;
+  orderId: string;
+  amountCents: number;
+  currency: string;
+  kind: 'full' | 'items' | 'percent' | 'amount';
+  percent: number | null;
+  items: OrderRefundItem[];
+  reason: string | null;
+  status: 'pending' | 'succeeded' | 'failed';
+  stripeRefundId: string | null;
+  failureMessage: string | null;
+  emailSentAt: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+interface OrderRefundRow {
+  id: string;
+  order_id: string;
+  amount_cents: number;
+  currency: string;
+  kind: OrderRefund['kind'];
+  percent: number | string | null;
+  items: unknown;
+  reason: string | null;
+  status: OrderRefund['status'];
+  stripe_refund_id: string | null;
+  failure_message: string | null;
+  email_sent_at: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+function toRefundItems(value: unknown): OrderRefundItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === 'object')
+    .map((item) => ({
+      orderItemId: String(item.orderItemId ?? ''),
+      productName: String(item.productName ?? ''),
+      quantity: Number(item.quantity ?? 0),
+      amountCents: Number(item.amountCents ?? 0)
+    }));
+}
+
+/** Refund attempts on an order, oldest first, through the caller's client. */
+export async function listOrderRefunds(
+  supabase: SupabaseClient,
+  orderId: string
+): Promise<OrderRefund[]> {
+  const { data, error } = await supabase
+    .from('order_refunds')
+    .select(
+      'id, order_id, amount_cents, currency, kind, percent, items, reason, status, stripe_refund_id, failure_message, email_sent_at, created_at, completed_at'
+    )
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as OrderRefundRow[]).map((row) => ({
+    id: row.id,
+    orderId: row.order_id,
+    amountCents: row.amount_cents,
+    currency: row.currency,
+    kind: row.kind,
+    percent: row.percent === null ? null : Number(row.percent),
+    items: toRefundItems(row.items),
+    reason: row.reason,
+    status: row.status,
+    stripeRefundId: row.stripe_refund_id,
+    failureMessage: row.failure_message,
+    emailSentAt: row.email_sent_at,
+    createdAt: row.created_at,
+    completedAt: row.completed_at
+  }));
 }
