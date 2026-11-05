@@ -55,7 +55,10 @@ if [ "$SKIP_SUPABASE" != "true" ] && ! $SUPABASE_CLI --version >/dev/null 2>&1; 
   exit 1
 fi
 
-APP_NAME=${1:-next-commerce-template}
+APP_PATH=${1:-next-commerce-template}
+# A path is fine too (the test script generates into its own /tmp
+# directory); the shop is named after its last part.
+APP_NAME=$(basename "$APP_PATH")
 DEFAULT_LOCALE=${2:-en}
 LOCALES_CSV=${3:-"en,de,tr,ar"}  # comma-separated
 
@@ -91,7 +94,7 @@ echo "🚀 Creating Next.js + Tailwind + Supabase (SSR) eCommerce Template: $APP
 # earlier interactive run, so an unstated option could differ per machine.
 # Cache Components stay off (every page reads cookies; see ROADMAP), the
 # React Compiler is still opt-in upstream, and AGENTS.md is Next's own file.
-pnpm create next-app@latest $APP_NAME \
+pnpm create next-app@latest "$APP_PATH" \
   --typescript \
   --tailwind \
   --eslint \
@@ -105,7 +108,7 @@ pnpm create next-app@latest $APP_NAME \
   --no-agent-feedback \
   --yes
 
-cd "$APP_NAME"
+cd "$APP_PATH"
 
 ENV_FILE=".env.local"
 touch "$ENV_FILE"
@@ -4604,7 +4607,8 @@ email_tmp_tag() {
   tag=$(echo "$tag" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
   echo "${tag:-shop}"
 }
-ensure_env_default "EMAIL_TMP_DIR" "/tmp/sf-$(email_tmp_tag)-email-builder"
+# An exported EMAIL_TMP_DIR wins (the test script sets it with --tmp-dir).
+ensure_env_default "EMAIL_TMP_DIR" "${EMAIL_TMP_DIR:-/tmp/sf-$(email_tmp_tag)-email-builder}"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
@@ -4638,7 +4642,7 @@ git commit -m "chore: scaffold Next.js + Supabase SSR eCommerce template with i1
 
 echo ""
 echo "✅ Done! Next steps:"
-echo "  cd $APP_NAME"
+echo "  cd $APP_PATH"
 echo "  pnpm dev"
 echo "  Open http://localhost:3000/$DEFAULT_LOCALE/auth/sign-up and create your account (with a password)."
 echo "  Then promote it in the Supabase SQL editor:"
