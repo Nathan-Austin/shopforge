@@ -58,7 +58,9 @@ export function emailTmpPath(area: EmailTmpArea, fileName: string, dir?: string)
     throw new Error(`Not a plain file name: ${fileName}`);
   }
   const root = dir ?? resolveRootOrThrow();
-  return path.join(root, area, fileName);
+  // Always under /tmp, never the project: tell Turbopack not to trace it,
+  // or it bundles the whole project into the server output.
+  return path.join(/*turbopackIgnore: true*/ root, area, fileName);
 }
 
 function resolveRootOrThrow(): string {
@@ -69,7 +71,7 @@ function resolveRootOrThrow(): string {
 
 async function ensureArea(area: EmailTmpArea, dir?: string): Promise<void> {
   // 0700: send logs hold (masked) addresses, other users have no business here.
-  await mkdir(path.join(dir ?? resolveRootOrThrow(), area), { recursive: true, mode: 0o700 });
+  await mkdir(path.join(/*turbopackIgnore: true*/ dir ?? resolveRootOrThrow(), area), { recursive: true, mode: 0o700 });
 }
 
 /** Writes a whole file, e.g. a rendered preview. Returns its path. */
