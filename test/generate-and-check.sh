@@ -97,6 +97,15 @@ if ! grep -q "Proxy (Middleware)" "$BUILD_LOG"; then
   exit 1
 fi
 
+# Turbopack only warns when a dynamic filesystem path makes it trace the
+# whole project into the server output (slow deploys, size limits), so
+# make that a failure here.
+if grep -q "Dynamic filesystem access causes tracing of the whole project" "$BUILD_LOG"; then
+  echo "❌ The build traces the whole project into the server output." >&2
+  echo "   Scope the path or mark it /*turbopackIgnore: true*/ (see the build log above)." >&2
+  exit 1
+fi
+
 # The storefront routes the product cards link to. A page file in the wrong
 # folder would not fail the build either, so check the route table.
 for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]" "/sitemap.xml" "/robots.txt" "/api/feeds/google/\[locale\]"; do
