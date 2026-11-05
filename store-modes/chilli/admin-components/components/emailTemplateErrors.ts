@@ -12,6 +12,11 @@ const ERROR_KEYS: Record<EmailTemplateActionError, string> = {
   failed: 'failed'
 };
 
+/** For error codes that come back through the URL, which anyone can edit. */
+export function isEmailTemplateActionError(value: unknown): value is EmailTemplateActionError {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(ERROR_KEYS, value);
+}
+
 /** A failed template action in the owner's words (`Admin.email` translator). */
 export function actionErrorText(t: Translate, result: Extract<EmailTemplateActionResult, { ok: false }>): string {
   return t(`errors.${ERROR_KEYS[result.error]}`, {

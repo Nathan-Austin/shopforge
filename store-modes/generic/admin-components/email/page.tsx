@@ -12,7 +12,7 @@ import {
 } from '../actions/emailTemplates';
 import ConfirmSubmitButton from '../components/ConfirmSubmitButton';
 import NewEmailTemplateForm from '../components/NewEmailTemplateForm';
-import { actionErrorText } from '../components/emailTemplateErrors';
+import { actionErrorText, isEmailTemplateActionError } from '../components/emailTemplateErrors';
 import { STARTER_KEYS } from './mode';
 import { requireShopOwner } from '../lib/auth';
 
@@ -51,11 +51,8 @@ export default async function AdminEmailPage({
     if (notice.notice === 'duplicated' || notice.notice === 'deleted') {
       return { ok: true, text: t(`notices.${notice.notice}`, { name: notice.name ?? '' }) };
     }
-    if (notice.error) {
-      return {
-        ok: false,
-        text: actionErrorText(t, { ok: false, error: notice.error as never, message: notice.message })
-      };
+    if (isEmailTemplateActionError(notice.error)) {
+      return { ok: false, text: actionErrorText(t, { ok: false, error: notice.error, message: notice.message }) };
     }
     return null;
   })();
