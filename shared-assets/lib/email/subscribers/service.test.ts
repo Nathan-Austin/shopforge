@@ -120,7 +120,7 @@ class Query {
               return { data: null, error: { code: '23505', message: 'duplicate key' } };
             }
           }
-          const row = { id: this.db.id(), status: 'pending', confirmation_sent_at: null, confirmed_at: null, unsubscribed_at: null, ...input };
+          const row = { id: this.db.id(), status: 'pending', consented_at: new Date().toISOString(), confirmation_sent_at: null, confirmed_at: null, unsubscribed_at: null, ...input };
           table.push(row);
           result.push(row);
         }
@@ -260,6 +260,17 @@ describe('confirm and unsubscribe', () => {
     expect(await service.unsubscribeByToken(signSubscriberToken(id, 'unsubscribe', SECRET), 'page')).toBe('unsubscribed');
     expect(await service.confirmSubscription(confirm)).toBe('unsubscribed');
     expect(subscribers()[0].status).toBe('unsubscribed');
+  });
+
+  it('retires an older confirm link once the person signs up again', async () => {
+    const id = await pending();
+    const old = signSubscriberToken(id, 'confirm', SECRET, new Date(Date.now() - 60 * 60 * 1000));
+    // They unsubscribed, then signed up again just now: a new consent.
+    Object.assign(subscribers()[0], { status: 'unsubscribed', unsubscribed_at: new Date().toISOString() });
+    await signUp();
+    expect(await service.confirmSubscription(old)).toBe('expired');
+    expect(subscribers()[0].status).toBe('pending');
+    expect(await service.confirmSubscription(signSubscriberToken(id, 'confirm', SECRET))).toBe('confirmed');
   });
 
   it('unsubscribes idempotently and records how', async () => {

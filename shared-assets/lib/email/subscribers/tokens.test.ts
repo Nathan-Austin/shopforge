@@ -19,11 +19,13 @@ describe('signingSecret', () => {
 });
 
 describe('subscriber tokens', () => {
-  it('round-trips both purposes', () => {
-    for (const purpose of ['confirm', 'unsubscribe'] as const) {
-      const token = signSubscriberToken(ID, purpose, SECRET, NOW);
-      expect(verifySubscriberToken(token, purpose, SECRET, NOW)).toEqual({ ok: true, subscriberId: ID });
-    }
+  it('round-trips both purposes, confirm links with their issue time', () => {
+    expect(verifySubscriberToken(signSubscriberToken(ID, 'unsubscribe', SECRET, NOW), 'unsubscribe', SECRET, NOW)).toEqual({ ok: true, subscriberId: ID });
+    expect(verifySubscriberToken(signSubscriberToken(ID, 'confirm', SECRET, NOW), 'confirm', SECRET, NOW)).toEqual({
+      ok: true,
+      subscriberId: ID,
+      issuedAt: NOW.getTime()
+    });
   });
 
   it('is URL-safe as it is', () => {

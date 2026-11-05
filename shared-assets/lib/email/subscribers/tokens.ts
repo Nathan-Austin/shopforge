@@ -46,7 +46,8 @@ export function signSubscriberToken(subscriberId: string, purpose: TokenPurpose,
 }
 
 export type TokenCheck =
-  | { ok: true; subscriberId: string }
+  /** issuedAt (ms) for confirm links, so a newer sign-up can retire older ones. */
+  | { ok: true; subscriberId: string; issuedAt?: number }
   | { ok: false; reason: 'malformed' | 'signature' | 'purpose' | 'expired' };
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -73,6 +74,7 @@ export function verifySubscriberToken(token: unknown, purpose: TokenPurpose, sec
     const issued = Number(payload.t);
     const age = now.getTime() / 1000 - issued;
     if (!Number.isFinite(issued) || age > CONFIRM_TTL_SECONDS || age < -300) return { ok: false, reason: 'expired' };
+    return { ok: true, subscriberId: payload.s, issuedAt: issued * 1000 };
   }
   return { ok: true, subscriberId: payload.s };
 }

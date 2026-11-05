@@ -166,6 +166,9 @@ export type LinkState =
   | { valid: true; subscriberId: string; email: string; status: SubscriberStatus; locale: string }
   | { valid: false; reason: 'invalid' | 'expired' | 'unavailable' };
 
+/** Clock skew allowed between a sign-up and the link sent for it. */
+const ISSUE_SLACK_MS = 5_000;
+
 /** What a link from an email refers to, without changing anything. */
 export async function readSubscriberLink(token: unknown, purpose: 'confirm' | 'unsubscribe'): Promise<LinkState> {
   const status = newsletterStatus();
@@ -174,11 +177,16 @@ export async function readSubscriberLink(token: unknown, purpose: 'confirm' | 'u
   if (!check.ok) return { valid: false, reason: check.reason === 'expired' ? 'expired' : 'invalid' };
   const { data } = await createAdminClient()
     .from('email_subscribers')
-    .select('id, email, status, locale')
+    .select('id, email, status, locale, consented_at')
     .eq('id', check.subscriberId)
     .maybeSingle();
   // A deleted subscriber's old link says the same as a broken one.
   if (!data) return { valid: false, reason: 'invalid' };
+  // A confirm link belongs to one sign-up: after a newer one (say, after
+  // unsubscribing and signing up again) only the newest link confirms.
+  if (check.issuedAt !== undefined && check.issuedAt < Date.parse(data.consented_at) - ISSUE_SLACK_MS) {
+    return { valid: false, reason: 'expired' };
+  }
   return { valid: true, subscriberId: data.id, email: data.email, status: data.status, locale: data.locale };
 }
 
