@@ -248,11 +248,16 @@ needed), then runs `pnpm install --frozen-lockfile`, `tsc --noEmit`,
 `pnpm lint`, `pnpm test` and `pnpm build`, the same checks a Vercel deploy
 performs. `--shipping` is passed through to the extend script so both
 address modes can be checked. Add `--keep` to inspect the generated store
-afterwards.
+afterwards. `--tmp-dir=/tmp/sf-<name>-email-builder` writes the store, the
+build log and the email previews the unit tests render into that one
+directory instead of the repository; `--suffix=<name>` keeps two runs of
+the same mode apart.
 
 Generated shops come with [Vitest](https://vitest.dev) and unit tests for
 the logic that ships with them — the heat scale, product field parsing,
-shipping and price formatting. Run them in your shop with `pnpm test`, or
+shipping, price formatting and the campaign email renderer (which also
+writes previews to `$EMAIL_TMP_DIR/previews/index.html`, desktop and
+phone width side by side). Run them in your shop with `pnpm test`, or
 `pnpm test:watch` while you work.
 
 ## Roadmap

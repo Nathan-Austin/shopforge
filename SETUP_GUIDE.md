@@ -146,6 +146,7 @@ RESEND_API_KEY=re_…                  # optional, see "Order confirmation email
 EMAIL_FROM=My Shop <orders@myshop.com>   # optional, must be a verified sender
 EMAIL_REPLY_TO=hello@myshop.com      # optional, where replies go
 SHOP_OWNER_EMAIL=you@myshop.com      # optional, BCC on receipts, CC on refund emails
+EMAIL_TMP_DIR=/tmp/sf-my-shop-email-builder  # generated; email logs and previews, must be /tmp/sf-<name>-email-builder
 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=…  # optional, Search Console HTML-tag code
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
 ```

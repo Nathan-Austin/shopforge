@@ -9,8 +9,8 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time: A (template model and renderer), then B
-   (saved templates and test sends), then C (the designer), and so on.
+   listed there, one at a time. A (template model and renderer) is done;
+   B (saved templates and test sends) is next, then C (the designer).
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -166,7 +166,11 @@ Working files from development and tests (build logs, send logs, preview
 HTML) go under `/tmp/sf-<branch>-email-builder/` (`EMAIL_TMP_DIR`), never
 loose in `/tmp`.
 
-- [ ] **A. Template model and renderer.** A Zod 4 schema for a campaign
+- [x] **A. Template model and renderer** — done 2026-11-05 in
+      `src/lib/email/campaigns/` (`schema.ts`, `render.ts`, `richText.ts`,
+      `mergeTags.ts`, `localize.ts`) and `src/lib/email/tmpDir.ts`, with
+      `Email.campaign` strings in en, de, tr and ar. Not used by any page
+      yet; B and C wire it in. A Zod 4 schema for a campaign
       document: heading, rich text (a Tiptap JSON subset: bold, italic,
       underline, strike, links, font sizes, colour, lists, alignment),
       image, button, product, discount code, divider, spacer, and 2 or 3
