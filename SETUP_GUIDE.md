@@ -235,6 +235,20 @@ below the minimum, and so on). The order records the code and the amount in
 Amount codes and minimums need a currency; the form defaults to the one your
 products use. Codes are per order, not per customer.
 
+### Email campaign templates
+
+`/admin/email` holds the templates for newsletters and offers. Create one
+from a starting layout, open it to preview it in each of your languages
+at desktop and phone width, and send yourself a test. A test uses the
+same `RESEND_API_KEY` and `EMAIL_FROM` as the receipts, goes to one
+address with `[Test]` in the subject, and fills merge tags with a sample
+subscriber called Alex. Each attempt is also written as one line of JSON
+to `$EMAIL_TMP_DIR/logs/test-sends-<date>.jsonl` (recipient masked); on
+Vercel that directory is temporary, so read the result on the page.
+
+Campaigns to subscribers will never go through this path: they need the
+subscriber list and a campaign provider (roadmap section 2d).
+
 ### Shipping emails
 
 Setting an order's status to **Shipped** on `/<locale>/admin/orders` emails

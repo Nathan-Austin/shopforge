@@ -62,6 +62,12 @@ support for languages such as Arabic.
   Percent and amount codes are mirrored as Stripe coupons and applied by
   Stripe at checkout; customers enter codes on the cart or checkout page
   and the order records what was taken off
+- **Email campaign templates** (first part of the email builder): at
+  `/admin/email`, create a template from a ready-made layout (chilli shops
+  get their own), preview it in every shop language at desktop and phone
+  width with a list of anything to fix, and send yourself a test through
+  Resend. The drag-and-drop designer, the subscriber list with double
+  opt-in and sending campaigns are next on the roadmap
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt
@@ -234,6 +240,7 @@ shared-assets/lib/                     helpers copied into every shop
 shared-assets/components/              components copied into every shop
 lib/product-fields.py                  reads the catalogue for the field picker
 test/generate-and-check.sh             generates a store and runs install, tsc, lint, build
+test/check-schema.sh                   applies each schema to a scratch Postgres and runs test/sql/
 ```
 
 ## Testing the generator
@@ -252,6 +259,15 @@ afterwards. `--tmp-dir=/tmp/sf-<name>-email-builder` writes the store, the
 build log and the email previews the unit tests render into that one
 directory instead of the repository; `--suffix=<name>` keeps two runs of
 the same mode apart.
+
+```bash
+test/check-schema.sh
+```
+
+applies each mode's schema twice to a throwaway Postgres 16 in Docker (it
+must be idempotent) and runs the SQL tests in `test/sql/`, which check
+row-level security and the database's own constraints. No Supabase
+project needed; `test/supabase-stub.sql` stands in for its `auth` schema.
 
 Generated shops come with [Vitest](https://vitest.dev) and unit tests for
 the logic that ships with them — the heat scale, product field parsing,

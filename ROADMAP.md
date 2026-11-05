@@ -9,8 +9,8 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A (template model and renderer) is done;
-   B (saved templates and test sends) is next, then C (the designer).
+   listed there, one at a time. A (template model and renderer) and B
+   (saved templates and test sends) are done; C (the designer) is next.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -179,7 +179,14 @@ loose in `/tmp`.
       checked against a registry, a brand theme, and size limits. A pure
       renderer to table-based email HTML plus plain text that drops a bad
       block with a warning instead of failing the email. Unit tests
-- [ ] **B. Saved templates and test sends.** `email_templates` table
+- [x] **B. Saved templates and test sends** — done 2026-11-05:
+      `email_templates` (owner-only RLS, edit-only `updated_at`),
+      `/admin/email` and `/admin/email/[id]`, actions in
+      `actions/emailTemplates.ts`, rendering and sending in
+      `src/lib/email/campaigns/server.ts`, mode hooks and starters in
+      `admin/email/mode.ts`, the `{{shop.locale_url}}` merge tag, and
+      `test/check-schema.sh` for the SQL tests. `saveEmailTemplate` already
+      accepts a document for C. `email_templates` table
       (owner-only RLS, document validated on every save), save, duplicate
       and delete actions, and "send a test to me" through Resend returning
       a structured result that is also appended as JSON lines to
