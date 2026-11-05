@@ -49,7 +49,7 @@ export interface SubscriberRow {
   created_at: string;
 }
 
-type EventName = 'requested' | 'confirmation_sent' | 'confirmed' | 'unsubscribed' | 'imported' | 'resubscribe_requested';
+type EventName = 'requested' | 'confirmation_sent' | 'confirmed' | 'unsubscribed' | 'imported' | 'resubscribe_requested' | 'edited';
 
 async function logEvent(supabase: SupabaseClient, subscriberId: string, event: EventName, source?: string, detail?: string) {
   const { error } = await supabase
@@ -244,6 +244,21 @@ export async function ownerUnsubscribe(subscriberId: string): Promise<void> {
 export async function ownerDelete(subscriberId: string): Promise<boolean> {
   const { data } = await createAdminClient().from('email_subscribers').delete().eq('id', subscriberId).select('id').maybeSingle();
   return Boolean(data);
+}
+
+/** The owner corrects a name or moves someone to another language. */
+export async function ownerEdit(subscriberId: string, changes: { firstName: unknown; locale: unknown }): Promise<'updated' | 'invalid' | 'not-found'> {
+  if (!isLocaleCode(changes.locale)) return 'invalid';
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from('email_subscribers')
+    .update({ first_name: cleanFirstName(changes.firstName), locale: changes.locale })
+    .eq('id', subscriberId)
+    .select('id')
+    .maybeSingle();
+  if (!data) return 'not-found';
+  await logEvent(supabase, subscriberId, 'edited', 'admin');
+  return 'updated';
 }
 
 export async function ownerResendConfirmation(subscriberId: string): Promise<'sent' | 'not-pending' | 'failed'> {
