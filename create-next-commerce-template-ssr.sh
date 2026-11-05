@@ -1024,7 +1024,7 @@ cat > src/messages/en.json <<'EOF'
     "email": {
       "heading": "Email campaigns",
       "subheading": "Templates for newsletters and offers. Preview them in each of the shop's languages and send yourself a test before anything goes to customers.",
-      "comingSoon": "Sending campaigns to subscribers is on its way; until then, send yourself a test from any template.",
+      "comingSoon": "Campaigns are sent from the Campaigns tab; a test from any template goes to one address.",
       "notConfigured": "Test sends need RESEND_API_KEY and EMAIL_FROM in the shop's environment. Previews work without them.",
       "newHeading": "New template",
       "name": "Name",
@@ -1300,7 +1300,8 @@ cat > src/messages/en.json <<'EOF'
       "tabs": {
         "label": "Email",
         "templates": "Templates",
-        "subscribers": "Subscribers"
+        "subscribers": "Subscribers",
+        "campaigns": "Campaigns"
       },
       "subscribers": {
         "heading": "Subscribers",
@@ -1317,7 +1318,9 @@ cat > src/messages/en.json <<'EOF'
           "not_authorized": "Only the shop owner can do that.",
           "not_found": "That subscriber no longer exists.",
           "not_pending": "Only people who have not confirmed yet can be sent the confirmation again.",
-          "failed": "Something went wrong. Please try again."
+          "failed": "Something went wrong. Please try again.",
+          "updated": "Saved.",
+          "invalid": "That language is not one of the shop's."
         },
         "status": {
           "pending": "Waiting for confirmation",
@@ -1373,7 +1376,108 @@ cat > src/messages/en.json <<'EOF'
           "empty": "The file has no addresses in it.",
           "failed": "The import stopped: {message}"
         },
-        "importConsentRecord": "Imported on {date} by the owner of {shop}, who confirmed this person had agreed to receive email from the shop."
+        "importConsentRecord": "Imported on {date} by the owner of {shop}, who confirmed this person had agreed to receive email from the shop.",
+        "edit": "Edit",
+        "editName": "First name",
+        "editLanguage": "Language",
+        "editSave": "Save"
+      },
+      "campaigns": {
+        "heading": "Campaigns",
+        "subheading": "A template sent to everyone who confirmed a subscription, one broadcast per language, through Resend.",
+        "notConfigured": "Sending needs RESEND_API_KEY and EMAIL_FROM in the shop's environment.",
+        "newHeading": "New campaign",
+        "noTemplates": "Create a template first, under Templates.",
+        "name": "Name",
+        "template": "Template",
+        "creating": "Creating…",
+        "create": "Create draft",
+        "empty": "No campaigns yet.",
+        "columns": {
+          "name": "Name",
+          "status": "Status",
+          "recipients": "Recipients",
+          "when": "When",
+          "actions": "Actions"
+        },
+        "status": {
+          "draft": "Draft",
+          "scheduled": "Scheduled",
+          "sending": "Sending",
+          "sent": "Sent",
+          "failed": "Failed"
+        },
+        "sentOn": "Sent {date}",
+        "scheduledFor": "Scheduled for {date}",
+        "createdOn": "Created {date}",
+        "confirmDelete": "Delete the draft “{name}”?",
+        "delete": "Delete",
+        "notices": {
+          "deleted": "Draft deleted."
+        },
+        "errors": {
+          "not_authorized": "Only the shop owner can do that.",
+          "not_found": "That campaign no longer exists.",
+          "name": "Give the campaign a name of up to 120 characters.",
+          "template": "Choose a template.",
+          "template_invalid": "That template has problems; open it in the designer and save it first.",
+          "not_draft": "Only drafts can be sent or deleted.",
+          "schedule_invalid": "That is not a valid time.",
+          "schedule_past": "Pick a time at least 5 minutes from now.",
+          "schedule_too_far": "Pick a time within the next 30 days.",
+          "not_configured": "Sending needs RESEND_API_KEY and EMAIL_FROM.",
+          "nobody": "Nobody has confirmed a subscription yet.",
+          "audience_missing": "The list for {message} has not been synced yet. Sync first.",
+          "not_synced": "The list for {message} has changes that are not synced yet. Sync first.",
+          "failed": "Something went wrong: {message}"
+        },
+        "back": "All campaigns",
+        "progressHeading": "Progress",
+        "refresh": "Refresh status",
+        "recipientsTotal": "{count, plural, one {# recipient} other {# recipients}}",
+        "recipientsCount": "{count, plural, one {# recipient} other {# recipients}}",
+        "localeStatus": {
+          "pending": "Preparing",
+          "queued": "Sending",
+          "scheduled": "Scheduled",
+          "sent": "Sent",
+          "failed": "Failed",
+          "skipped": "Nobody in this language"
+        },
+        "cancelHint": "To cancel a scheduled campaign, cancel its broadcasts in the Resend dashboard, then refresh the status here.",
+        "snapshotNote": "This is a copy of the template as it was when the campaign was created. Editing the template does not change it.",
+        "sync": {
+          "heading": "The list at Resend",
+          "intro": "Before sending, everyone who confirmed is pushed to a Resend audience for their language, and people who unsubscribed through Resend are read back. Resend takes one person per request, so the first sync of a large list takes a while; leave this page open.",
+          "running": "Syncing…",
+          "syncNow": "Sync {count, plural, one {# change} other {# changes}}",
+          "syncAgain": "Sync again",
+          "language": "Language",
+          "recipients": "Will receive it",
+          "toSync": "To sync",
+          "state": "State",
+          "pushing": "Pushed {count} so far…",
+          "error": "Stopped: {message}",
+          "done": "Done: {pushed} pushed, {pulled} unsubscribed at Resend.",
+          "nobody": "Nobody",
+          "noAudience": "Not synced yet",
+          "outOfDate": "Changes to sync",
+          "upToDate": "Up to date"
+        },
+        "send": {
+          "heading": "Send",
+          "intro": "{count, plural, =0 {Nobody will receive this yet.} one {# person will receive it.} other {# people will receive it.}}",
+          "now": "Send now",
+          "later": "Schedule",
+          "time": "Time",
+          "timeHint": "In your time zone ({zone}); within the next 30 days.",
+          "notReady": "Sync the list first, and make sure sending is configured.",
+          "sending": "Sending…",
+          "schedule": "Schedule",
+          "sendNow": "Send now",
+          "confirmNow": "Send this campaign to {count, plural, one {# person} other {# people}} now? This cannot be undone.",
+          "confirmLater": "Schedule this campaign for {count, plural, one {# person} other {# people}} at {time}?"
+        }
       }
     }
   },
@@ -1947,7 +2051,7 @@ cat > src/messages/de.json <<'EOF'
     "email": {
       "heading": "E-Mail-Kampagnen",
       "subheading": "Vorlagen für Newsletter und Angebote. Sehen Sie sie in jeder Sprache des Shops an und senden Sie sich einen Test, bevor etwas an Kunden geht.",
-      "comingSoon": "Der Versand von Kampagnen an Abonnenten ist in Arbeit; bis dahin können Sie sich aus jeder Vorlage einen Test senden.",
+      "comingSoon": "Kampagnen werden im Reiter Kampagnen gesendet; ein Test aus einer Vorlage geht an eine Adresse.",
       "notConfigured": "Testversand braucht RESEND_API_KEY und EMAIL_FROM in der Umgebung des Shops. Die Vorschau funktioniert auch ohne.",
       "newHeading": "Neue Vorlage",
       "name": "Name",
@@ -2223,7 +2327,8 @@ cat > src/messages/de.json <<'EOF'
       "tabs": {
         "label": "E-Mail",
         "templates": "Vorlagen",
-        "subscribers": "Abonnenten"
+        "subscribers": "Abonnenten",
+        "campaigns": "Kampagnen"
       },
       "subscribers": {
         "heading": "Abonnenten",
@@ -2240,7 +2345,9 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das darf nur der Shop-Inhaber.",
           "not_found": "Diesen Abonnenten gibt es nicht mehr.",
           "not_pending": "Die Bestätigung kann nur erneut an Personen gehen, die noch nicht bestätigt haben.",
-          "failed": "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut."
+          "failed": "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut.",
+          "updated": "Gespeichert.",
+          "invalid": "Diese Sprache gehört nicht zum Shop."
         },
         "status": {
           "pending": "Wartet auf Bestätigung",
@@ -2296,7 +2403,108 @@ cat > src/messages/de.json <<'EOF'
           "empty": "Die Datei enthält keine Adressen.",
           "failed": "Der Import wurde abgebrochen: {message}"
         },
-        "importConsentRecord": "Importiert am {date} vom Inhaber von {shop}, der bestätigt hat, dass diese Person dem E-Mail-Empfang vom Shop zugestimmt hatte."
+        "importConsentRecord": "Importiert am {date} vom Inhaber von {shop}, der bestätigt hat, dass diese Person dem E-Mail-Empfang vom Shop zugestimmt hatte.",
+        "edit": "Bearbeiten",
+        "editName": "Vorname",
+        "editLanguage": "Sprache",
+        "editSave": "Speichern"
+      },
+      "campaigns": {
+        "heading": "Kampagnen",
+        "subheading": "Eine Vorlage, gesendet an alle mit bestätigtem Abonnement, ein Versand pro Sprache, über Resend.",
+        "notConfigured": "Zum Senden braucht es RESEND_API_KEY und EMAIL_FROM in der Umgebung des Shops.",
+        "newHeading": "Neue Kampagne",
+        "noTemplates": "Legen Sie zuerst unter Vorlagen eine Vorlage an.",
+        "name": "Name",
+        "template": "Vorlage",
+        "creating": "Wird angelegt…",
+        "create": "Entwurf anlegen",
+        "empty": "Noch keine Kampagnen.",
+        "columns": {
+          "name": "Name",
+          "status": "Status",
+          "recipients": "Empfänger",
+          "when": "Wann",
+          "actions": "Aktionen"
+        },
+        "status": {
+          "draft": "Entwurf",
+          "scheduled": "Geplant",
+          "sending": "Wird gesendet",
+          "sent": "Gesendet",
+          "failed": "Fehlgeschlagen"
+        },
+        "sentOn": "Gesendet {date}",
+        "scheduledFor": "Geplant für {date}",
+        "createdOn": "Angelegt {date}",
+        "confirmDelete": "Den Entwurf „{name}“ löschen?",
+        "delete": "Löschen",
+        "notices": {
+          "deleted": "Entwurf gelöscht."
+        },
+        "errors": {
+          "not_authorized": "Das darf nur der Shop-Inhaber.",
+          "not_found": "Diese Kampagne gibt es nicht mehr.",
+          "name": "Geben Sie der Kampagne einen Namen mit höchstens 120 Zeichen.",
+          "template": "Wählen Sie eine Vorlage.",
+          "template_invalid": "Diese Vorlage hat Probleme; öffnen Sie sie zuerst im Designer und speichern Sie.",
+          "not_draft": "Nur Entwürfe können gesendet oder gelöscht werden.",
+          "schedule_invalid": "Das ist keine gültige Zeit.",
+          "schedule_past": "Wählen Sie eine Zeit, die mindestens 5 Minuten in der Zukunft liegt.",
+          "schedule_too_far": "Wählen Sie eine Zeit innerhalb der nächsten 30 Tage.",
+          "not_configured": "Zum Senden braucht es RESEND_API_KEY und EMAIL_FROM.",
+          "nobody": "Noch hat niemand ein Abonnement bestätigt.",
+          "audience_missing": "Die Liste für {message} wurde noch nicht synchronisiert. Zuerst synchronisieren.",
+          "not_synced": "Die Liste für {message} hat noch nicht synchronisierte Änderungen. Zuerst synchronisieren.",
+          "failed": "Etwas ist schiefgegangen: {message}"
+        },
+        "back": "Alle Kampagnen",
+        "progressHeading": "Fortschritt",
+        "refresh": "Status aktualisieren",
+        "recipientsTotal": "{count, plural, one {# Empfänger} other {# Empfänger}}",
+        "recipientsCount": "{count, plural, one {# Empfänger} other {# Empfänger}}",
+        "localeStatus": {
+          "pending": "Wird vorbereitet",
+          "queued": "Wird gesendet",
+          "scheduled": "Geplant",
+          "sent": "Gesendet",
+          "failed": "Fehlgeschlagen",
+          "skipped": "Niemand in dieser Sprache"
+        },
+        "cancelHint": "Um eine geplante Kampagne abzusagen, stornieren Sie ihre Sendungen im Resend-Dashboard und aktualisieren Sie hier den Status.",
+        "snapshotNote": "Dies ist eine Kopie der Vorlage, wie sie beim Anlegen der Kampagne war. Änderungen an der Vorlage wirken sich nicht aus.",
+        "sync": {
+          "heading": "Die Liste bei Resend",
+          "intro": "Vor dem Senden werden alle Bestätigten in ein Resend-Publikum ihrer Sprache übertragen, und wer sich über Resend abgemeldet hat, wird zurückgelesen. Resend nimmt eine Person pro Anfrage, daher dauert die erste Synchronisierung einer großen Liste eine Weile; lassen Sie diese Seite offen.",
+          "running": "Wird synchronisiert…",
+          "syncNow": "{count, plural, one {# Änderung} other {# Änderungen}} synchronisieren",
+          "syncAgain": "Erneut synchronisieren",
+          "language": "Sprache",
+          "recipients": "Erhalten sie",
+          "toSync": "Zu synchronisieren",
+          "state": "Stand",
+          "pushing": "Bisher {count} übertragen…",
+          "error": "Abgebrochen: {message}",
+          "done": "Fertig: {pushed} übertragen, {pulled} bei Resend abgemeldet.",
+          "nobody": "Niemand",
+          "noAudience": "Noch nicht synchronisiert",
+          "outOfDate": "Änderungen offen",
+          "upToDate": "Aktuell"
+        },
+        "send": {
+          "heading": "Senden",
+          "intro": "{count, plural, =0 {Noch niemand würde sie erhalten.} one {# Person erhält sie.} other {# Personen erhalten sie.}}",
+          "now": "Jetzt senden",
+          "later": "Planen",
+          "time": "Zeit",
+          "timeHint": "In Ihrer Zeitzone ({zone}); innerhalb der nächsten 30 Tage.",
+          "notReady": "Synchronisieren Sie zuerst die Liste und prüfen Sie, dass der Versand eingerichtet ist.",
+          "sending": "Wird gesendet…",
+          "schedule": "Planen",
+          "sendNow": "Jetzt senden",
+          "confirmNow": "Diese Kampagne jetzt an {count, plural, one {# Person} other {# Personen}} senden? Das lässt sich nicht rückgängig machen.",
+          "confirmLater": "Diese Kampagne für {count, plural, one {# Person} other {# Personen}} um {time} planen?"
+        }
       }
     }
   },
@@ -2870,7 +3078,7 @@ cat > src/messages/tr.json <<'EOF'
     "email": {
       "heading": "E-posta kampanyaları",
       "subheading": "Bültenler ve teklifler için şablonlar. Mağazanın her dilinde önizleyin ve müşterilere bir şey gitmeden önce kendinize bir test gönderin.",
-      "comingSoon": "Abonelere kampanya gönderimi yolda; o zamana kadar herhangi bir şablondan kendinize test gönderebilirsiniz.",
+      "comingSoon": "Kampanyalar Kampanyalar sekmesinden gönderilir; bir şablondan test tek bir adrese gider.",
       "notConfigured": "Test gönderimi için mağaza ortamında RESEND_API_KEY ve EMAIL_FROM gerekir. Önizleme bunlar olmadan da çalışır.",
       "newHeading": "Yeni şablon",
       "name": "Ad",
@@ -3146,7 +3354,8 @@ cat > src/messages/tr.json <<'EOF'
       "tabs": {
         "label": "E-posta",
         "templates": "Şablonlar",
-        "subscribers": "Aboneler"
+        "subscribers": "Aboneler",
+        "campaigns": "Kampanyalar"
       },
       "subscribers": {
         "heading": "Aboneler",
@@ -3163,7 +3372,9 @@ cat > src/messages/tr.json <<'EOF'
           "not_authorized": "Bunu yalnızca mağaza sahibi yapabilir.",
           "not_found": "Bu abone artık yok.",
           "not_pending": "Onay yalnızca henüz onaylamamış kişilere yeniden gönderilebilir.",
-          "failed": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
+          "failed": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+          "updated": "Kaydedildi.",
+          "invalid": "Bu dil mağazanın dillerinden değil."
         },
         "status": {
           "pending": "Onay bekliyor",
@@ -3219,7 +3430,108 @@ cat > src/messages/tr.json <<'EOF'
           "empty": "Dosyada adres yok.",
           "failed": "İçe aktarma durdu: {message}"
         },
-        "importConsentRecord": "{date} tarihinde {shop} sahibi tarafından içe aktarıldı; sahibi, bu kişinin mağazadan e-posta almayı kabul ettiğini doğruladı."
+        "importConsentRecord": "{date} tarihinde {shop} sahibi tarafından içe aktarıldı; sahibi, bu kişinin mağazadan e-posta almayı kabul ettiğini doğruladı.",
+        "edit": "Düzenle",
+        "editName": "Ad",
+        "editLanguage": "Dil",
+        "editSave": "Kaydet"
+      },
+      "campaigns": {
+        "heading": "Kampanyalar",
+        "subheading": "Aboneliğini onaylayan herkese gönderilen bir şablon, dil başına bir gönderim, Resend üzerinden.",
+        "notConfigured": "Gönderim için mağaza ortamında RESEND_API_KEY ve EMAIL_FROM gerekir.",
+        "newHeading": "Yeni kampanya",
+        "noTemplates": "Önce Şablonlar altında bir şablon oluşturun.",
+        "name": "Ad",
+        "template": "Şablon",
+        "creating": "Oluşturuluyor…",
+        "create": "Taslak oluştur",
+        "empty": "Henüz kampanya yok.",
+        "columns": {
+          "name": "Ad",
+          "status": "Durum",
+          "recipients": "Alıcılar",
+          "when": "Ne zaman",
+          "actions": "İşlemler"
+        },
+        "status": {
+          "draft": "Taslak",
+          "scheduled": "Zamanlandı",
+          "sending": "Gönderiliyor",
+          "sent": "Gönderildi",
+          "failed": "Başarısız"
+        },
+        "sentOn": "Gönderildi {date}",
+        "scheduledFor": "{date} için zamanlandı",
+        "createdOn": "Oluşturuldu {date}",
+        "confirmDelete": "“{name}” taslağı silinsin mi?",
+        "delete": "Sil",
+        "notices": {
+          "deleted": "Taslak silindi."
+        },
+        "errors": {
+          "not_authorized": "Bunu yalnızca mağaza sahibi yapabilir.",
+          "not_found": "Bu kampanya artık yok.",
+          "name": "Kampanyaya en fazla 120 karakterlik bir ad verin.",
+          "template": "Bir şablon seçin.",
+          "template_invalid": "Bu şablonda sorunlar var; önce tasarımcıda açıp kaydedin.",
+          "not_draft": "Yalnızca taslaklar gönderilebilir veya silinebilir.",
+          "schedule_invalid": "Bu geçerli bir zaman değil.",
+          "schedule_past": "Şu andan en az 5 dakika sonrası için bir zaman seçin.",
+          "schedule_too_far": "Önümüzdeki 30 gün içinde bir zaman seçin.",
+          "not_configured": "Gönderim için RESEND_API_KEY ve EMAIL_FROM gerekir.",
+          "nobody": "Henüz kimse aboneliğini onaylamadı.",
+          "audience_missing": "{message} listesi henüz eşitlenmedi. Önce eşitleyin.",
+          "not_synced": "{message} listesinde eşitlenmemiş değişiklikler var. Önce eşitleyin.",
+          "failed": "Bir şeyler ters gitti: {message}"
+        },
+        "back": "Tüm kampanyalar",
+        "progressHeading": "İlerleme",
+        "refresh": "Durumu yenile",
+        "recipientsTotal": "{count, plural, one {# alıcı} other {# alıcı}}",
+        "recipientsCount": "{count, plural, one {# alıcı} other {# alıcı}}",
+        "localeStatus": {
+          "pending": "Hazırlanıyor",
+          "queued": "Gönderiliyor",
+          "scheduled": "Zamanlandı",
+          "sent": "Gönderildi",
+          "failed": "Başarısız",
+          "skipped": "Bu dilde kimse yok"
+        },
+        "cancelHint": "Zamanlanmış bir kampanyayı iptal etmek için gönderimlerini Resend panelinde iptal edin, sonra burada durumu yenileyin.",
+        "snapshotNote": "Bu, kampanya oluşturulduğu andaki şablonun bir kopyasıdır. Şablonu düzenlemek bunu değiştirmez.",
+        "sync": {
+          "heading": "Resend'deki liste",
+          "intro": "Göndermeden önce onaylayan herkes kendi dilinin Resend kitlesine aktarılır ve Resend üzerinden abonelikten çıkanlar geri okunur. Resend istek başına bir kişi alır, bu yüzden büyük bir listenin ilk eşitlemesi biraz sürer; bu sayfayı açık bırakın.",
+          "running": "Eşitleniyor…",
+          "syncNow": "{count, plural, one {# değişikliği} other {# değişikliği}} eşitle",
+          "syncAgain": "Yeniden eşitle",
+          "language": "Dil",
+          "recipients": "Alacak olanlar",
+          "toSync": "Eşitlenecek",
+          "state": "Durum",
+          "pushing": "Şimdiye kadar {count} aktarıldı…",
+          "error": "Durdu: {message}",
+          "done": "Bitti: {pushed} aktarıldı, {pulled} Resend'de abonelikten çıkmış.",
+          "nobody": "Kimse yok",
+          "noAudience": "Henüz eşitlenmedi",
+          "outOfDate": "Eşitlenecek değişiklikler var",
+          "upToDate": "Güncel"
+        },
+        "send": {
+          "heading": "Gönder",
+          "intro": "{count, plural, =0 {Henüz kimse almayacak.} one {# kişi alacak.} other {# kişi alacak.}}",
+          "now": "Şimdi gönder",
+          "later": "Zamanla",
+          "time": "Zaman",
+          "timeHint": "Sizin saat diliminizde ({zone}); önümüzdeki 30 gün içinde.",
+          "notReady": "Önce listeyi eşitleyin ve gönderimin yapılandırıldığından emin olun.",
+          "sending": "Gönderiliyor…",
+          "schedule": "Zamanla",
+          "sendNow": "Şimdi gönder",
+          "confirmNow": "Bu kampanya şimdi {count, plural, one {# kişiye} other {# kişiye}} gönderilsin mi? Bu geri alınamaz.",
+          "confirmLater": "Bu kampanya {count, plural, one {# kişi} other {# kişi}} için {time} zamanına ayarlansın mı?"
+        }
       }
     }
   },
@@ -3793,7 +4105,7 @@ cat > src/messages/ar.json <<'EOF'
     "email": {
       "heading": "حملات البريد الإلكتروني",
       "subheading": "قوالب للنشرات والعروض. اعرضها بكل لغات المتجر وأرسل لنفسك رسالة تجريبية قبل أن يصل أي شيء إلى العملاء.",
-      "comingSoon": "إرسال الحملات إلى المشتركين قيد الإعداد؛ حتى ذلك الحين أرسل لنفسك تجربة من أي قالب.",
+      "comingSoon": "تُرسل الحملات من تبويب الحملات؛ والتجربة من أي قالب تذهب إلى عنوان واحد.",
       "notConfigured": "يتطلب الإرسال التجريبي وجود RESEND_API_KEY وEMAIL_FROM في إعدادات المتجر. المعاينة تعمل بدونهما.",
       "newHeading": "قالب جديد",
       "name": "الاسم",
@@ -4069,7 +4381,8 @@ cat > src/messages/ar.json <<'EOF'
       "tabs": {
         "label": "البريد",
         "templates": "القوالب",
-        "subscribers": "المشتركون"
+        "subscribers": "المشتركون",
+        "campaigns": "الحملات"
       },
       "subscribers": {
         "heading": "المشتركون",
@@ -4086,7 +4399,9 @@ cat > src/messages/ar.json <<'EOF'
           "not_authorized": "هذا متاح لصاحب المتجر فقط.",
           "not_found": "هذا المشترك لم يعد موجودًا.",
           "not_pending": "لا تُعاد رسالة التأكيد إلا لمن لم يؤكد بعد.",
-          "failed": "حدث خطأ. يرجى المحاولة مجددًا."
+          "failed": "حدث خطأ. يرجى المحاولة مجددًا.",
+          "updated": "تم الحفظ.",
+          "invalid": "هذه اللغة ليست من لغات المتجر."
         },
         "status": {
           "pending": "بانتظار التأكيد",
@@ -4142,7 +4457,108 @@ cat > src/messages/ar.json <<'EOF'
           "empty": "لا توجد عناوين في الملف.",
           "failed": "توقف الاستيراد: {message}"
         },
-        "importConsentRecord": "استُورد في {date} بواسطة صاحب {shop}، الذي أكد أن هذا الشخص وافق على تلقي رسائل من المتجر."
+        "importConsentRecord": "استُورد في {date} بواسطة صاحب {shop}، الذي أكد أن هذا الشخص وافق على تلقي رسائل من المتجر.",
+        "edit": "تعديل",
+        "editName": "الاسم الأول",
+        "editLanguage": "اللغة",
+        "editSave": "حفظ"
+      },
+      "campaigns": {
+        "heading": "الحملات",
+        "subheading": "قالب يُرسل إلى كل من أكد اشتراكه، إرسال واحد لكل لغة، عبر Resend.",
+        "notConfigured": "يتطلب الإرسال RESEND_API_KEY وEMAIL_FROM في إعدادات المتجر.",
+        "newHeading": "حملة جديدة",
+        "noTemplates": "أنشئ قالبًا أولًا في القوالب.",
+        "name": "الاسم",
+        "template": "القالب",
+        "creating": "جارٍ الإنشاء…",
+        "create": "إنشاء مسودة",
+        "empty": "لا توجد حملات بعد.",
+        "columns": {
+          "name": "الاسم",
+          "status": "الحالة",
+          "recipients": "المستلمون",
+          "when": "متى",
+          "actions": "الإجراءات"
+        },
+        "status": {
+          "draft": "مسودة",
+          "scheduled": "مجدولة",
+          "sending": "قيد الإرسال",
+          "sent": "أُرسلت",
+          "failed": "فشلت"
+        },
+        "sentOn": "أُرسلت {date}",
+        "scheduledFor": "مجدولة في {date}",
+        "createdOn": "أُنشئت {date}",
+        "confirmDelete": "حذف المسودة “{name}”؟",
+        "delete": "حذف",
+        "notices": {
+          "deleted": "حُذفت المسودة."
+        },
+        "errors": {
+          "not_authorized": "هذا متاح لصاحب المتجر فقط.",
+          "not_found": "هذه الحملة لم تعد موجودة.",
+          "name": "أعطِ الحملة اسمًا لا يتجاوز 120 حرفًا.",
+          "template": "اختر قالبًا.",
+          "template_invalid": "في هذا القالب مشكلات؛ افتحه في المصمم واحفظه أولًا.",
+          "not_draft": "المسودات فقط يمكن إرسالها أو حذفها.",
+          "schedule_invalid": "هذا ليس وقتًا صالحًا.",
+          "schedule_past": "اختر وقتًا بعد 5 دقائق على الأقل من الآن.",
+          "schedule_too_far": "اختر وقتًا خلال الثلاثين يومًا القادمة.",
+          "not_configured": "يتطلب الإرسال RESEND_API_KEY وEMAIL_FROM.",
+          "nobody": "لم يؤكد أحد اشتراكه بعد.",
+          "audience_missing": "قائمة {message} لم تُزامَن بعد. زامِن أولًا.",
+          "not_synced": "في قائمة {message} تغييرات غير مزامنة. زامِن أولًا.",
+          "failed": "حدث خطأ: {message}"
+        },
+        "back": "كل الحملات",
+        "progressHeading": "التقدم",
+        "refresh": "تحديث الحالة",
+        "recipientsTotal": "{count, plural, one {مستلم واحد} other {# مستلمين}}",
+        "recipientsCount": "{count, plural, one {مستلم واحد} other {# مستلمين}}",
+        "localeStatus": {
+          "pending": "قيد التحضير",
+          "queued": "قيد الإرسال",
+          "scheduled": "مجدولة",
+          "sent": "أُرسلت",
+          "failed": "فشلت",
+          "skipped": "لا أحد بهذه اللغة"
+        },
+        "cancelHint": "لإلغاء حملة مجدولة، ألغِ إرسالاتها في لوحة Resend ثم حدّث الحالة هنا.",
+        "snapshotNote": "هذه نسخة من القالب كما كان عند إنشاء الحملة. تعديل القالب لا يغيرها.",
+        "sync": {
+          "heading": "القائمة في Resend",
+          "intro": "قبل الإرسال يُنقل كل من أكد اشتراكه إلى جمهور Resend للغته، ويُقرأ من ألغى اشتراكه عبر Resend. يقبل Resend شخصًا واحدًا في كل طلب، لذا تستغرق المزامنة الأولى لقائمة كبيرة وقتًا؛ أبقِ هذه الصفحة مفتوحة.",
+          "running": "جارٍ المزامنة…",
+          "syncNow": "مزامنة {count, plural, one {تغيير واحد} other {# تغييرات}}",
+          "syncAgain": "مزامنة مجددًا",
+          "language": "اللغة",
+          "recipients": "سيستلمونها",
+          "toSync": "للمزامنة",
+          "state": "الحالة",
+          "pushing": "نُقل {count} حتى الآن…",
+          "error": "توقفت: {message}",
+          "done": "تم: نُقل {pushed}، وألغى {pulled} اشتراكهم في Resend.",
+          "nobody": "لا أحد",
+          "noAudience": "لم تُزامَن بعد",
+          "outOfDate": "تغييرات بانتظار المزامنة",
+          "upToDate": "محدّثة"
+        },
+        "send": {
+          "heading": "إرسال",
+          "intro": "{count, plural, =0 {لن يستلمها أحد بعد.} one {سيستلمها شخص واحد.} other {سيستلمها # أشخاص.}}",
+          "now": "إرسال الآن",
+          "later": "جدولة",
+          "time": "الوقت",
+          "timeHint": "بتوقيتك ({zone})؛ خلال الثلاثين يومًا القادمة.",
+          "notReady": "زامِن القائمة أولًا وتأكد من إعداد الإرسال.",
+          "sending": "جارٍ الإرسال…",
+          "schedule": "جدولة",
+          "sendNow": "إرسال الآن",
+          "confirmNow": "إرسال هذه الحملة الآن إلى {count, plural, one {شخص واحد} other {# أشخاص}}؟ لا يمكن التراجع عن ذلك.",
+          "confirmLater": "جدولة هذه الحملة لـ {count, plural, one {شخص واحد} other {# أشخاص}} في {time}؟"
+        }
       }
     }
   },
