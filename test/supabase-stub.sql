@@ -14,6 +14,12 @@ do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
 end $$;
 grant usage on schema public, auth to anon, authenticated, service_role;
+-- Supabase's own defaults: every API role may reach every new table,
+-- function and sequence in public, and row-level security decides. The
+-- shop's schema revokes what it must, so test it against the same start.
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 create schema if not exists storage;
 create table if not exists storage.buckets (id text primary key, name text, public boolean);
 create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
