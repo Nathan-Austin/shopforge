@@ -75,6 +75,31 @@ do $$ begin
   end;
 end $$;
 
+-- A sync marks the row seen without counting as an edit; an edit makes it
+-- due again. Separate statements, as in the app: each is its own
+-- transaction, so now() moves between them.
+insert into public.email_subscribers (id, email, locale, status, source, consent_text, confirmed_at)
+values ('00000000-0000-4000-8000-00000000b0a5', 'due@example.com', 'en', 'subscribed', 'footer', 'x', now());
+do $$ begin
+  if not (select provider_sync_due from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a5') then raise exception 'a new subscriber is not due'; end if;
+end $$;
+create temp table sync_check as select updated_at as before_sync from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a5';
+select pg_sleep(0.02) \gset
+update public.email_subscribers set provider_contact_id = 'c_2', provider_locale = 'en', provider_synced_at = now() where id = '00000000-0000-4000-8000-00000000b0a5';
+do $$ begin
+  if (select provider_sync_due from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a5') then raise exception 'still due after a sync'; end if;
+  if (select updated_at from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a5') <> (select before_sync from sync_check) then raise exception 'a sync moved updated_at'; end if;
+end $$;
+select pg_sleep(0.02) \gset
+update public.email_subscribers set first_name = 'Dee' where id = '00000000-0000-4000-8000-00000000b0a5';
+insert into public.email_subscribers (id, email, locale, source, consent_text) values ('00000000-0000-4000-8000-00000000b0a6', 'pend@example.com', 'en', 'footer', 'x');
+do $$ begin
+  if not (select provider_sync_due from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a5') then raise exception 'an edit did not make the row due'; end if;
+  if (select provider_sync_due from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a6') then raise exception 'a pending subscriber is due'; end if;
+end $$;
+delete from public.email_subscribers where id in ('00000000-0000-4000-8000-00000000b0a5', '00000000-0000-4000-8000-00000000b0a6');
+drop table sync_check;
+
 delete from public.email_campaigns where id = '00000000-0000-4000-8000-00000000ca01';
 delete from public.email_audiences where locale = 'de';
 delete from public.email_subscribers where id = '00000000-0000-4000-8000-00000000b0a4';

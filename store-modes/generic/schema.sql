@@ -1290,3 +1290,38 @@ alter table public.email_subscribers
 alter table public.email_subscriber_events drop constraint if exists email_subscriber_events_event_check;
 alter table public.email_subscriber_events add constraint email_subscriber_events_event_check
   check (event in ('requested', 'confirmation_sent', 'confirmed', 'unsubscribed', 'imported', 'resubscribe_requested', 'edited'));
+
+-- A sync only writes the provider_* columns; that is not an edit, so it
+-- must not move updated_at (which would make the row due again at once).
+create or replace function public.touch_email_subscriber_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.email is distinct from old.email
+     or new.first_name is distinct from old.first_name
+     or new.locale is distinct from old.locale
+     or new.status is distinct from old.status
+     or new.source is distinct from old.source
+     or new.consent_text is distinct from old.consent_text then
+    new.updated_at := now();
+  else
+    new.updated_at := old.updated_at;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_email_subscribers_updated on public.email_subscribers;
+create trigger trg_email_subscribers_updated
+before update on public.email_subscribers
+for each row
+execute function public.touch_email_subscriber_updated_at();
+
+-- Due for a push: confirmed or unsubscribed people (never the pending)
+-- that the provider has not seen since their last change.
+alter table public.email_subscribers
+  add column if not exists provider_sync_due boolean
+  generated always as (status <> 'pending' and (provider_synced_at is null or updated_at > provider_synced_at)) stored;
+
+create index if not exists idx_email_subscribers_sync_due on public.email_subscribers(locale) where provider_sync_due;
