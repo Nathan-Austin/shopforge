@@ -220,3 +220,37 @@ describe('renderCampaign error fallbacks', () => {
     expect(email.warnings).toEqual([{ code: 'invalid-block', blockId: 'x', detail: 'Duplicate block id' }]);
   });
 });
+
+describe('renderCampaign for a broadcast (provider placeholders)', () => {
+  const passthroughTags = {
+    'subscriber.first_name': (fallback: string) => `{{{FIRST_NAME|${fallback}}}}`,
+    'subscriber.email': () => '{{{EMAIL}}}',
+    unsubscribe_url: () => '{{{RESEND_UNSUBSCRIBE_URL}}}'
+  };
+
+  it('writes the provider\'s placeholders where recipient tags were, fallbacks included', () => {
+    const doc = withBlocks([
+      { id: 'h', type: 'heading', text: { en: 'Hi {{subscriber.first_name|there}}, {{subscriber.email}}' } },
+      { id: 'b', type: 'button', label: { en: 'Leave' }, href: '{{unsubscribe_url}}' }
+    ]);
+    const email = rendered(renderCampaign(doc, sampleContext({ recipient: null, unsubscribeUrl: '{{{RESEND_UNSUBSCRIBE_URL}}}', passthroughTags })));
+    expect(email.html).toContain('Hi {{{FIRST_NAME|there}}}, {{{EMAIL}}}');
+    expect(email.html).toContain('href="{{{RESEND_UNSUBSCRIBE_URL}}}"');
+    expect(email.text).toContain('Leave: {{{RESEND_UNSUBSCRIBE_URL}}}');
+    // The footer's unsubscribe link is the placeholder too, so there is no warning.
+    expect(email.warnings).toEqual([]);
+    expect(email.html.match(/RESEND_UNSUBSCRIBE_URL/g)?.length).toBe(2);
+  });
+
+  it('still fills the shop\'s own tags itself', () => {
+    const doc = withBlocks([{ id: 'h', type: 'heading', text: { en: '{{shop.name}} {{current_year}}' } }]);
+    const email = rendered(renderCampaign(doc, sampleContext({ passthroughTags })));
+    expect(email.html).toContain('Your Shop 2026');
+  });
+
+  it('does not accept placeholder links outside a broadcast', () => {
+    const doc = withBlocks([{ id: 'h', type: 'heading', text: { en: 'x' } }]);
+    const email = rendered(renderCampaign(doc, sampleContext({ unsubscribeUrl: '{{{RESEND_UNSUBSCRIBE_URL}}}' })));
+    expect(email.warnings).toContainEqual({ code: 'missing-unsubscribe' });
+  });
+});

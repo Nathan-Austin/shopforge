@@ -90,10 +90,18 @@ export function mergeTagProblems(text: string): MergeTagProblem[] {
  * reported through `onUnknown` and render as their fallback, never as the
  * raw `{{...}}`.
  */
+/**
+ * Tags a sending provider fills in per recipient. The renderer writes what
+ * the function returns (the provider's own placeholder, fallback included)
+ * instead of a value, so one rendered email serves a whole audience.
+ */
+export type PassthroughTags = Partial<Record<MergeTagKey, (fallback: string) => string>>;
+
 export function interpolateMergeTags(
   text: string,
   values: MergeValues,
-  onUnknown?: (key: string) => void
+  onUnknown?: (key: string) => void,
+  passthrough?: PassthroughTags
 ): string {
   return text.replace(TAG_PATTERN, (_raw, key: string, fallback: string | undefined) => {
     const fallbackText = fallback?.trim() ?? '';
@@ -101,6 +109,8 @@ export function interpolateMergeTags(
       onUnknown?.(key);
       return fallbackText;
     }
+    const pass = passthrough?.[key];
+    if (pass) return pass(fallbackText);
     const value = values[key];
     return value && value.trim() ? value : fallbackText;
   });

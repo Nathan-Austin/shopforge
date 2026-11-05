@@ -21,7 +21,7 @@ import { formatPrice } from '../../format';
 import { directionOf, hreflangOf } from '../../i18n/locales';
 import { escapeHtml } from '../orderConfirmation';
 import { isBlankString, pickLocalized, type Localized } from './localize';
-import { interpolateMergeTags, type MergeTagKey, type MergeValues } from './mergeTags';
+import { interpolateMergeTags, type MergeTagKey, type MergeValues, type PassthroughTags } from './mergeTags';
 import { renderRichTextHtml, renderRichTextPlain, type RichTextRenderOptions } from './richText';
 import {
   campaignDocumentSchema,
@@ -86,6 +86,11 @@ export interface CampaignRenderContext {
   now?: Date;
   /** Overrides for merge values, e.g. the preview's sample subscriber. */
   mergeValues?: MergeValues;
+  /**
+   * Tags the provider fills per recipient (a broadcast). The placeholders
+   * they produce are accepted as link targets and as the unsubscribe link.
+   */
+  passthroughTags?: PassthroughTags;
 }
 
 export type CampaignWarningCode =
@@ -251,12 +256,17 @@ class Renderer {
   }
 
   interpolate = (text: string): string =>
-    interpolateMergeTags(text, this.values, (key) => this.warn('unknown-merge-tag', key));
+    interpolateMergeTags(text, this.values, (key) => this.warn('unknown-merge-tag', key), this.context.passthroughTags);
+
+  /** A link that is nothing but a provider placeholder, e.g. `{{{RESEND_UNSUBSCRIBE_URL}}}`. */
+  private isPassthroughUrl(value: string): boolean {
+    return Boolean(this.context.passthroughTags) && /^\{\{\{[A-Za-z0-9_|. -]+\}\}\}$/.test(value);
+  }
 
   /** An interpolated link, or null (with a warning) if it is not http(s)/mailto. */
   resolveHref = (href: string): string | null => {
     const resolved = this.interpolate(href).trim();
-    if (SAFE_URL.test(resolved)) return resolved;
+    if (SAFE_URL.test(resolved) || this.isPassthroughUrl(resolved)) return resolved;
     this.warn('unsafe-url', resolved.slice(0, 100) || href.slice(0, 100));
     return null;
   };
