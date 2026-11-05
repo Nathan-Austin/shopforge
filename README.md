@@ -62,6 +62,13 @@ support for languages such as Arabic.
   Percent and amount codes are mirrored as Stripe coupons and applied by
   Stripe at checkout; customers enter codes on the cart or checkout page
   and the order records what was taken off
+- **Newsletter list with double opt-in:** a sign-up form at the bottom of
+  every page and an unticked box at checkout; each sign-up is confirmed by
+  email before it counts, with what they agreed to and when kept as the
+  consent record. Unsubscribe links never expire and mail clients'
+  one-click unsubscribe is supported. The admin lists subscribers with
+  search and counts, unsubscribes or deletes on request, and imports and
+  exports CSV (a Mailchimp export works as it is)
 - **Email campaign designer:** at `/admin/email`, build newsletters and
   offers from blocks (headings, text with a word-processor toolbar,
   images, buttons, products, discount codes, dividers, spacing and two- or
@@ -70,8 +77,7 @@ support for languages such as Arabic.
   details like the subscriber's first name, watch a live preview at
   desktop and phone width, undo anything, and send yourself a test
   through Resend. Chilli shops get heat on product blocks and their own
-  starter layouts. The subscriber list with double opt-in and sending
-  campaigns are next on the roadmap
+  starter layouts. Sending campaigns to the list is next on the roadmap
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt

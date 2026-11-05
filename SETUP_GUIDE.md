@@ -155,6 +155,7 @@ SHOP_OWNER_EMAIL=you@myshop.com      # optional, BCC on receipts, CC on refund e
 EMAIL_TMP_DIR=/tmp/sf-my-shop-email-builder  # generated; email logs and previews, must be /tmp/sf-<name>-email-builder
 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=…  # optional, Search Console HTML-tag code
 NEXTAUTH_SECRET=…                    # generated; signs links, keep it secret
+EMAIL_SIGNING_SECRET=…               # generated; signs newsletter confirm/unsubscribe links, keep it
 ```
 
 `.env.local` is gitignored. Never commit it.
@@ -240,6 +241,40 @@ below the minimum, and so on). The order records the code and the amount in
 
 Amount codes and minimums need a currency; the form defaults to the one your
 products use. Codes are per order, not per customer.
+
+### Newsletter subscribers
+
+The newsletter sign-up appears at the bottom of every page, and an
+unticked "email me news" box on the checkout page, once three things are
+set: `RESEND_API_KEY` and `EMAIL_FROM` (the confirmation email has to go
+out), `EMAIL_SIGNING_SECRET` (generated for you; at least 32 characters)
+and `NEXT_PUBLIC_SITE_URL` (the links in the email point there). Until
+then neither is shown, and the subscriber page in the admin says what is
+missing.
+
+Every sign-up is double opt-in. The person gets an email with one button;
+only after pressing it (on the shop's page, not just by opening the
+link, since mail scanners open links) are they subscribed. Their row
+keeps what they agreed to, in their language, when they asked, when they
+confirmed and, later, when they left, with a dated history behind it.
+Unsubscribe links never expire; mail clients' own "Unsubscribe" button
+works too (one-click, RFC 8058), once campaign sending exists.
+
+`/admin/email/subscribers` lists everyone with their status. You can
+unsubscribe someone, delete them and their history (when someone asks to
+be forgotten), resend a confirmation, download the list as CSV, and
+import a CSV from another service. An import adds people as subscribed
+on your word that they agreed (you tick a box saying so, and that is
+stored as their consent); it never changes someone already on the list
+and never brings back someone who unsubscribed.
+
+Keep `EMAIL_SIGNING_SECRET` once you have subscribers: changing it breaks
+every confirm and unsubscribe link already sent. Shops generated before
+it existed use `NEXTAUTH_SECRET` instead. Re-running
+`extend-commerce-template.sh` brings the pages and the checkout box to an
+older shop; for the footer, add `<SiteFooter locale={locale} />` (from
+`@/components/newsletter/SiteFooter`) under `<main>` in
+`src/app/[locale]/layout.tsx`.
 
 ### Email campaign templates
 

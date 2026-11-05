@@ -9,8 +9,9 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A, B and C (model, saved templates and
-   test sends, the designer) are done; D (subscribers) is next.
+   listed there, one at a time. A to D (model, saved templates and test
+   sends, the designer, subscribers) are done; E (sending campaigns) is
+   next.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -211,7 +212,16 @@ loose in `/tmp`.
       pickers, column sections, a merge-tag menu, a locale switcher that
       flags missing translations, desktop/phone preview, starter templates
       per store mode. Tiptap 3 for the text toolbar (approved 2026-11-05)
-- [ ] **D. Subscribers.** `email_subscribers` with double opt-in (required,
+- [x] **D. Subscribers** — done 2026-11-05: `email_subscribers` and
+      `email_subscriber_events` (owner-only, SQL-tested), signed links in
+      `src/lib/email/subscribers/` (`tokens.ts`, `links.ts`), the rules,
+      CSV and service there too, `/[locale]/newsletter/confirm` and
+      `/unsubscribe` (a button, never on open), `POST
+      /api/email/unsubscribe` (RFC 8058), the footer form with a bot trap,
+      the checkout box, `/admin/email/subscribers`. Checked end to end in
+      Chrome against PostgREST. Follow-ups: a per-IP limit on sign-ups
+      (today: per address, every ten minutes), and the owner editing a
+      subscriber's name or language. `email_subscribers` with double opt-in (required,
       decided 2026-11-05) and a
       consent record, a signed unsubscribe link and one-click
       `List-Unsubscribe` (RFC 8058), sign-up in the footer and at checkout,
