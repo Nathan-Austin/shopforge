@@ -7,7 +7,8 @@ import { z } from 'zod';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
 import type { CampaignIssue } from '@/lib/email/campaigns/schema';
-import { sendCampaignTest } from '@/lib/email/campaigns/server';
+import { searchCatalog, sendCampaignTest } from '@/lib/email/campaigns/server';
+import type { CatalogProduct } from '@/lib/email/campaigns/context';
 import {
   buildStarterDocument,
   duplicateName,
@@ -187,4 +188,11 @@ export async function sendTestEmail(
   });
   refresh(context.locale, context.id);
   return result;
+}
+
+/** Published products by name, for the designer's product picker. */
+export async function searchEmailProducts(query: string): Promise<CatalogProduct[]> {
+  const { error, supabase } = await ensureShopOwner();
+  if (error || !supabase || typeof query !== 'string' || !query.trim()) return [];
+  return searchCatalog(supabase, query, CAMPAIGN_MODE);
 }

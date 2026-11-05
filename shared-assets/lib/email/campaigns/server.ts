@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
 
-import { CODE_PATTERN } from '@/lib/discounts/rules';
+import { CODE_PATTERN, discountStatus } from '@/lib/discounts/rules';
 import { DISCOUNT_COLUMNS, toDiscountCode, type DiscountRow } from '@/lib/discounts/service';
 import { getEmailConfig } from '@/lib/email/config';
 import { sendEmail } from '@/lib/email/send';
@@ -11,18 +11,18 @@ import { appendEmailTmpLog } from '@/lib/email/tmpDir';
 import {
   CAMPAIGN_PRODUCT_COLUMNS,
   campaignDiscounts,
+  previewUnsubscribeUrl,
   sampleSubscriberValues,
   toCampaignProduct,
-  type CampaignProductRow
+  toCatalogProduct,
+  type CampaignProductRow,
+  type CatalogProduct,
+  type DesignerData,
+  type DesignerLocaleData,
+  type DiscountWording
 } from './context';
 import type { MergeValues } from './mergeTags';
-import {
-  campaignStrings,
-  renderCampaign,
-  type CampaignProduct,
-  type CampaignRenderContext,
-  type CampaignRenderResult
-} from './render';
+import { campaignStrings, renderCampaign, type CampaignProduct, type CampaignRenderContext } from './render';
 import { documentReferences, type EmailTemplate } from './templates';
 import { maskEmail, testSendLogEntry, testSendLogFile, type TestSendResult } from './testSendLog';
 
@@ -97,11 +97,7 @@ export async function buildCampaignContext(
 
   const discounts = campaignDiscounts(
     ((discountsResult.data ?? []) as DiscountRow[]).map(toDiscountCode),
-    {
-      percent: (percent) => t('discountPercent', { percent }),
-      amount: (amount) => t('discountAmount', { amount }),
-      freeShipping: t('discountFreeShipping')
-    },
+    discountWording(t),
     options.locale
   );
 
@@ -117,31 +113,85 @@ export async function buildCampaignContext(
   };
 }
 
-/**
- * Until subscribers exist (roadmap phase D) previews and tests have no
- * real unsubscribe link; they point at the shop's home page in that
- * language, so the footer looks as it will.
- */
-function placeholderUnsubscribeUrl(locale: string): string | null {
-  const url = shopSettings().url;
-  return url ? `${url}/${locale}` : null;
+type Translate = (key: string, values?: Record<string, string>) => string;
+
+function discountWording(t: Translate): DiscountWording {
+  return {
+    percent: (percent) => t('discountPercent', { percent }),
+    amount: (amount) => t('discountAmount', { amount }),
+    freeShipping: t('discountFreeShipping')
+  };
 }
 
-/** The designer's and the admin's preview: a sample subscriber, nothing sent. */
-export async function renderCampaignPreview(
+/** How many products the designer's picker shows before the owner searches. */
+export const CATALOG_PAGE = 24;
+
+function catalogRows(rows: unknown, mode: CampaignModeHooks): CatalogProduct[] {
+  return ((rows ?? []) as (CampaignProductRow & Record<string, unknown>)[]).map((row) =>
+    toCatalogProduct(row, mode.productExtras(row))
+  );
+}
+
+/**
+ * What the designer renders its live preview from: the products the
+ * document uses plus a first page for the picker, the codes that are live
+ * or scheduled, and the fixed wording and code labels in every language.
+ */
+export async function loadDesignerData(
   supabase: SupabaseClient,
   document: unknown,
-  locale: string,
+  locales: readonly string[],
   mode: CampaignModeHooks
-): Promise<CampaignRenderResult> {
-  const context = await buildCampaignContext(supabase, document, {
-    locale,
-    recipient: null,
-    mergeValues: sampleSubscriberValues(),
-    unsubscribeUrl: placeholderUnsubscribeUrl(locale),
-    mode
+): Promise<DesignerData> {
+  const shop = shopSettings();
+  const ids = documentReferences(document).productIds.filter((id) => ID_PATTERN.test(id));
+  const columns = CAMPAIGN_PRODUCT_COLUMNS + mode.productColumns;
+  const [used, firstPage, codes] = await Promise.all([
+    ids.length ? supabase.from('products_public').select(columns).in('id', ids) : Promise.resolve({ data: [], error: null }),
+    supabase.from('products_public').select(columns).order('name').limit(CATALOG_PAGE),
+    supabase.from('discount_codes').select(DISCOUNT_COLUMNS).order('code')
+  ]);
+
+  const catalog = new Map<string, CatalogProduct>();
+  for (const product of [...catalogRows(used.data, mode), ...catalogRows(firstPage.data, mode)]) catalog.set(product.id, product);
+
+  const now = new Date();
+  const liveCodes = ((codes.data ?? []) as DiscountRow[]).map(toDiscountCode).filter((code) => {
+    const status = discountStatus(code, now);
+    return status === 'active' || status === 'scheduled';
   });
-  return renderCampaign(document, context);
+
+  const localeData: Record<string, DesignerLocaleData> = {};
+  await Promise.all(
+    locales.map(async (locale) => {
+      const t = await getTranslations({ locale, namespace: 'Email.campaign' });
+      const labels = campaignDiscounts(liveCodes, discountWording(t), locale, now);
+      localeData[locale] = {
+        strings: campaignStrings(t, shop.name),
+        discountLabels: Object.fromEntries(Object.values(labels).map((discount) => [discount.code, discount.label]))
+      };
+    })
+  );
+
+  return {
+    shop,
+    catalog: [...catalog.values()],
+    discounts: liveCodes.map((code) => ({ code: code.code, status: discountStatus(code, now) as 'active' | 'scheduled' })),
+    locales: localeData
+  };
+}
+
+/** Published products whose name contains the query, for the picker. */
+export async function searchCatalog(supabase: SupabaseClient, query: string, mode: CampaignModeHooks): Promise<CatalogProduct[]> {
+  // ilike treats % and _ as wildcards and \ as their escape.
+  const pattern = `%${query.trim().slice(0, 80).replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+  const { data } = await supabase
+    .from('products_public')
+    .select(CAMPAIGN_PRODUCT_COLUMNS + mode.productColumns)
+    .ilike('name', pattern)
+    .order('name')
+    .limit(CATALOG_PAGE);
+  return catalogRows(data, mode);
 }
 
 export interface TestSendRequest {
@@ -201,7 +251,7 @@ async function renderAndSend(
     recipient: { email: request.to, firstName: null },
     // The sample first name, so {{subscriber.first_name}} shows working.
     mergeValues: { 'subscriber.first_name': sampleSubscriberValues()['subscriber.first_name'] },
-    unsubscribeUrl: placeholderUnsubscribeUrl(request.locale),
+    unsubscribeUrl: previewUnsubscribeUrl(shopSettings().url, request.locale),
     mode: request.mode
   });
   const rendered = renderCampaign(request.template.document, context);

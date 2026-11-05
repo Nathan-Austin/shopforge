@@ -35,64 +35,72 @@ vi.mock('next-intl/server', () => ({
 const sendEmail = vi.fn();
 vi.mock('@/lib/email/send', () => ({ sendEmail: (...args: unknown[]) => sendEmail(...args) }));
 
-const { sendCampaignTest, renderCampaignPreview } = await import('./server');
+const { sendCampaignTest, loadDesignerData, searchCatalog } = await import('./server');
 
-/** A Supabase client that answers the two lookups the renderer makes. */
-function fakeSupabase(options: { failProducts?: boolean } = {}) {
+const PRODUCT_ROW = {
+  id: PRODUCT_ID,
+  name: 'Ghost Pepper Sauce',
+  slug: 'ghost-pepper',
+  price_cents: 899,
+  compare_at_price_cents: null,
+  currency: 'EUR',
+  image_url: null,
+  heat_level: 8
+};
+
+function discountRow(code: string, overrides: Record<string, unknown> = {}) {
+  return {
+    id: code,
+    code,
+    kind: 'percent',
+    percent_off: '15',
+    amount_off_cents: null,
+    currency: null,
+    min_subtotal_cents: null,
+    starts_at: null,
+    ends_at: null,
+    max_redemptions: null,
+    redemption_count: 0,
+    active: true,
+    stripe_coupon_id: null,
+    stripe_promotion_code_id: null,
+    ...overrides
+  };
+}
+
+type Call = { table: string; method: string; args: unknown[] };
+
+/**
+ * A Supabase client whose queries chain like the real builder and resolve
+ * to fixed rows per table. Every call is recorded for the assertions.
+ */
+function fakeSupabase(options: { failProducts?: boolean; discounts?: unknown[] } = {}) {
+  const calls: Call[] = [];
   const queries: { table: string; columns: string; values: string[] }[] = [];
+  const rows: Record<string, unknown[]> = {
+    products_public: [PRODUCT_ROW],
+    discount_codes: options.discounts ?? [discountRow('SPRING15')]
+  };
   const client = {
     from(table: string) {
-      return {
-        select(columns: string) {
-          return {
-            in(_column: string, values: string[]) {
-              queries.push({ table, columns, values });
-              if (table === 'products_public') {
-                if (options.failProducts) throw new Error('database unreachable');
-                return Promise.resolve({
-                  data: [
-                    {
-                      id: PRODUCT_ID,
-                      name: 'Ghost Pepper Sauce',
-                      slug: 'ghost-pepper',
-                      price_cents: 899,
-                      compare_at_price_cents: null,
-                      currency: 'EUR',
-                      image_url: null,
-                      heat_level: 8
-                    }
-                  ],
-                  error: null
-                });
-              }
-              return Promise.resolve({
-                data: [
-                  {
-                    id: 'd',
-                    code: 'SPRING15',
-                    kind: 'percent',
-                    percent_off: '15',
-                    amount_off_cents: null,
-                    currency: null,
-                    min_subtotal_cents: null,
-                    starts_at: null,
-                    ends_at: null,
-                    max_redemptions: null,
-                    redemption_count: 0,
-                    active: true,
-                    stripe_coupon_id: null,
-                    stripe_promotion_code_id: null
-                  }
-                ],
-                error: null
-              });
-            }
-          };
-        }
+      let columns = '';
+      const builder: Record<string, unknown> = {};
+      for (const method of ['select', 'in', 'order', 'limit', 'ilike']) {
+        builder[method] = (...args: unknown[]) => {
+          calls.push({ table, method, args });
+          if (method === 'select') columns = String(args[0]);
+          if (method === 'in') queries.push({ table, columns, values: args[1] as string[] });
+          return builder;
+        };
+      }
+      builder.then = (resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) => {
+        if (table === 'products_public' && options.failProducts) return Promise.reject(new Error('database unreachable')).then(resolve, reject);
+        return Promise.resolve({ data: rows[table] ?? [], error: null }).then(resolve, reject);
       };
+      return builder;
     }
   };
-  return { client: client as never, queries };
+  return { client: client as never, queries, calls };
 }
 
 const mode = { productColumns: ', heat_level', productExtras: (row: Record<string, unknown>) => [`Heat ${row.heat_level}`] };
@@ -222,14 +230,48 @@ describe('sendCampaignTest', () => {
   });
 });
 
-describe('renderCampaignPreview', () => {
-  it('uses the sample subscriber and sends nothing', async () => {
-    const result = await renderCampaignPreview(fakeSupabase().client, sampleDocument(), 'en', mode);
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.email.html).toContain('Hi Alex!');
-      expect(result.email.html).toContain('href="https://shop.example/en"');
-    }
-    expect(sendEmail).not.toHaveBeenCalled();
+describe('loadDesignerData', () => {
+  it('loads the catalog, live codes and the wording for every language', async () => {
+    const discounts = [
+      discountRow('SPRING15'),
+      discountRow('SOON', { starts_at: '2000-02-01T00:00:00Z' }),
+      discountRow('OLD', { active: false })
+    ];
+    const { client, calls } = fakeSupabase({ discounts });
+    const data = await loadDesignerData(client, sampleDocument(), ['en', 'de'], mode);
+
+    expect(data.shop).toEqual({ name: 'Test Shop', url: 'https://shop.example' });
+    expect(data.catalog).toEqual([
+      {
+        id: PRODUCT_ID,
+        name: 'Ghost Pepper Sauce',
+        slug: 'ghost-pepper',
+        priceCents: 899,
+        compareAtPriceCents: null,
+        currency: 'EUR',
+        imageUrl: null,
+        extras: ['Heat 8']
+      }
+    ]);
+    expect(data.discounts).toEqual([
+      { code: 'SPRING15', status: 'active' },
+      { code: 'SOON', status: 'scheduled' }
+    ]);
+    expect(Object.keys(data.locales).sort()).toEqual(['de', 'en']);
+    expect(data.locales.en.discountLabels).toEqual({ SPRING15: '15% off', SOON: '15% off' });
+    expect(data.locales.en.strings.footerReason).toBe('You subscribed to news from Test Shop.');
+    // The products the document uses, then a first page for the picker.
+    expect(calls.filter((call) => call.table === 'products_public' && call.method === 'limit')).toEqual([
+      { table: 'products_public', method: 'limit', args: [24] }
+    ]);
+  });
+});
+
+describe('searchCatalog', () => {
+  it('searches names, treating % and _ as plain characters', async () => {
+    const { client, calls } = fakeSupabase();
+    const results = await searchCatalog(client, ' 100%_hot ', mode);
+    expect(results.map((product) => product.id)).toEqual([PRODUCT_ID]);
+    expect(calls.find((call) => call.method === 'ilike')?.args).toEqual(['name', '%100\\%\\_hot%']);
   });
 });
