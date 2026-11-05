@@ -17,3 +17,7 @@ grant usage on schema public, auth to anon, authenticated, service_role;
 create schema if not exists storage;
 create table if not exists storage.buckets (id text primary key, name text, public boolean);
 create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
+-- As on Supabase: the API roles reach the table, row-level security decides.
+alter table storage.objects enable row level security;
+grant usage on schema storage to anon, authenticated, service_role;
+grant select, insert, update, delete on storage.objects to anon, authenticated, service_role;

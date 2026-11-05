@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Applies each store mode's schema to a scratch Postgres, twice (it must be
-# idempotent), then runs the SQL tests in test/sql/ against it: row-level
-# security and the checks that back up the app's own validation.
+# Applies each store mode's schema and lib/storage-policies.sql to a scratch
+# Postgres, twice (both must be idempotent), then runs the SQL tests in
+# test/sql/ against it: row-level security and the checks that back up the
+# app's own validation.
 #
 #   test/check-schema.sh [--mode=generic|chilli|all] [--tmp-dir=/tmp/sf-<name>-...]
 #
@@ -76,6 +77,14 @@ for mode in $MODES; do
     fi
   done
   echo "schema applied twice"
+  for pass in first second; do
+    if ! psql_in -d "shop_$mode" < "$ROOT/lib/storage-policies.sql" > /dev/null 2>"$DATA_DIR/err.log"; then
+      grep -v NOTICE "$DATA_DIR/err.log" >&2
+      echo "❌ storage policies failed to apply ($pass pass)." >&2
+      exit 1
+    fi
+  done
+  echo "storage policies applied twice"
   for test in "$ROOT"/test/sql/*.sql; do
     if ! psql_in -d "shop_$mode" < "$test" 2>"$DATA_DIR/err.log"; then
       grep -v NOTICE "$DATA_DIR/err.log" >&2
