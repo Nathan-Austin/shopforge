@@ -84,6 +84,12 @@ describe('renderCampaign', () => {
     expect(html).toContain('Tom &amp; &quot;Jerry&quot; &lt;b&gt;');
   });
 
+  it('links {{shop.locale_url}} to the shop in the recipient\'s language', () => {
+    const doc = withBlocks([{ id: 'b', type: 'button', label: { en: 'Shop' }, href: '{{shop.locale_url}}/shop' }]);
+    expect(rendered(renderCampaign(doc, sampleContext({ locale: 'de-at' }))).html).toContain('href="https://shop.example/de-at/shop"');
+    expect(rendered(renderCampaign(doc, sampleContext({ locale: 'en' }))).text).toContain('Shop: https://shop.example/en/shop');
+  });
+
   it('writes {{current_year}} from the given clock', () => {
     const doc = { ...sampleDocument(), footer: { en: '© {{current_year}} {{shop.name}}' } };
     expect(rendered(renderCampaign(doc, sampleContext())).text).toContain('© 2026 Your Shop');

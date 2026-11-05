@@ -74,6 +74,7 @@ describe('sampleMergeValues and startsWithUrlTag', () => {
 
   it('only counts URL tags at the very start', () => {
     expect(startsWithUrlTag('{{shop.url}}/shop')).toBe(true);
+    expect(startsWithUrlTag('{{shop.locale_url}}/shop')).toBe(true);
     expect(startsWithUrlTag('{{shop.name}}/shop')).toBe(false);
     expect(startsWithUrlTag('x{{shop.url}}')).toBe(false);
   });

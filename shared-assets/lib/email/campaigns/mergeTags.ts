@@ -21,6 +21,8 @@ export const MERGE_TAGS = {
   'subscriber.email': { sample: 'alex@example.com' },
   'shop.name': { sample: 'Your Shop' },
   'shop.url': { sample: 'https://shop.example', url: true },
+  /** The shop in the recipient's language, `https://shop.example/de`: links are shared by every locale. */
+  'shop.locale_url': { sample: 'https://shop.example/en', url: true },
   unsubscribe_url: { sample: 'https://shop.example/unsubscribe', url: true },
   current_year: { sample: '2026' }
 } as const satisfies Record<string, MergeTagDefinition>;

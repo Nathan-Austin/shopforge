@@ -235,6 +235,7 @@ class Renderer {
       'subscriber.email': context.recipient?.email ?? null,
       'shop.name': context.shop.name,
       'shop.url': shopUrl,
+      'shop.locale_url': shopUrl ? `${shopUrl}/${context.locale}` : null,
       unsubscribe_url: context.unsubscribeUrl,
       current_year: String((context.now ?? new Date()).getUTCFullYear())
     };
