@@ -802,7 +802,8 @@ cat > src/messages/en.json <<'EOF'
       "newProduct": "New product",
       "orders": "Orders",
       "discounts": "Discount codes",
-      "seo": "Search & Merchant Center"
+      "seo": "Search & Merchant Center",
+      "email": "Email"
     },
     "stats": {
       "products": "Products",
@@ -1029,6 +1030,105 @@ cat > src/messages/en.json <<'EOF'
       "createDescription": "Add every detail about the sauce, then publish when you're ready.",
       "saved": "Saved successfully.",
       "notSet": "Not set"
+    },
+    "email": {
+      "heading": "Email campaigns",
+      "subheading": "Templates for newsletters and offers. Preview them in each of the shop's languages and send yourself a test before anything goes to customers.",
+      "comingSoon": "The drag-and-drop designer and sending to subscribers are on their way. Until then, templates start from a ready-made layout.",
+      "notConfigured": "Test sends need RESEND_API_KEY and EMAIL_FROM in the shop's environment. Previews work without them.",
+      "newHeading": "New template",
+      "name": "Name",
+      "starter": "Start from",
+      "starters": {
+        "blank": "Blank",
+        "newsletter": "Newsletter"
+      },
+      "create": "Create template",
+      "creating": "Creating…",
+      "empty": "No templates yet. Create one above.",
+      "columns": {
+        "name": "Name",
+        "updated": "Last edited",
+        "lastTest": "Last test",
+        "actions": "Actions"
+      },
+      "never": "Never",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "confirmDelete": "Delete the template “{name}”? This cannot be undone.",
+      "copySuffix": "(copy)",
+      "notices": {
+        "created": "Template “{name}” created.",
+        "saved": "Saved.",
+        "duplicated": "Copied as “{name}”.",
+        "deleted": "Template “{name}” deleted."
+      },
+      "errors": {
+        "name": "Give the template a name of up to 120 characters.",
+        "document": "The template has {count, plural, one {# problem} other {# problems}} and was not saved.",
+        "tooLarge": "The template is too large to save.",
+        "starter": "Choose a layout to start from.",
+        "notFound": "That template no longer exists.",
+        "notAuthorized": "Only the shop owner can do that.",
+        "failed": "Something went wrong: {message}"
+      },
+      "back": "All templates",
+      "save": "Save",
+      "saving": "Saving…",
+      "language": "Language",
+      "subject": "Subject",
+      "preheader": "Preview text",
+      "noPreheader": "None",
+      "preview": {
+        "heading": "Preview",
+        "desktop": "Desktop",
+        "phone": "Phone",
+        "frameTitle": "Email preview, {width} pixels wide",
+        "sampleNote": "Merge tags show a sample subscriber called {name}. Until the subscriber list exists, the unsubscribe link points to the shop's home page."
+      },
+      "renderFailed": {
+        "invalidDocument": "This template cannot be read: {issues}",
+        "empty": "This template has nothing to show in this language yet."
+      },
+      "warningsHeading": "Worth a look",
+      "noWarnings": "Nothing to fix in this language.",
+      "warningIn": "{message} (block {block})",
+      "warnings": {
+        "invalidBlock": "A block could not be read and is left out.",
+        "blockFailed": "A block failed to render and is left out.",
+        "missingTranslation": "Not translated into this language yet, so the {language} text is shown.",
+        "emptyBlock": "Has no text in this language, so it is left out.",
+        "missingProduct": "The product is no longer in the shop, so this block is left out.",
+        "missingDiscount": "The code {detail} is retired, expired or used up, so this block is left out.",
+        "unknownMergeTag": "Unknown merge tag “{detail}”; its fallback text is used.",
+        "unsafeUrl": "A link that is not http(s) or mailto was removed: {detail}",
+        "missingUnsubscribe": "There is no unsubscribe link."
+      },
+      "test": {
+        "heading": "Send a test",
+        "intro": "Sends this template to one address with [Test] in the subject. Merge tags use the sample subscriber.",
+        "to": "Send to",
+        "language": "Language",
+        "send": "Send test",
+        "sending": "Sending…",
+        "subjectPrefix": "[Test]",
+        "result": {
+          "sent": "Sent to {to}. Resend message id: {id}.",
+          "notConfigured": "Not sent: email is not configured (RESEND_API_KEY and EMAIL_FROM).",
+          "providerError": "Resend did not accept the email: {error}",
+          "invalidTemplate": "Not sent: the template cannot be read.",
+          "empty": "Not sent: nothing is left to show in this language.",
+          "invalidRecipient": "That does not look like an email address.",
+          "invalidLocale": "That language is not one of the shop's.",
+          "tooSoon": "A test of this template went out a moment ago. Wait a few seconds and try again.",
+          "notFound": "That template no longer exists.",
+          "notAuthorized": "Only the shop owner can send tests.",
+          "failed": "Something went wrong: {error}"
+        },
+        "details": "{duration} ms, {count, plural, =0 {no warnings} one {# warning} other {# warnings}}",
+        "logged": "Logged to {file}",
+        "notLogged": "Not logged: {error}"
+      }
     }
   },
   "UI": {
@@ -1156,7 +1256,10 @@ cat > src/messages/en.json <<'EOF'
       "unsubscribe": "Unsubscribe",
       "viewProduct": "View product",
       "discountTitle": "Your code",
-      "discountHint": "Enter it in your cart or at checkout."
+      "discountHint": "Enter it in your cart or at checkout.",
+      "discountPercent": "{percent}% off",
+      "discountAmount": "{amount} off",
+      "discountFreeShipping": "Free shipping"
     }
   },
   "Home": {
@@ -1319,7 +1422,8 @@ cat > src/messages/de.json <<'EOF'
       "newProduct": "New product",
       "orders": "Bestellungen",
       "discounts": "Gutscheincodes",
-      "seo": "Suche & Merchant Center"
+      "seo": "Suche & Merchant Center",
+      "email": "E-Mail"
     },
     "stats": {
       "products": "Products",
@@ -1546,6 +1650,105 @@ cat > src/messages/de.json <<'EOF'
       "createDescription": "Add every detail about the sauce, then publish when you're ready.",
       "saved": "Saved successfully.",
       "notSet": "Not set"
+    },
+    "email": {
+      "heading": "E-Mail-Kampagnen",
+      "subheading": "Vorlagen für Newsletter und Angebote. Sehen Sie sie in jeder Sprache des Shops an und senden Sie sich einen Test, bevor etwas an Kunden geht.",
+      "comingSoon": "Der Drag-and-drop-Designer und der Versand an Abonnenten sind in Arbeit. Bis dahin beginnen Vorlagen mit einem fertigen Layout.",
+      "notConfigured": "Testversand braucht RESEND_API_KEY und EMAIL_FROM in der Umgebung des Shops. Die Vorschau funktioniert auch ohne.",
+      "newHeading": "Neue Vorlage",
+      "name": "Name",
+      "starter": "Beginnen mit",
+      "starters": {
+        "blank": "Leer",
+        "newsletter": "Newsletter"
+      },
+      "create": "Vorlage anlegen",
+      "creating": "Wird angelegt…",
+      "empty": "Noch keine Vorlagen. Legen Sie oben eine an.",
+      "columns": {
+        "name": "Name",
+        "updated": "Zuletzt bearbeitet",
+        "lastTest": "Letzter Test",
+        "actions": "Aktionen"
+      },
+      "never": "Nie",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "confirmDelete": "Die Vorlage „{name}“ löschen? Das lässt sich nicht rückgängig machen.",
+      "copySuffix": "(Kopie)",
+      "notices": {
+        "created": "Vorlage „{name}“ angelegt.",
+        "saved": "Gespeichert.",
+        "duplicated": "Kopiert als „{name}“.",
+        "deleted": "Vorlage „{name}“ gelöscht."
+      },
+      "errors": {
+        "name": "Geben Sie der Vorlage einen Namen mit höchstens 120 Zeichen.",
+        "document": "Die Vorlage hat {count, plural, one {# Problem} other {# Probleme}} und wurde nicht gespeichert.",
+        "tooLarge": "Die Vorlage ist zu groß zum Speichern.",
+        "starter": "Wählen Sie ein Layout zum Beginnen.",
+        "notFound": "Diese Vorlage gibt es nicht mehr.",
+        "notAuthorized": "Das darf nur der Shop-Inhaber.",
+        "failed": "Etwas ist schiefgegangen: {message}"
+      },
+      "back": "Alle Vorlagen",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…",
+      "language": "Sprache",
+      "subject": "Betreff",
+      "preheader": "Vorschautext",
+      "noPreheader": "Keiner",
+      "preview": {
+        "heading": "Vorschau",
+        "desktop": "Desktop",
+        "phone": "Smartphone",
+        "frameTitle": "E-Mail-Vorschau, {width} Pixel breit",
+        "sampleNote": "Platzhalter zeigen einen Beispiel-Abonnenten namens {name}. Solange es keine Abonnentenliste gibt, führt der Abmeldelink zur Startseite des Shops."
+      },
+      "renderFailed": {
+        "invalidDocument": "Diese Vorlage kann nicht gelesen werden: {issues}",
+        "empty": "Diese Vorlage zeigt in dieser Sprache noch nichts."
+      },
+      "warningsHeading": "Bitte prüfen",
+      "noWarnings": "In dieser Sprache ist nichts zu korrigieren.",
+      "warningIn": "{message} (Block {block})",
+      "warnings": {
+        "invalidBlock": "Ein Block konnte nicht gelesen werden und fehlt.",
+        "blockFailed": "Ein Block konnte nicht dargestellt werden und fehlt.",
+        "missingTranslation": "Noch nicht in diese Sprache übersetzt, daher wird der Text in {language} gezeigt.",
+        "emptyBlock": "Hat in dieser Sprache keinen Text und fehlt deshalb.",
+        "missingProduct": "Das Produkt ist nicht mehr im Shop, daher fehlt dieser Block.",
+        "missingDiscount": "Der Code {detail} ist deaktiviert, abgelaufen oder aufgebraucht, daher fehlt dieser Block.",
+        "unknownMergeTag": "Unbekannter Platzhalter „{detail}“; sein Ersatztext wird verwendet.",
+        "unsafeUrl": "Ein Link, der nicht mit http(s) oder mailto beginnt, wurde entfernt: {detail}",
+        "missingUnsubscribe": "Es gibt keinen Abmeldelink."
+      },
+      "test": {
+        "heading": "Test senden",
+        "intro": "Sendet diese Vorlage an eine Adresse, mit [Test] im Betreff. Platzhalter zeigen den Beispiel-Abonnenten.",
+        "to": "Senden an",
+        "language": "Sprache",
+        "send": "Test senden",
+        "sending": "Wird gesendet…",
+        "subjectPrefix": "[Test]",
+        "result": {
+          "sent": "An {to} gesendet. Resend-Nachrichten-ID: {id}.",
+          "notConfigured": "Nicht gesendet: E-Mail ist nicht eingerichtet (RESEND_API_KEY und EMAIL_FROM).",
+          "providerError": "Resend hat die E-Mail nicht angenommen: {error}",
+          "invalidTemplate": "Nicht gesendet: Die Vorlage kann nicht gelesen werden.",
+          "empty": "Nicht gesendet: In dieser Sprache bleibt nichts zu zeigen.",
+          "invalidRecipient": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+          "invalidLocale": "Diese Sprache gehört nicht zum Shop.",
+          "tooSoon": "Ein Test dieser Vorlage wurde gerade erst gesendet. Warten Sie ein paar Sekunden und versuchen Sie es erneut.",
+          "notFound": "Diese Vorlage gibt es nicht mehr.",
+          "notAuthorized": "Nur der Shop-Inhaber kann Tests senden.",
+          "failed": "Etwas ist schiefgegangen: {error}"
+        },
+        "details": "{duration} ms, {count, plural, =0 {keine Hinweise} one {# Hinweis} other {# Hinweise}}",
+        "logged": "Protokolliert in {file}",
+        "notLogged": "Nicht protokolliert: {error}"
+      }
     }
   },
   "UI": {
@@ -1673,7 +1876,10 @@ cat > src/messages/de.json <<'EOF'
       "unsubscribe": "Abmelden",
       "viewProduct": "Zum Produkt",
       "discountTitle": "Ihr Code",
-      "discountHint": "Geben Sie ihn im Warenkorb oder an der Kasse ein."
+      "discountHint": "Geben Sie ihn im Warenkorb oder an der Kasse ein.",
+      "discountPercent": "{percent} % Rabatt",
+      "discountAmount": "{amount} Rabatt",
+      "discountFreeShipping": "Kostenloser Versand"
     }
   },
   "Home": {
@@ -1836,7 +2042,8 @@ cat > src/messages/tr.json <<'EOF'
       "newProduct": "New product",
       "orders": "Siparişler",
       "discounts": "İndirim kodları",
-      "seo": "Arama ve Merchant Center"
+      "seo": "Arama ve Merchant Center",
+      "email": "E-posta"
     },
     "stats": {
       "products": "Products",
@@ -2063,6 +2270,105 @@ cat > src/messages/tr.json <<'EOF'
       "createDescription": "Add every detail about the sauce, then publish when you're ready.",
       "saved": "Saved successfully.",
       "notSet": "Not set"
+    },
+    "email": {
+      "heading": "E-posta kampanyaları",
+      "subheading": "Bültenler ve teklifler için şablonlar. Mağazanın her dilinde önizleyin ve müşterilere bir şey gitmeden önce kendinize bir test gönderin.",
+      "comingSoon": "Sürükle-bırak tasarımcı ve abonelere gönderim yolda. O zamana kadar şablonlar hazır bir düzenle başlar.",
+      "notConfigured": "Test gönderimi için mağaza ortamında RESEND_API_KEY ve EMAIL_FROM gerekir. Önizleme bunlar olmadan da çalışır.",
+      "newHeading": "Yeni şablon",
+      "name": "Ad",
+      "starter": "Başlangıç",
+      "starters": {
+        "blank": "Boş",
+        "newsletter": "Bülten"
+      },
+      "create": "Şablon oluştur",
+      "creating": "Oluşturuluyor…",
+      "empty": "Henüz şablon yok. Yukarıdan bir tane oluşturun.",
+      "columns": {
+        "name": "Ad",
+        "updated": "Son düzenleme",
+        "lastTest": "Son test",
+        "actions": "İşlemler"
+      },
+      "never": "Hiç",
+      "duplicate": "Kopyala",
+      "delete": "Sil",
+      "confirmDelete": "“{name}” şablonu silinsin mi? Bu geri alınamaz.",
+      "copySuffix": "(kopya)",
+      "notices": {
+        "created": "“{name}” şablonu oluşturuldu.",
+        "saved": "Kaydedildi.",
+        "duplicated": "“{name}” olarak kopyalandı.",
+        "deleted": "“{name}” şablonu silindi."
+      },
+      "errors": {
+        "name": "Şablona en fazla 120 karakterlik bir ad verin.",
+        "document": "Şablonda {count, plural, one {# sorun} other {# sorun}} var ve kaydedilmedi.",
+        "tooLarge": "Şablon kaydedilemeyecek kadar büyük.",
+        "starter": "Başlamak için bir düzen seçin.",
+        "notFound": "Bu şablon artık yok.",
+        "notAuthorized": "Bunu yalnızca mağaza sahibi yapabilir.",
+        "failed": "Bir şeyler ters gitti: {message}"
+      },
+      "back": "Tüm şablonlar",
+      "save": "Kaydet",
+      "saving": "Kaydediliyor…",
+      "language": "Dil",
+      "subject": "Konu",
+      "preheader": "Önizleme metni",
+      "noPreheader": "Yok",
+      "preview": {
+        "heading": "Önizleme",
+        "desktop": "Masaüstü",
+        "phone": "Telefon",
+        "frameTitle": "E-posta önizlemesi, {width} piksel genişliğinde",
+        "sampleNote": "Birleştirme etiketleri {name} adlı örnek bir aboneyi gösterir. Abone listesi oluşana kadar abonelikten çıkma bağlantısı mağazanın ana sayfasına gider."
+      },
+      "renderFailed": {
+        "invalidDocument": "Bu şablon okunamıyor: {issues}",
+        "empty": "Bu şablonun bu dilde henüz gösterecek bir şeyi yok."
+      },
+      "warningsHeading": "Göz atmaya değer",
+      "noWarnings": "Bu dilde düzeltilecek bir şey yok.",
+      "warningIn": "{message} (blok {block})",
+      "warnings": {
+        "invalidBlock": "Bir blok okunamadı ve çıkarıldı.",
+        "blockFailed": "Bir blok gösterilemedi ve çıkarıldı.",
+        "missingTranslation": "Henüz bu dile çevrilmedi, bu yüzden {language} metni gösteriliyor.",
+        "emptyBlock": "Bu dilde metni yok, bu yüzden çıkarıldı.",
+        "missingProduct": "Ürün artık mağazada değil, bu yüzden bu blok çıkarıldı.",
+        "missingDiscount": "{detail} kodu devre dışı, süresi dolmuş veya tükenmiş, bu yüzden bu blok çıkarıldı.",
+        "unknownMergeTag": "Bilinmeyen birleştirme etiketi “{detail}”; yedek metni kullanılıyor.",
+        "unsafeUrl": "http(s) veya mailto olmayan bir bağlantı kaldırıldı: {detail}",
+        "missingUnsubscribe": "Abonelikten çıkma bağlantısı yok."
+      },
+      "test": {
+        "heading": "Test gönder",
+        "intro": "Bu şablonu konuda [Test] ile tek bir adrese gönderir. Birleştirme etiketleri örnek aboneyi kullanır.",
+        "to": "Alıcı",
+        "language": "Dil",
+        "send": "Test gönder",
+        "sending": "Gönderiliyor…",
+        "subjectPrefix": "[Test]",
+        "result": {
+          "sent": "{to} adresine gönderildi. Resend mesaj kimliği: {id}.",
+          "notConfigured": "Gönderilmedi: e-posta yapılandırılmamış (RESEND_API_KEY ve EMAIL_FROM).",
+          "providerError": "Resend e-postayı kabul etmedi: {error}",
+          "invalidTemplate": "Gönderilmedi: şablon okunamıyor.",
+          "empty": "Gönderilmedi: bu dilde gösterilecek bir şey kalmadı.",
+          "invalidRecipient": "Bu bir e-posta adresine benzemiyor.",
+          "invalidLocale": "Bu dil mağazanın dillerinden biri değil.",
+          "tooSoon": "Bu şablonun bir testi az önce gönderildi. Birkaç saniye bekleyip tekrar deneyin.",
+          "notFound": "Bu şablon artık yok.",
+          "notAuthorized": "Test göndermeyi yalnızca mağaza sahibi yapabilir.",
+          "failed": "Bir şeyler ters gitti: {error}"
+        },
+        "details": "{duration} ms, {count, plural, =0 {uyarı yok} one {# uyarı} other {# uyarı}}",
+        "logged": "Günlüğe yazıldı: {file}",
+        "notLogged": "Günlüğe yazılamadı: {error}"
+      }
     }
   },
   "UI": {
@@ -2190,7 +2496,10 @@ cat > src/messages/tr.json <<'EOF'
       "unsubscribe": "Abonelikten çık",
       "viewProduct": "Ürünü görüntüle",
       "discountTitle": "Kodunuz",
-      "discountHint": "Sepetinizde veya ödeme sırasında girin."
+      "discountHint": "Sepetinizde veya ödeme sırasında girin.",
+      "discountPercent": "%{percent} indirim",
+      "discountAmount": "{amount} indirim",
+      "discountFreeShipping": "Ücretsiz kargo"
     }
   },
   "Home": {
@@ -2353,7 +2662,8 @@ cat > src/messages/ar.json <<'EOF'
       "newProduct": "New product",
       "orders": "الطلبات",
       "discounts": "رموز الخصم",
-      "seo": "البحث وMerchant Center"
+      "seo": "البحث وMerchant Center",
+      "email": "البريد"
     },
     "stats": {
       "products": "Products",
@@ -2580,6 +2890,105 @@ cat > src/messages/ar.json <<'EOF'
       "createDescription": "Add every detail about the sauce, then publish when you're ready.",
       "saved": "Saved successfully.",
       "notSet": "Not set"
+    },
+    "email": {
+      "heading": "حملات البريد الإلكتروني",
+      "subheading": "قوالب للنشرات والعروض. اعرضها بكل لغات المتجر وأرسل لنفسك رسالة تجريبية قبل أن يصل أي شيء إلى العملاء.",
+      "comingSoon": "مصمم السحب والإفلات والإرسال إلى المشتركين قيد الإعداد. حتى ذلك الحين تبدأ القوالب بتصميم جاهز.",
+      "notConfigured": "يتطلب الإرسال التجريبي وجود RESEND_API_KEY وEMAIL_FROM في إعدادات المتجر. المعاينة تعمل بدونهما.",
+      "newHeading": "قالب جديد",
+      "name": "الاسم",
+      "starter": "البدء من",
+      "starters": {
+        "blank": "فارغ",
+        "newsletter": "نشرة إخبارية"
+      },
+      "create": "إنشاء القالب",
+      "creating": "جارٍ الإنشاء…",
+      "empty": "لا توجد قوالب بعد. أنشئ قالبًا أعلاه.",
+      "columns": {
+        "name": "الاسم",
+        "updated": "آخر تعديل",
+        "lastTest": "آخر تجربة",
+        "actions": "الإجراءات"
+      },
+      "never": "أبدًا",
+      "duplicate": "نسخ",
+      "delete": "حذف",
+      "confirmDelete": "هل تريد حذف القالب “{name}”؟ لا يمكن التراجع عن ذلك.",
+      "copySuffix": "(نسخة)",
+      "notices": {
+        "created": "تم إنشاء القالب “{name}”.",
+        "saved": "تم الحفظ.",
+        "duplicated": "تم النسخ باسم “{name}”.",
+        "deleted": "تم حذف القالب “{name}”."
+      },
+      "errors": {
+        "name": "أعطِ القالب اسمًا لا يتجاوز 120 حرفًا.",
+        "document": "في القالب {count, plural, one {مشكلة واحدة} other {# مشكلات}} ولم يُحفظ.",
+        "tooLarge": "القالب أكبر من أن يُحفظ.",
+        "starter": "اختر تصميمًا للبدء منه.",
+        "notFound": "هذا القالب لم يعد موجودًا.",
+        "notAuthorized": "هذا متاح لصاحب المتجر فقط.",
+        "failed": "حدث خطأ: {message}"
+      },
+      "back": "كل القوالب",
+      "save": "حفظ",
+      "saving": "جارٍ الحفظ…",
+      "language": "اللغة",
+      "subject": "الموضوع",
+      "preheader": "نص المعاينة",
+      "noPreheader": "لا يوجد",
+      "preview": {
+        "heading": "معاينة",
+        "desktop": "سطح المكتب",
+        "phone": "الهاتف",
+        "frameTitle": "معاينة الرسالة بعرض {width} بكسل",
+        "sampleNote": "تعرض وسوم الدمج مشتركًا تجريبيًا اسمه {name}. إلى أن تتوفر قائمة المشتركين، يؤدي رابط إلغاء الاشتراك إلى الصفحة الرئيسية للمتجر."
+      },
+      "renderFailed": {
+        "invalidDocument": "تتعذر قراءة هذا القالب: {issues}",
+        "empty": "لا يعرض هذا القالب شيئًا بهذه اللغة بعد."
+      },
+      "warningsHeading": "يستحق المراجعة",
+      "noWarnings": "لا شيء يحتاج إلى إصلاح بهذه اللغة.",
+      "warningIn": "{message} (الكتلة {block})",
+      "warnings": {
+        "invalidBlock": "تعذرت قراءة كتلة فتم حذفها.",
+        "blockFailed": "تعذر عرض كتلة فتم حذفها.",
+        "missingTranslation": "لم تُترجم إلى هذه اللغة بعد، لذا يظهر النص بلغة {language}.",
+        "emptyBlock": "لا تحتوي على نص بهذه اللغة، لذا تم حذفها.",
+        "missingProduct": "المنتج لم يعد في المتجر، لذا حُذفت هذه الكتلة.",
+        "missingDiscount": "الرمز {detail} موقوف أو منتهٍ أو مستنفد، لذا حُذفت هذه الكتلة.",
+        "unknownMergeTag": "وسم دمج غير معروف “{detail}”؛ يُستخدم نصه البديل.",
+        "unsafeUrl": "أُزيل رابط لا يبدأ بـ http(s) أو mailto: {detail}",
+        "missingUnsubscribe": "لا يوجد رابط لإلغاء الاشتراك."
+      },
+      "test": {
+        "heading": "إرسال تجربة",
+        "intro": "يرسل هذا القالب إلى عنوان واحد مع [Test] في الموضوع. تستخدم وسوم الدمج المشترك التجريبي.",
+        "to": "الإرسال إلى",
+        "language": "اللغة",
+        "send": "إرسال تجربة",
+        "sending": "جارٍ الإرسال…",
+        "subjectPrefix": "[Test]",
+        "result": {
+          "sent": "أُرسلت إلى {to}. معرّف رسالة Resend: {id}.",
+          "notConfigured": "لم تُرسل: البريد غير مُعد (RESEND_API_KEY وEMAIL_FROM).",
+          "providerError": "لم يقبل Resend الرسالة: {error}",
+          "invalidTemplate": "لم تُرسل: تتعذر قراءة القالب.",
+          "empty": "لم تُرسل: لم يبقَ ما يُعرض بهذه اللغة.",
+          "invalidRecipient": "لا يبدو هذا عنوان بريد إلكتروني.",
+          "invalidLocale": "هذه اللغة ليست من لغات المتجر.",
+          "tooSoon": "أُرسلت تجربة لهذا القالب قبل لحظات. انتظر بضع ثوانٍ وحاول مجددًا.",
+          "notFound": "هذا القالب لم يعد موجودًا.",
+          "notAuthorized": "إرسال التجارب متاح لصاحب المتجر فقط.",
+          "failed": "حدث خطأ: {error}"
+        },
+        "details": "{duration} مللي ثانية، {count, plural, =0 {لا تنبيهات} one {تنبيه واحد} other {# تنبيهات}}",
+        "logged": "سُجلت في {file}",
+        "notLogged": "لم تُسجل: {error}"
+      }
     }
   },
   "UI": {
@@ -2707,7 +3116,10 @@ cat > src/messages/ar.json <<'EOF'
       "unsubscribe": "إلغاء الاشتراك",
       "viewProduct": "عرض المنتج",
       "discountTitle": "رمزك",
-      "discountHint": "أدخله في سلة التسوق أو عند الدفع."
+      "discountHint": "أدخله في سلة التسوق أو عند الدفع.",
+      "discountPercent": "خصم {percent}٪",
+      "discountAmount": "خصم {amount}",
+      "discountFreeShipping": "شحن مجاني"
     }
   },
   "Home": {
