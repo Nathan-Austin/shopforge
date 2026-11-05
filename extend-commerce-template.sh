@@ -76,6 +76,12 @@ if ! grep -q '"stripe"' package.json; then
   pnpm add stripe
 fi
 
+# Stores generated before the email designer need its text editor.
+if ! grep -q '"@tiptap/react"' package.json; then
+  echo "📦 Adding the email designer's editor (Tiptap)..."
+  pnpm add @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-text-style @tiptap/extension-text-align
+fi
+
 # The cart service is server-only; this makes a client import fail the build.
 if ! grep -q '"server-only"' package.json; then
   echo "📦 Adding server-only..."

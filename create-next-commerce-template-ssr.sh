@@ -334,6 +334,8 @@ pnpm add @supabase/supabase-js @supabase/ssr next-intl react-hook-form zod clsx 
 pnpm add server-only
 # stripe is imported by src/lib/stripe/server.ts (copied from shared-assets)
 pnpm add stripe
+# Tiptap is the email designer's text editor (admin pages only).
+pnpm add @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-text-style @tiptap/extension-text-align
 # tailwindcss-rtl is Tailwind v3 only; Tailwind v4 has native rtl:/ltr: variants built-in
 # Tailwind 4 runs through @tailwindcss/turbopack (see next.config.ts), so
 # there is no postcss.config and no need for postcss/autoprefixer.
