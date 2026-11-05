@@ -108,7 +108,7 @@ fi
 
 # The storefront routes the product cards link to. A page file in the wrong
 # folder would not fail the build either, so check the route table.
-for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]" "/sitemap.xml" "/robots.txt" "/api/feeds/google/\[locale\]"; do
+for route in "/\[locale\]/shop" "/\[locale\]/shop/\[slug\]" "/\[locale\]/admin/orders/\[id\]" "/sitemap.xml" "/robots.txt" "/api/feeds/google/\[locale\]" "/\[locale\]/newsletter/confirm" "/\[locale\]/newsletter/unsubscribe" "/api/email/unsubscribe"; do
   # ƒ is a dynamic route, ○ a static one; robots.txt is static.
   if ! grep -qE "[ƒ○] +$route\$" "$BUILD_LOG"; then
     echo "❌ Build output has no $route route." >&2
