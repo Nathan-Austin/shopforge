@@ -580,25 +580,9 @@ if [ "$NEXT_PUBLIC_STORE_MODE" = "single" ] && [ -f "$MODE_DIR/brand-single.sql"
   cp "$MODE_DIR/brand-single.sql" supabase/migrations/0003_brand_single.sql
 fi
 
-# 4. Storage Policies (Standard for all templates)
-cat > supabase/migrations/0004_storage_policies.sql <<'SQL'
--- Storage Policies
--- Note: 'product-images' bucket must be created in the Supabase Dashboard.
--- These policies apply once the bucket exists.
--- RLS should be enabled via the Dashboard Storage settings.
-
-create policy "Public read product-images" 
-on storage.objects for select 
-using (bucket_id = 'product-images');
-
-create policy "Authenticated upload product-images" 
-on storage.objects for insert 
-with check (bucket_id = 'product-images' AND (auth.role() = 'authenticated'));
-
-create policy "Authenticated delete product-images" 
-on storage.objects for delete 
-using (bucket_id = 'product-images' AND (auth.role() = 'authenticated'));
-SQL
+# 4. Storage Policies (Standard for all templates): public read, owner-only
+# writes. Kept in lib/ so test/check-schema.sh can test them too.
+cp "$SCRIPT_DIR/lib/storage-policies.sql" supabase/migrations/0004_storage_policies.sql
 
 if [ "$SKIP_SUPABASE" = "true" ]; then
   echo "🗄️ Migrations written to supabase/migrations (not pushed: --skip-supabase)."
