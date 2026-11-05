@@ -183,30 +183,42 @@ loose in `/tmp`.
       (owner-only RLS, document validated on every save), save, duplicate
       and delete actions, and "send a test to me" through Resend returning
       a structured result that is also appended as JSON lines to
-      `$EMAIL_TMP_DIR/logs/`
+      `$EMAIL_TMP_DIR/logs/`. A plain `/admin/email` page to create a
+      template from a starter, preview it (desktop/phone, per language),
+      duplicate, delete and test-send it, until the designer replaces it
 - [ ] **C. The designer** at `/admin/email`: block palette, reorder,
       settings panel per block, Tiptap toolbar, product and discount-code
       pickers, column sections, a merge-tag menu, a locale switcher that
       flags missing translations, desktop/phone preview, starter templates
-      per store mode
-- [ ] **D. Subscribers.** `email_subscribers` with double opt-in and a
+      per store mode. Tiptap 3 for the text toolbar (approved 2026-11-05)
+- [ ] **D. Subscribers.** `email_subscribers` with double opt-in (required,
+      decided 2026-11-05) and a
       consent record, a signed unsubscribe link and one-click
       `List-Unsubscribe` (RFC 8058), sign-up in the footer and at checkout,
       the admin list with CSV import and export
 - [ ] **E. Sending campaigns.** A provider adapter: Resend (contacts and
       broadcasts) first, then Mailchimp (sync members, create a campaign
       with our HTML, send or schedule). Campaign rows with status, schedule
-      and a per-send log; the provider's limits shown before sending
+      and a per-send log; the provider's limits shown before sending.
+      Campaigns never go through the transactional send path, which is
+      for receipts and single test sends only
 - [ ] **F. Provider keys.** The generator asks for the campaign provider
-      and its key (`.env.local`); the admin shows which provider is active,
-      tests the key, and accepts a key typed in the dashboard (where it is
-      stored is an open decision: Supabase Vault or env-only)
+      and its key (`.env.local`); the admin shows which provider is active.
+      A key typed in the dashboard is write-only (decided 2026-11-05): the
+      owner enters it, tests it, and only a successful test stores it,
+      encrypted (Supabase Vault, readable by the server alone); the input
+      is cleared and a "saved" message says plainly that the key cannot
+      and will not be shown again, that a copy has to come from the
+      provider, and that replacing it means entering a new one. The admin
+      only ever shows that a key is set, when, and its last four
+      characters at most
 - [ ] **G. Transactional templates.** The builder's brand theme (logo,
       colours, footer) and editable intro/footer copy per locale applied to
       the receipt, shipping and refund emails, with the order details
-      still generated in code
-- [ ] **H. More providers** behind the same adapter as shops ask: Brevo,
-      MailerLite, Kit
+      still generated in code (scope confirmed 2026-11-05)
+- [ ] **H. More providers** behind the same adapter, the popular ones for
+      small shops: Brevo, MailerLite, Kit, Klaviyo (e-commerce focused) and
+      Mailjet
 
 ## 3. Languages
 
