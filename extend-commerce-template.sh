@@ -218,6 +218,8 @@ const addressSchema = z.object({
 const checkoutSchema = z.object({
   email: z.email(),
   locale: z.string().min(2),
+  // The unticked "email me news" box: 'on' only when the customer ticked it.
+  newsletter: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -357,6 +359,10 @@ export async function POST(request: Request) {
         // goods discounts are read from Stripe's own total_details.
         discount_code: discount?.code ?? '',
         shipping_discount_cents: promo.outcome.shippingDiscountCents.toString(),
+        // The webhook asks for the newsletter only once the payment is in,
+        // and the customer still confirms by email (double opt-in).
+        newsletter: payload.newsletter === 'on' ? '1' : '',
+        newsletter_first_name: address?.firstName ?? '',
         ...(address
           ? {
               shipping_name: `${address.firstName} ${address.lastName}`,
@@ -393,6 +399,7 @@ import { getEmailConfig } from '@/lib/email/config';
 import { getTranslations } from 'next-intl/server';
 
 import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
+import { requestSubscription } from '@/lib/email/subscribers/service';
 
 /**
  * Stripe webhook.
@@ -697,6 +704,24 @@ export async function POST(request: Request) {
         // owner can see it was never confirmed.
         console.error(`Could not email the confirmation for ${order.id}:`, result.error);
       }
+
+      // Ticked "email me news" at checkout: a pending subscriber and a
+      // confirmation email. Safe on a retried webhook (an address already
+      // pending or subscribed gets nothing new), and never fails the order.
+      if (session.metadata?.newsletter === '1') {
+        try {
+          const tNewsletter = await getTranslations({ locale, namespace: 'Newsletter' });
+          await requestSubscription({
+            email: customerEmail,
+            firstName: session.metadata?.newsletter_first_name || null,
+            locale,
+            source: 'checkout',
+            consentText: tNewsletter('consent', { shop: shopName })
+          });
+        } catch (subscribeError) {
+          console.error(`Could not add ${order.id}'s customer to the newsletter:`, subscribeError);
+        }
+      }
     }
 
     // 4. Stock.
@@ -739,6 +764,7 @@ import { getTranslations } from 'next-intl/server';
 
 import CheckoutForm from '@/components/cart/CheckoutForm';
 import DiscountCodeForm from '@/components/cart/DiscountCodeForm';
+import { newsletterStatus } from '@/lib/email/subscribers/config';
 import { createClient } from '@/lib/supabase/server';
 import { getCart } from '@/lib/cart/service';
 import { resolveCartDiscount } from '@/lib/discounts/service';
@@ -819,7 +845,7 @@ export default async function CheckoutPage({
         />
       </div>
 
-      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} />
+      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} newsletter={newsletterStatus().enabled} />
     </main>
   );
 }
@@ -1185,11 +1211,15 @@ function countryName(code: string, locale: string): string {
 }
 export default function CheckoutForm({
   locale,
-  defaultEmail
+  defaultEmail,
+  newsletter = false
 }: {
   locale: string;
   defaultEmail: string;
+  /** Offer the newsletter box: only when the shop can send its confirmation. */
+  newsletter?: boolean;
 }) {
+  const tNewsletter = useTranslations('Newsletter');
   const t = useTranslations('Checkout');
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -1297,6 +1327,14 @@ export default function CheckoutForm({
         </div>
       </div>
       </>
+      )}
+
+      {newsletter && (
+        <label className="flex items-start gap-2 text-sm">
+          {/* Never ticked in advance: consent has to be the customer's own act. */}
+          <input type="checkbox" name="newsletter" className="mt-1" />
+          <span>{tNewsletter('checkoutOptIn')}</span>
+        </label>
       )}
 
       <Button type="submit" disabled={loading} className="w-full">
