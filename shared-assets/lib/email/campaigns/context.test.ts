@@ -2,7 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import type { DiscountCode } from '../../discounts/rules';
 import { formatPrice } from '../../format';
-import { campaignDiscounts, describeDiscount, sampleSubscriberValues, toCampaignProduct, type DiscountWording } from './context';
+import {
+  campaignDiscounts,
+  describeDiscount,
+  designerPreviewContext,
+  previewUnsubscribeUrl,
+  sampleSubscriberValues,
+  toCampaignProduct,
+  toCatalogProduct,
+  type DesignerData,
+  type DiscountWording
+} from './context';
+import { sampleDocument } from './fixtures';
+import { renderCampaign } from './render';
 
 const row = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -89,5 +101,58 @@ describe('campaignDiscounts', () => {
 describe('sampleSubscriberValues', () => {
   it('only fills subscriber tags', () => {
     expect(sampleSubscriberValues()).toEqual({ 'subscriber.first_name': 'Alex', 'subscriber.email': 'alex@example.com' });
+  });
+});
+
+describe('designerPreviewContext', () => {
+  const data: DesignerData = {
+    shop: { name: 'Test Shop', url: 'https://shop.example' },
+    catalog: [toCatalogProduct(row, ['🌶 Hot (8/10)'])],
+    discounts: [{ code: 'SPRING15', status: 'active' }],
+    locales: {
+      en: {
+        strings: { footerReason: 'Subscribed to Test Shop.', unsubscribe: 'Unsubscribe', viewProduct: 'View product', discountTitle: 'Your code', discountHint: 'At checkout.' },
+        discountLabels: { SPRING15: '15% off' }
+      },
+      de: {
+        strings: { footerReason: 'Abonniert bei Test Shop.', unsubscribe: 'Abmelden', viewProduct: 'Zum Produkt', discountTitle: 'Ihr Code', discountHint: 'An der Kasse.' },
+        discountLabels: { SPRING15: '15 % Rabatt' }
+      }
+    }
+  };
+
+  it('builds the same context a test send gets, in the language asked for', () => {
+    const context = designerPreviewContext(data, 'de', 'en');
+    expect(context.strings.unsubscribe).toBe('Abmelden');
+    expect(context.discounts).toEqual({ SPRING15: { code: 'SPRING15', label: '15 % Rabatt' } });
+    expect(context.products[row.id]?.url).toBe('https://shop.example/de/shop/ghost%20pepper');
+    expect(context.products[row.id]?.extras).toEqual(['🌶 Hot (8/10)']);
+    expect(context.unsubscribeUrl).toBe('https://shop.example/de');
+    expect(context.mergeValues).toEqual(sampleSubscriberValues());
+    expect(context.recipient).toBeNull();
+  });
+
+  it('falls back to the default language\'s wording for a market without its own', () => {
+    expect(designerPreviewContext(data, 'fr', 'en').strings.unsubscribe).toBe('Unsubscribe');
+  });
+
+  it('renders the sample campaign with it', () => {
+    const result = renderCampaign(sampleDocument(), designerPreviewContext(data, 'de', 'en'));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.email.html).toContain('15 % Rabatt');
+      expect(result.email.html).toContain('Hallo Alex!');
+    }
+  });
+
+  it('has no products to link without a site address', () => {
+    expect(designerPreviewContext({ ...data, shop: { name: 'S', url: null } }, 'en', 'en').products).toEqual({});
+  });
+});
+
+describe('previewUnsubscribeUrl', () => {
+  it('is the shop home page in that language', () => {
+    expect(previewUnsubscribeUrl('https://shop.example/', 'de-at')).toBe('https://shop.example/de-at');
+    expect(previewUnsubscribeUrl(null, 'en')).toBeNull();
   });
 });
