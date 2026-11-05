@@ -98,6 +98,19 @@ begin
   end if;
 end $$;
 
+-- ...but not when a test send is claimed, and a client cannot set it.
+do $$
+declare before timestamptz;
+begin
+  select updated_at into before from public.email_templates where id = '00000000-0000-4000-8000-00000000e001';
+  perform pg_sleep(0.01);
+  update public.email_templates set last_test_sent_at = now() where id = '00000000-0000-4000-8000-00000000e001';
+  update public.email_templates set updated_at = '2000-01-01' where id = '00000000-0000-4000-8000-00000000e001';
+  if (select updated_at from public.email_templates where id = '00000000-0000-4000-8000-00000000e001') <> before then
+    raise exception 'updated_at moved without an edit';
+  end if;
+end $$;
+
 select pg_temp.act_as('00000000-0000-4000-8000-0000000000a1') \gset
 delete from public.email_templates where id = '00000000-0000-4000-8000-00000000e001';
 reset role;

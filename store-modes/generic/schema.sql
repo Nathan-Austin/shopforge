@@ -1092,11 +1092,29 @@ create table if not exists public.email_templates (
 
 create index if not exists idx_email_templates_updated on public.email_templates(updated_at desc);
 
+-- updated_at is "last edited": it moves when the name or the document
+-- changes, not when a test send is claimed, and a client cannot set it.
+create or replace function public.touch_email_template_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.name is distinct from old.name
+     or new.kind is distinct from old.kind
+     or new.document is distinct from old.document then
+    new.updated_at := now();
+  else
+    new.updated_at := old.updated_at;
+  end if;
+  return new;
+end;
+$$;
+
 drop trigger if exists trg_email_templates_updated on public.email_templates;
 create trigger trg_email_templates_updated
 before update on public.email_templates
 for each row
-execute function public.touch_updated_at();
+execute function public.touch_email_template_updated_at();
 
 alter table public.email_templates enable row level security;
 
