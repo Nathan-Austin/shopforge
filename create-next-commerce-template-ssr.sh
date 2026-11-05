@@ -2811,8 +2811,24 @@ EOF
 # loads as ESM without adding "type": "module" to package.json, which would
 # change how Next loads its own config.
 cat > vitest.config.mts <<'EOF'
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+
+/**
+ * EMAIL_TMP_DIR from the environment or .env.local, which Vitest does not
+ * read: the email tests write their previews where the app writes its
+ * email logs, never loose in /tmp.
+ */
+function emailTmpDir(): string {
+  if (process.env.EMAIL_TMP_DIR) return process.env.EMAIL_TMP_DIR;
+  try {
+    const match = readFileSync('.env.local', 'utf8').match(/^EMAIL_TMP_DIR=(.*)$/m);
+    return match ? match[1].trim() : '';
+  } catch {
+    return '';
+  }
+}
 
 export default defineConfig({
   resolve: {
@@ -2823,6 +2839,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    env: { EMAIL_TMP_DIR: emailTmpDir() },
   },
 });
 EOF
@@ -4569,6 +4586,25 @@ ensure_env_default "EMAIL_FROM" ""
 ensure_env_default "EMAIL_REPLY_TO" ""
 ensure_env_default "SHOP_OWNER_EMAIL" ""
 ensure_env_default "NEXT_PUBLIC_SHOP_NAME" "$APP_NAME"
+# Working files of the email tools (send logs, rendered previews) go in one
+# /tmp/sf-<tag>-email-builder directory and nowhere else, so two checkouts
+# or two shops on one machine never share them. The tag is
+# SHOPFORGE_TMP_TAG if set, else the last part of the shopforge branch
+# (feat/email-builder -> email-builder), else the shop's name.
+email_tmp_tag() {
+  local tag="${SHOPFORGE_TMP_TAG:-}"
+  if [ -z "$tag" ]; then
+    local branch
+    branch=$(git -C "$SCRIPT_DIR" branch --show-current 2>/dev/null || true)
+    case "$branch" in
+      ""|main|master) tag="$APP_NAME" ;;
+      *) tag="${branch##*/}" ;;
+    esac
+  fi
+  tag=$(echo "$tag" | tr 'A-Z' 'a-z' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')
+  echo "${tag:-shop}"
+}
+ensure_env_default "EMAIL_TMP_DIR" "/tmp/sf-$(email_tmp_tag)-email-builder"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
