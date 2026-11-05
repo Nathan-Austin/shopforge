@@ -5,8 +5,10 @@ import { getTranslations } from 'next-intl/server';
 import { newsletterStatus } from '@/lib/email/subscribers/config';
 import { SUBSCRIBER_STATUSES, type SubscriberStatus } from '@/lib/email/subscribers/rules';
 import { SUBSCRIBER_COLUMNS, type SubscriberRow } from '@/lib/email/subscribers/service';
+import { LOCALES } from '@/i18n/config';
 import {
   deleteSubscriber,
+  editSubscriber,
   importSubscriberCsv,
   resendSubscriberConfirmation,
   unsubscribeSubscriber,
@@ -20,7 +22,7 @@ import { requireShopOwner } from '../../lib/auth';
 export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 50;
-const NOTICES = ['unsubscribed', 'deleted', 'resent', 'not_authorized', 'not_found', 'not_pending', 'failed'];
+const NOTICES = ['unsubscribed', 'deleted', 'resent', 'updated', 'not_authorized', 'not_found', 'not_pending', 'invalid', 'failed'];
 
 /** The newsletter list: who is on it, how they got there, and the owner's tools for it. */
 export default async function AdminSubscribersPage({
@@ -77,6 +79,7 @@ export default async function AdminSubscribersPage({
   const unsubscribe = act(unsubscribeSubscriber);
   const remove = act(deleteSubscriber);
   const resend = act(resendSubscriberConfirmation);
+  const edit = act(editSubscriber);
 
   const notice = query.notice && NOTICES.includes(query.notice) ? query.notice : null;
   const badge: Record<SubscriberStatus, string> = {
@@ -99,7 +102,7 @@ export default async function AdminSubscribersPage({
       {notice && (
         <p
           role="status"
-          className={`rounded-md border px-3 py-2 text-sm ${['unsubscribed', 'deleted', 'resent'].includes(notice) ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-red-200 bg-red-50 text-red-900'}`}
+          className={`rounded-md border px-3 py-2 text-sm ${['unsubscribed', 'deleted', 'resent', 'updated'].includes(notice) ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-red-200 bg-red-50 text-red-900'}`}
         >
           {t(`notices.${notice}`)}
         </p>
@@ -206,6 +209,29 @@ export default async function AdminSubscribersPage({
                         </ConfirmSubmitButton>
                       </form>
                     </div>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs underline">{t('edit')}</summary>
+                      <form action={edit} className="mt-2 flex flex-wrap items-end gap-2">
+                        <input type="hidden" name="id" value={subscriber.id} />
+                        <label className="block text-xs font-medium">
+                          {t('editName')}
+                          <input type="text" name="first_name" defaultValue={subscriber.first_name ?? ''} maxLength={100} className="mt-1 block w-36 rounded-md border border-border bg-white px-2 py-1 text-sm" />
+                        </label>
+                        <label className="block text-xs font-medium">
+                          {t('editLanguage')}
+                          <select name="locale" defaultValue={subscriber.locale} className="mt-1 block rounded-md border border-border bg-white px-2 py-1 text-sm">
+                            {(LOCALES as readonly string[]).map((code) => (
+                              <option key={code} value={code}>
+                                {code}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <button type="submit" className="rounded-md border border-border px-3 py-1 text-sm hover:border-emerald-700">
+                          {t('editSave')}
+                        </button>
+                      </form>
+                    </details>
                   </td>
                 </tr>
               ))}

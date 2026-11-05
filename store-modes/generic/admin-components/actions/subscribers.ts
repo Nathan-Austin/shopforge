@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
 import { MAX_IMPORT_BYTES, parseSubscriberCsv, type CsvImportError } from '@/lib/email/subscribers/csv';
-import { importSubscribers, ownerDelete, ownerResendConfirmation, ownerUnsubscribe } from '@/lib/email/subscribers/service';
+import { importSubscribers, ownerDelete, ownerEdit, ownerResendConfirmation, ownerUnsubscribe } from '@/lib/email/subscribers/service';
 import { ensureShopOwner } from '../lib/auth';
 
 interface Context {
@@ -13,8 +13,8 @@ interface Context {
 }
 
 export type SubscriberActionResult =
-  | { ok: true; action: 'unsubscribed' | 'deleted' | 'resent' }
-  | { ok: false; error: 'not_authorized' | 'not_found' | 'not_pending' | 'failed' };
+  | { ok: true; action: 'unsubscribed' | 'deleted' | 'resent' | 'updated' }
+  | { ok: false; error: 'not_authorized' | 'not_found' | 'not_pending' | 'invalid' | 'failed' };
 
 function refresh(locale: string) {
   revalidatePath(`/${locale}/admin/email/subscribers`);
@@ -45,6 +45,20 @@ export async function deleteSubscriber(context: Context, formData: FormData): Pr
   if (!id || !(await ownerDelete(id))) return { ok: false, error: 'not_found' };
   refresh(context.locale);
   return { ok: true, action: 'deleted' };
+}
+
+/** A corrected first name or a move to another of the shop's languages. */
+export async function editSubscriber(context: Context, formData: FormData): Promise<SubscriberActionResult> {
+  const { error } = await ensureShopOwner();
+  if (error) return { ok: false, error: 'not_authorized' };
+  const id = subscriberId(formData);
+  if (!id) return { ok: false, error: 'not_found' };
+  const locale = formData.get('locale')?.toString() ?? '';
+  if (!(LOCALES as readonly string[]).includes(locale)) return { ok: false, error: 'invalid' };
+  const result = await ownerEdit(id, { firstName: formData.get('first_name'), locale });
+  refresh(context.locale);
+  if (result === 'updated') return { ok: true, action: 'updated' };
+  return { ok: false, error: result === 'invalid' ? 'invalid' : 'not_found' };
 }
 
 export async function resendSubscriberConfirmation(context: Context, formData: FormData): Promise<SubscriberActionResult> {
