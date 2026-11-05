@@ -32,7 +32,7 @@ describe('renderCampaign', () => {
     expect(html).toContain('<span style="font-size:24px;">big</span>');
     // {{shop.url}} has its trailing slash removed before the path is added.
     expect(html).toContain('href="https://shop.example/en/shop"');
-    expect(html).toMatch(/<ul [^>]*>.*Free shipping over 50.*<\/ul>/s);
+    expect(html).toMatch(/<ul [^>]*>[\s\S]*Free shipping over 50[\s\S]*<\/ul>/);
     expect(text).toContain('See the shop (https://shop.example/en/shop)');
     expect(text).toContain('- Free shipping over 50');
   });
