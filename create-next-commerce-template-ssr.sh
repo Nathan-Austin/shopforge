@@ -465,6 +465,10 @@ mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
 mkdir -p src/components
 cp -R "$SHARED_DIR/components/." src/components/
+# Pages and routes that are plain files rather than generated here (the
+# newsletter confirm and unsubscribe pages, the one-click endpoint).
+mkdir -p src/app
+cp -R "$SHARED_DIR/app/." src/app/
 
 # 3) Initialize Supabase (creates /supabase/)
 if [ "$SKIP_SUPABASE" = "true" ]; then
@@ -4821,6 +4825,7 @@ import '../globals.css';
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 import Header from '@/components/Header';
+import SiteFooter from '@/components/newsletter/SiteFooter';
 import { parseLocale } from '@/lib/i18n/locales';
 import { siteUrl } from '@/lib/seo/alternates';
 import { googleSiteVerification, shopName } from '@/lib/seo/store';
@@ -4859,6 +4864,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <Header locale={locale} />
           <main>{children}</main>
+          <SiteFooter locale={locale} />
         </NextIntlClientProvider>
       </body>
     </html>
@@ -6220,6 +6226,9 @@ email_tmp_tag() {
 # An exported EMAIL_TMP_DIR wins (the test script sets it with --tmp-dir).
 ensure_env_default "EMAIL_TMP_DIR" "${EMAIL_TMP_DIR:-/tmp/sf-$(email_tmp_tag)-email-builder}"
 ensure_env_default "NEXTAUTH_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
+# Signs the newsletter's confirm and unsubscribe links. Changing it breaks
+# every link already sent, so keep it once the shop has subscribers.
+ensure_env_default "EMAIL_SIGNING_SECRET" "$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d " \n")"
 
 # 15) Dev README
 cat > README.md <<'EOF'

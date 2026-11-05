@@ -53,6 +53,8 @@ mkdir -p src/lib
 cp -R "$SHARED_DIR/lib/." src/lib/
 mkdir -p src/components
 cp -R "$SHARED_DIR/components/." src/components/
+mkdir -p src/app
+cp -R "$SHARED_DIR/app/." src/app/
 
 # Shops generated before the product field catalogue existed have no config;
 # give them every field so nothing the admin form shows is silently dropped.
