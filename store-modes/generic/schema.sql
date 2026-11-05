@@ -1063,3 +1063,51 @@ as $$
 $$;
 
 revoke all on function public.record_discount_redemption(text) from public, anon, authenticated;
+
+-- Email templates --------------------------------------------------------------
+
+-- Campaign templates built in the admin (/admin/email). The document is the
+-- block layout the designer edits; the app validates it in full (Zod,
+-- src/lib/email/campaigns/schema.ts) on every save, and these checks are
+-- only the backstop for a write that skipped the app: an object, version 1,
+-- and small enough that no single row can bloat the table.
+create table if not exists public.email_templates (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(trim(name)) between 1 and 120),
+  -- 'campaign' today; transactional layouts (receipt, shipping, refund)
+  -- join in a later phase.
+  kind text not null default 'campaign' check (kind in ('campaign')),
+  document jsonb not null check (
+    jsonb_typeof(document) = 'object'
+    -- coalesce: a missing version is null, which a check would let through
+    and coalesce(document->>'version' = '1', false)
+    and pg_column_size(document) <= 262144
+  ),
+  -- Claimed before a test send, so a double click sends one email.
+  last_test_sent_at timestamptz,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_email_templates_updated on public.email_templates(updated_at desc);
+
+drop trigger if exists trg_email_templates_updated on public.email_templates;
+create trigger trg_email_templates_updated
+before update on public.email_templates
+for each row
+execute function public.touch_updated_at();
+
+alter table public.email_templates enable row level security;
+
+-- The owner's alone: customers and visitors never see a template, not even
+-- one about to be sent to them.
+drop policy if exists "Email templates manage" on public.email_templates;
+create policy "Email templates manage"
+  on public.email_templates
+  for all
+  using (public.is_shop_owner())
+  with check (public.is_shop_owner());
+
+revoke all on public.email_templates from anon, authenticated;
+grant select, insert, update, delete on public.email_templates to authenticated;
