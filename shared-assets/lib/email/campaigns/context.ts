@@ -9,6 +9,7 @@
 
 import { discountStatus, type DiscountCode } from '../../discounts/rules';
 import { formatPrice } from '../../format';
+import { unsubscribePreviewUrl } from '../subscribers/links';
 import { MERGE_TAGS, type MergeValues } from './mergeTags';
 import type { CampaignDiscount, CampaignProduct, CampaignRenderContext, CampaignStrings } from './render';
 
@@ -118,13 +119,12 @@ export function campaignDiscounts(
 }
 
 /**
- * Until subscribers exist (roadmap phase D) previews and tests have no
- * real unsubscribe link; they point at the shop's home page in that
- * language, so the footer looks as it will.
+ * Previews and test sends have no subscriber behind them, so their
+ * unsubscribe link opens the unsubscribe page in preview mode: it looks as
+ * it will, and says that in a real email it would unsubscribe the reader.
  */
 export function previewUnsubscribeUrl(siteUrl: string | null, locale: string): string | null {
-  const base = siteUrl?.replace(/\/$/, '');
-  return base ? `${base}/${locale}` : null;
+  return siteUrl ? unsubscribePreviewUrl(siteUrl, locale) : null;
 }
 
 /**

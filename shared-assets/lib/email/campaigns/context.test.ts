@@ -127,7 +127,7 @@ describe('designerPreviewContext', () => {
     expect(context.discounts).toEqual({ SPRING15: { code: 'SPRING15', label: '15 % Rabatt' } });
     expect(context.products[row.id]?.url).toBe('https://shop.example/de/shop/ghost%20pepper');
     expect(context.products[row.id]?.extras).toEqual(['🌶 Hot (8/10)']);
-    expect(context.unsubscribeUrl).toBe('https://shop.example/de');
+    expect(context.unsubscribeUrl).toBe('https://shop.example/de/newsletter/unsubscribe?preview=1');
     expect(context.mergeValues).toEqual(sampleSubscriberValues());
     expect(context.recipient).toBeNull();
   });
@@ -151,8 +151,8 @@ describe('designerPreviewContext', () => {
 });
 
 describe('previewUnsubscribeUrl', () => {
-  it('is the shop home page in that language', () => {
-    expect(previewUnsubscribeUrl('https://shop.example/', 'de-at')).toBe('https://shop.example/de-at');
+  it('is the unsubscribe page in preview mode, in that language', () => {
+    expect(previewUnsubscribeUrl('https://shop.example/', 'de-at')).toBe('https://shop.example/de-at/newsletter/unsubscribe?preview=1');
     expect(previewUnsubscribeUrl(null, 'en')).toBeNull();
   });
 });
