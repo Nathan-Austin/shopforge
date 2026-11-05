@@ -47,8 +47,9 @@ export default function NewsletterSignup({ action, shopName }: NewsletterSignupP
           {pending ? t('sending') : t('submit')}
         </button>
       </div>
-      {/* Hidden from people, not from bots. */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+      {/* Hidden from people, not from bots. Clipped in place rather than moved
+          off-screen: pushed far left, it made right-to-left pages scroll sideways. */}
+      <div aria-hidden="true" className="pointer-events-none absolute h-px w-px overflow-hidden opacity-0 [clip:rect(0,0,0,0)]">
         <label>
           Website
           <input type="text" name="website" tabIndex={-1} autoComplete="off" />

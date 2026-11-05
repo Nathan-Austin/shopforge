@@ -15,7 +15,8 @@ export default async function SiteFooter({ locale }: { locale: string }) {
 
   return (
     <footer className="mt-16 border-t border-gray-200 bg-gray-50">
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+      {/* Same width as the header, so the two line up. */}
+      <div className="mx-auto max-w-5xl space-y-6 px-6 py-10">
         {newsletter && (
           <div className="max-w-2xl">
             <NewsletterSignup action={subscribeToNewsletter.bind(null, locale)} shopName={shopName} />
