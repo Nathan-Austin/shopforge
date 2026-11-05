@@ -8,6 +8,8 @@
  * carries Resend's message for the owner to read.
  */
 
+import type { PassthroughTags } from '../campaigns/mergeTags';
+
 const ENDPOINT = 'https://api.resend.com';
 
 export type ResendResult<T> =
@@ -123,10 +125,10 @@ export function createResendClient({ apiKey, fetch: fetchImpl = fetch }: ResendC
 export type ResendClient = ReturnType<typeof createResendClient>;
 
 /** Resend's broadcast merge variables, in place of our recipient tags. */
-export const RESEND_PASSTHROUGH_TAGS = {
-  'subscriber.first_name': (fallback: string) => (fallback ? `{{{FIRST_NAME|${fallback}}}}` : '{{{FIRST_NAME}}}'),
-  'subscriber.email': (_fallback: string) => '{{{EMAIL}}}',
-  unsubscribe_url: (_fallback: string) => '{{{RESEND_UNSUBSCRIBE_URL}}}'
-} as const;
+export const RESEND_PASSTHROUGH_TAGS: PassthroughTags = {
+  'subscriber.first_name': (fallback) => (fallback ? `{{{FIRST_NAME|${fallback}}}}` : '{{{FIRST_NAME}}}'),
+  'subscriber.email': () => '{{{EMAIL}}}',
+  unsubscribe_url: () => '{{{RESEND_UNSUBSCRIBE_URL}}}'
+};
 
 export const RESEND_UNSUBSCRIBE_PLACEHOLDER = '{{{RESEND_UNSUBSCRIBE_URL}}}';

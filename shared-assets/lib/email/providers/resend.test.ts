@@ -63,8 +63,8 @@ describe('createResendClient', () => {
 
 describe('RESEND_PASSTHROUGH_TAGS', () => {
   it('writes Resend\'s variables with the owner\'s fallback', () => {
-    expect(RESEND_PASSTHROUGH_TAGS['subscriber.first_name']('there')).toBe('{{{FIRST_NAME|there}}}');
-    expect(RESEND_PASSTHROUGH_TAGS['subscriber.first_name']('')).toBe('{{{FIRST_NAME}}}');
-    expect(RESEND_PASSTHROUGH_TAGS.unsubscribe_url('')).toBe('{{{RESEND_UNSUBSCRIBE_URL}}}');
+    expect(RESEND_PASSTHROUGH_TAGS['subscriber.first_name']?.('there')).toBe('{{{FIRST_NAME|there}}}');
+    expect(RESEND_PASSTHROUGH_TAGS['subscriber.first_name']?.('')).toBe('{{{FIRST_NAME}}}');
+    expect(RESEND_PASSTHROUGH_TAGS.unsubscribe_url?.('')).toBe('{{{RESEND_UNSUBSCRIBE_URL}}}');
   });
 });
