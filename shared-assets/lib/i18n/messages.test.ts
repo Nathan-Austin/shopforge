@@ -47,7 +47,9 @@ const REQUIRED_NAMESPACES = [
   'Account',
   'UI',
   'SauceArchive',
-  'homepage'
+  'homepage',
+  'Newsletter',
+  'Footer'
 ];
 
 describe('message files', () => {

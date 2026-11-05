@@ -1020,7 +1020,7 @@ cat > src/messages/en.json <<'EOF'
     "email": {
       "heading": "Email campaigns",
       "subheading": "Templates for newsletters and offers. Preview them in each of the shop's languages and send yourself a test before anything goes to customers.",
-      "comingSoon": "Sending to subscribers is on its way; until then, send yourself a test from any template.",
+      "comingSoon": "Sending campaigns to subscribers is on its way; until then, send yourself a test from any template.",
       "notConfigured": "Test sends need RESEND_API_KEY and EMAIL_FROM in the shop's environment. Previews work without them.",
       "newHeading": "New template",
       "name": "Name",
@@ -1069,7 +1069,7 @@ cat > src/messages/en.json <<'EOF'
         "desktop": "Desktop",
         "phone": "Phone",
         "frameTitle": "Email preview, {width} pixels wide",
-        "sampleNote": "Merge tags show a sample subscriber called {name}. Until the subscriber list exists, the unsubscribe link points to the shop's home page."
+        "sampleNote": "Merge tags show a sample subscriber called {name}. The unsubscribe link opens the unsubscribe page as a preview."
       },
       "renderFailed": {
         "invalidDocument": "This template cannot be read: {issues}",
@@ -1292,6 +1292,84 @@ cat > src/messages/en.json <<'EOF'
           "logoWidth": "Logo width",
           "removeLogo": "Remove the logo"
         }
+      },
+      "tabs": {
+        "label": "Email",
+        "templates": "Templates",
+        "subscribers": "Subscribers"
+      },
+      "subscribers": {
+        "heading": "Subscribers",
+        "subheading": "Everyone who signed up for the newsletter, with when and how they agreed. Only confirmed subscribers will receive campaigns.",
+        "disabled": {
+          "email-not-configured": "Sign-up is switched off: email is not configured (RESEND_API_KEY and EMAIL_FROM), so no confirmation could be sent.",
+          "no-signing-secret": "Sign-up is switched off: EMAIL_SIGNING_SECRET is missing or shorter than 32 characters.",
+          "no-site-url": "Sign-up is switched off: NEXT_PUBLIC_SITE_URL is not set, so the links in emails would have nowhere to go."
+        },
+        "notices": {
+          "unsubscribed": "Unsubscribed.",
+          "deleted": "Deleted, with their history.",
+          "resent": "Confirmation email sent again.",
+          "not_authorized": "Only the shop owner can do that.",
+          "not_found": "That subscriber no longer exists.",
+          "not_pending": "Only people who have not confirmed yet can be sent the confirmation again.",
+          "failed": "Something went wrong. Please try again."
+        },
+        "status": {
+          "pending": "Waiting for confirmation",
+          "subscribed": "Subscribed",
+          "unsubscribed": "Unsubscribed"
+        },
+        "search": "Search by email",
+        "searchButton": "Search",
+        "exportAll": "Download all as CSV",
+        "exportFiltered": "Download “{status}” as CSV",
+        "noMatches": "Nobody matches.",
+        "empty": "Nobody has signed up yet. The sign-up form is at the bottom of every page.",
+        "columns": {
+          "email": "Email",
+          "language": "Language",
+          "status": "Status",
+          "source": "Signed up through",
+          "dates": "When",
+          "actions": "Actions"
+        },
+        "sources": {
+          "footer": "Footer form",
+          "checkout": "Checkout",
+          "import": "Import",
+          "admin": "Admin"
+        },
+        "signedUp": "Asked on {date}",
+        "confirmedOn": "Confirmed on {date}",
+        "unsubscribedOn": "Left on {date}",
+        "consentShown": "What they agreed to",
+        "resend": "Resend confirmation",
+        "unsubscribe": "Unsubscribe",
+        "confirmUnsubscribe": "Unsubscribe {email}? They can sign up again themselves.",
+        "delete": "Delete",
+        "confirmDelete": "Delete {email} and their history for good? Use this when someone asks to be forgotten.",
+        "pagination": "Pages",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {page} of {pages}",
+        "importHeading": "Import from another service",
+        "importIntro": "A CSV with an email column, and optionally first name and language, such as an export from Mailchimp. People already on the list are left as they are, and nobody who unsubscribed is added back.",
+        "importConsent": "These people agreed to receive email from this shop, and I can show it if asked.",
+        "importing": "Importing…",
+        "import": "Import",
+        "importDone": "{added, plural, =0 {Nobody new to add.} one {# subscriber added.} other {# subscribers added.}}",
+        "importSkipped": "Skipped: {existing} already on the list, {unsubscribed} unsubscribed, {duplicates} repeated, {invalid} not an email address.",
+        "importBadLine": "Line {line}: {value}",
+        "errors": {
+          "notAuthorized": "Only the shop owner can import.",
+          "noFile": "Choose a CSV file.",
+          "tooLarge": "The file is too large: at most 10,000 people and 2 MB at a time.",
+          "noConsent": "Tick the box to confirm these people agreed.",
+          "empty": "The file has no addresses in it.",
+          "failed": "The import stopped: {message}"
+        },
+        "importConsentRecord": "Imported on {date} by the owner of {shop}, who confirmed this person had agreed to receive email from the shop."
       }
     }
   },
@@ -1424,12 +1502,59 @@ cat > src/messages/en.json <<'EOF'
       "discountPercent": "{percent}% off",
       "discountAmount": "{amount} off",
       "discountFreeShipping": "Free shipping"
+    },
+    "subscribe": {
+      "subject": "{shop}: please confirm your subscription",
+      "headline": "One more step",
+      "intro": "Please confirm that you would like news and offers from {shop} by email.",
+      "button": "Confirm my subscription",
+      "expires": "The button works for 7 days.",
+      "ignore": "If you did not sign up, ignore this email: you will not be added, and you will not hear from us again."
     }
   },
   "Home": {
     "__after__": "Nav",
     "tagline": "Welcome to {shop}",
     "browse": "Browse the shop"
+  },
+  "Newsletter": {
+    "heading": "Stay in the loop",
+    "intro": "News, new arrivals and offers from {shop}, about once a month.",
+    "email": "Email address",
+    "firstName": "First name (optional)",
+    "submit": "Sign up",
+    "sending": "Signing up…",
+    "consent": "Yes, send me news and offers from {shop} by email. I can unsubscribe at any time.",
+    "thanks": "Almost there: we have sent you an email. Press the button in it to confirm your subscription.",
+    "invalidEmail": "Please enter a valid email address.",
+    "failed": "That did not work. Please try again in a moment.",
+    "checkoutOptIn": "Email me news and offers. I can unsubscribe at any time.",
+    "backToShop": "Back to the shop",
+    "confirm": {
+      "title": "Confirm your subscription",
+      "body": "Press the button to start receiving news and offers from {shop} at {email}.",
+      "button": "Confirm my subscription",
+      "confirmed": "You are subscribed. Welcome!",
+      "alreadySubscribed": "You are already subscribed.",
+      "unsubscribed": "This link is from before you unsubscribed, so it no longer works. You can sign up again at the bottom of any page.",
+      "invalid": "This link does not work. It may have been cut short when copied.",
+      "expired": "This link has expired. Sign up again at the bottom of any page to get a new one.",
+      "unavailable": "The newsletter is not available at the moment."
+    },
+    "unsubscribe": {
+      "title": "Unsubscribe",
+      "body": "Press the button to stop receiving news and offers from {shop} at {email}.",
+      "button": "Unsubscribe",
+      "done": "You are unsubscribed. You will not receive any more news from {shop}.",
+      "changedMind": "Changed your mind? You can sign up again at the bottom of any page.",
+      "alreadyDone": "You are already unsubscribed.",
+      "invalid": "This link does not work. It may have been cut short when copied.",
+      "unavailable": "Unsubscribing is not available at the moment. Please reply to the email instead.",
+      "preview": "This is a preview. In a real email, this link takes the reader to this page with a button that unsubscribes them."
+    }
+  },
+  "Footer": {
+    "copyright": "© {year} {shop}"
   }
 }
 EOF
@@ -1818,7 +1943,7 @@ cat > src/messages/de.json <<'EOF'
     "email": {
       "heading": "E-Mail-Kampagnen",
       "subheading": "Vorlagen für Newsletter und Angebote. Sehen Sie sie in jeder Sprache des Shops an und senden Sie sich einen Test, bevor etwas an Kunden geht.",
-      "comingSoon": "Der Versand an Abonnenten ist in Arbeit; bis dahin können Sie sich aus jeder Vorlage einen Test senden.",
+      "comingSoon": "Der Versand von Kampagnen an Abonnenten ist in Arbeit; bis dahin können Sie sich aus jeder Vorlage einen Test senden.",
       "notConfigured": "Testversand braucht RESEND_API_KEY und EMAIL_FROM in der Umgebung des Shops. Die Vorschau funktioniert auch ohne.",
       "newHeading": "Neue Vorlage",
       "name": "Name",
@@ -1867,7 +1992,7 @@ cat > src/messages/de.json <<'EOF'
         "desktop": "Desktop",
         "phone": "Smartphone",
         "frameTitle": "E-Mail-Vorschau, {width} Pixel breit",
-        "sampleNote": "Platzhalter zeigen einen Beispiel-Abonnenten namens {name}. Solange es keine Abonnentenliste gibt, führt der Abmeldelink zur Startseite des Shops."
+        "sampleNote": "Platzhalter zeigen einen Beispiel-Abonnenten namens {name}. Der Abmeldelink öffnet die Abmeldeseite als Vorschau."
       },
       "renderFailed": {
         "invalidDocument": "Diese Vorlage kann nicht gelesen werden: {issues}",
@@ -2090,6 +2215,84 @@ cat > src/messages/de.json <<'EOF'
           "logoWidth": "Logobreite",
           "removeLogo": "Logo entfernen"
         }
+      },
+      "tabs": {
+        "label": "E-Mail",
+        "templates": "Vorlagen",
+        "subscribers": "Abonnenten"
+      },
+      "subscribers": {
+        "heading": "Abonnenten",
+        "subheading": "Alle, die sich für den Newsletter angemeldet haben, mit Zeitpunkt und Art ihrer Zustimmung. Nur bestätigte Abonnenten erhalten Kampagnen.",
+        "disabled": {
+          "email-not-configured": "Die Anmeldung ist ausgeschaltet: E-Mail ist nicht eingerichtet (RESEND_API_KEY und EMAIL_FROM), es könnte keine Bestätigung verschickt werden.",
+          "no-signing-secret": "Die Anmeldung ist ausgeschaltet: EMAIL_SIGNING_SECRET fehlt oder ist kürzer als 32 Zeichen.",
+          "no-site-url": "Die Anmeldung ist ausgeschaltet: NEXT_PUBLIC_SITE_URL ist nicht gesetzt, die Links in E-Mails hätten kein Ziel."
+        },
+        "notices": {
+          "unsubscribed": "Abgemeldet.",
+          "deleted": "Gelöscht, samt Verlauf.",
+          "resent": "Bestätigungs-E-Mail erneut gesendet.",
+          "not_authorized": "Das darf nur der Shop-Inhaber.",
+          "not_found": "Diesen Abonnenten gibt es nicht mehr.",
+          "not_pending": "Die Bestätigung kann nur erneut an Personen gehen, die noch nicht bestätigt haben.",
+          "failed": "Etwas ist schiefgegangen. Bitte versuchen Sie es erneut."
+        },
+        "status": {
+          "pending": "Wartet auf Bestätigung",
+          "subscribed": "Angemeldet",
+          "unsubscribed": "Abgemeldet"
+        },
+        "search": "Nach E-Mail suchen",
+        "searchButton": "Suchen",
+        "exportAll": "Alle als CSV herunterladen",
+        "exportFiltered": "„{status}“ als CSV herunterladen",
+        "noMatches": "Keine Treffer.",
+        "empty": "Noch hat sich niemand angemeldet. Das Anmeldeformular steht unten auf jeder Seite.",
+        "columns": {
+          "email": "E-Mail",
+          "language": "Sprache",
+          "status": "Status",
+          "source": "Angemeldet über",
+          "dates": "Wann",
+          "actions": "Aktionen"
+        },
+        "sources": {
+          "footer": "Formular unten",
+          "checkout": "Kasse",
+          "import": "Import",
+          "admin": "Admin"
+        },
+        "signedUp": "Angefragt am {date}",
+        "confirmedOn": "Bestätigt am {date}",
+        "unsubscribedOn": "Abgemeldet am {date}",
+        "consentShown": "Wozu zugestimmt wurde",
+        "resend": "Bestätigung erneut senden",
+        "unsubscribe": "Abmelden",
+        "confirmUnsubscribe": "{email} abmelden? Die Person kann sich selbst wieder anmelden.",
+        "delete": "Löschen",
+        "confirmDelete": "{email} samt Verlauf endgültig löschen? Für den Fall, dass jemand vergessen werden möchte.",
+        "pagination": "Seiten",
+        "previous": "Zurück",
+        "next": "Weiter",
+        "pageOf": "Seite {page} von {pages}",
+        "importHeading": "Aus einem anderen Dienst importieren",
+        "importIntro": "Eine CSV-Datei mit einer E-Mail-Spalte, optional Vorname und Sprache, etwa ein Export aus Mailchimp. Wer schon auf der Liste steht, bleibt unverändert, und wer sich abgemeldet hat, wird nicht wieder hinzugefügt.",
+        "importConsent": "Diese Personen haben zugestimmt, E-Mails von diesem Shop zu erhalten, und ich kann das auf Nachfrage belegen.",
+        "importing": "Wird importiert…",
+        "import": "Importieren",
+        "importDone": "{added, plural, =0 {Niemand Neues hinzuzufügen.} one {# Abonnent hinzugefügt.} other {# Abonnenten hinzugefügt.}}",
+        "importSkipped": "Übersprungen: {existing} schon auf der Liste, {unsubscribed} abgemeldet, {duplicates} doppelt, {invalid} keine E-Mail-Adresse.",
+        "importBadLine": "Zeile {line}: {value}",
+        "errors": {
+          "notAuthorized": "Nur der Shop-Inhaber kann importieren.",
+          "noFile": "Wählen Sie eine CSV-Datei.",
+          "tooLarge": "Die Datei ist zu groß: höchstens 10.000 Personen und 2 MB auf einmal.",
+          "noConsent": "Bestätigen Sie mit dem Häkchen, dass diese Personen zugestimmt haben.",
+          "empty": "Die Datei enthält keine Adressen.",
+          "failed": "Der Import wurde abgebrochen: {message}"
+        },
+        "importConsentRecord": "Importiert am {date} vom Inhaber von {shop}, der bestätigt hat, dass diese Person dem E-Mail-Empfang vom Shop zugestimmt hatte."
       }
     }
   },
@@ -2222,12 +2425,59 @@ cat > src/messages/de.json <<'EOF'
       "discountPercent": "{percent} % Rabatt",
       "discountAmount": "{amount} Rabatt",
       "discountFreeShipping": "Kostenloser Versand"
+    },
+    "subscribe": {
+      "subject": "{shop}: Bitte bestätigen Sie Ihre Anmeldung",
+      "headline": "Noch ein Schritt",
+      "intro": "Bitte bestätigen Sie, dass Sie Neuigkeiten und Angebote von {shop} per E-Mail erhalten möchten.",
+      "button": "Anmeldung bestätigen",
+      "expires": "Die Schaltfläche funktioniert 7 Tage lang.",
+      "ignore": "Wenn Sie sich nicht angemeldet haben, ignorieren Sie diese E-Mail: Sie werden nicht eingetragen und hören nicht wieder von uns."
     }
   },
   "Home": {
     "__after__": "Nav",
     "tagline": "Willkommen bei {shop}",
     "browse": "Zum Shop"
+  },
+  "Newsletter": {
+    "heading": "Auf dem Laufenden bleiben",
+    "intro": "Neuigkeiten, neue Produkte und Angebote von {shop}, etwa einmal im Monat.",
+    "email": "E-Mail-Adresse",
+    "firstName": "Vorname (optional)",
+    "submit": "Anmelden",
+    "sending": "Wird angemeldet…",
+    "consent": "Ja, senden Sie mir Neuigkeiten und Angebote von {shop} per E-Mail. Ich kann mich jederzeit abmelden.",
+    "thanks": "Fast geschafft: Wir haben Ihnen eine E-Mail geschickt. Bestätigen Sie Ihre Anmeldung mit der Schaltfläche darin.",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "failed": "Das hat nicht geklappt. Bitte versuchen Sie es gleich noch einmal.",
+    "checkoutOptIn": "Senden Sie mir Neuigkeiten und Angebote per E-Mail. Ich kann mich jederzeit abmelden.",
+    "backToShop": "Zurück zum Shop",
+    "confirm": {
+      "title": "Anmeldung bestätigen",
+      "body": "Mit der Schaltfläche erhalten Sie künftig Neuigkeiten und Angebote von {shop} an {email}.",
+      "button": "Anmeldung bestätigen",
+      "confirmed": "Sie sind angemeldet. Willkommen!",
+      "alreadySubscribed": "Sie sind bereits angemeldet.",
+      "unsubscribed": "Dieser Link stammt aus der Zeit vor Ihrer Abmeldung und gilt nicht mehr. Unten auf jeder Seite können Sie sich neu anmelden.",
+      "invalid": "Dieser Link funktioniert nicht. Vielleicht wurde er beim Kopieren abgeschnitten.",
+      "expired": "Dieser Link ist abgelaufen. Melden Sie sich unten auf einer beliebigen Seite neu an, um einen neuen zu erhalten.",
+      "unavailable": "Der Newsletter ist gerade nicht verfügbar."
+    },
+    "unsubscribe": {
+      "title": "Abmelden",
+      "body": "Mit der Schaltfläche erhalten Sie keine Neuigkeiten und Angebote von {shop} mehr an {email}.",
+      "button": "Abmelden",
+      "done": "Sie sind abgemeldet und erhalten keine Neuigkeiten von {shop} mehr.",
+      "changedMind": "Doch anders überlegt? Unten auf jeder Seite können Sie sich jederzeit neu anmelden.",
+      "alreadyDone": "Sie sind bereits abgemeldet.",
+      "invalid": "Dieser Link funktioniert nicht. Vielleicht wurde er beim Kopieren abgeschnitten.",
+      "unavailable": "Die Abmeldung ist gerade nicht möglich. Antworten Sie bitte stattdessen auf die E-Mail.",
+      "preview": "Dies ist eine Vorschau. In einer echten E-Mail führt dieser Link zu dieser Seite mit einer Schaltfläche, die abmeldet."
+    }
+  },
+  "Footer": {
+    "copyright": "© {year} {shop}"
   }
 }
 EOF
@@ -2616,7 +2866,7 @@ cat > src/messages/tr.json <<'EOF'
     "email": {
       "heading": "E-posta kampanyaları",
       "subheading": "Bültenler ve teklifler için şablonlar. Mağazanın her dilinde önizleyin ve müşterilere bir şey gitmeden önce kendinize bir test gönderin.",
-      "comingSoon": "Abonelere gönderim yolda; o zamana kadar herhangi bir şablondan kendinize test gönderebilirsiniz.",
+      "comingSoon": "Abonelere kampanya gönderimi yolda; o zamana kadar herhangi bir şablondan kendinize test gönderebilirsiniz.",
       "notConfigured": "Test gönderimi için mağaza ortamında RESEND_API_KEY ve EMAIL_FROM gerekir. Önizleme bunlar olmadan da çalışır.",
       "newHeading": "Yeni şablon",
       "name": "Ad",
@@ -2665,7 +2915,7 @@ cat > src/messages/tr.json <<'EOF'
         "desktop": "Masaüstü",
         "phone": "Telefon",
         "frameTitle": "E-posta önizlemesi, {width} piksel genişliğinde",
-        "sampleNote": "Birleştirme etiketleri {name} adlı örnek bir aboneyi gösterir. Abone listesi oluşana kadar abonelikten çıkma bağlantısı mağazanın ana sayfasına gider."
+        "sampleNote": "Birleştirme etiketleri {name} adlı örnek bir aboneyi gösterir. Abonelikten çıkma bağlantısı, ilgili sayfayı önizleme olarak açar."
       },
       "renderFailed": {
         "invalidDocument": "Bu şablon okunamıyor: {issues}",
@@ -2888,6 +3138,84 @@ cat > src/messages/tr.json <<'EOF'
           "logoWidth": "Logo genişliği",
           "removeLogo": "Logoyu kaldır"
         }
+      },
+      "tabs": {
+        "label": "E-posta",
+        "templates": "Şablonlar",
+        "subscribers": "Aboneler"
+      },
+      "subscribers": {
+        "heading": "Aboneler",
+        "subheading": "Bültene kaydolan herkes, ne zaman ve nasıl onay verdikleriyle birlikte. Kampanyaları yalnızca onaylanmış aboneler alır.",
+        "disabled": {
+          "email-not-configured": "Kayıt kapalı: e-posta yapılandırılmamış (RESEND_API_KEY ve EMAIL_FROM), bu yüzden onay gönderilemez.",
+          "no-signing-secret": "Kayıt kapalı: EMAIL_SIGNING_SECRET eksik veya 32 karakterden kısa.",
+          "no-site-url": "Kayıt kapalı: NEXT_PUBLIC_SITE_URL ayarlanmamış, e-postalardaki bağlantıların gideceği yer olmaz."
+        },
+        "notices": {
+          "unsubscribed": "Abonelikten çıkarıldı.",
+          "deleted": "Geçmişiyle birlikte silindi.",
+          "resent": "Onay e-postası yeniden gönderildi.",
+          "not_authorized": "Bunu yalnızca mağaza sahibi yapabilir.",
+          "not_found": "Bu abone artık yok.",
+          "not_pending": "Onay yalnızca henüz onaylamamış kişilere yeniden gönderilebilir.",
+          "failed": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
+        },
+        "status": {
+          "pending": "Onay bekliyor",
+          "subscribed": "Abone",
+          "unsubscribed": "Abonelikten çıktı"
+        },
+        "search": "E-postaya göre ara",
+        "searchButton": "Ara",
+        "exportAll": "Tümünü CSV olarak indir",
+        "exportFiltered": "“{status}” olanları CSV olarak indir",
+        "noMatches": "Eşleşen kimse yok.",
+        "empty": "Henüz kimse kaydolmadı. Kayıt formu her sayfanın altında.",
+        "columns": {
+          "email": "E-posta",
+          "language": "Dil",
+          "status": "Durum",
+          "source": "Kayıt yolu",
+          "dates": "Ne zaman",
+          "actions": "İşlemler"
+        },
+        "sources": {
+          "footer": "Alt form",
+          "checkout": "Ödeme",
+          "import": "İçe aktarma",
+          "admin": "Yönetim"
+        },
+        "signedUp": "İstek: {date}",
+        "confirmedOn": "Onay: {date}",
+        "unsubscribedOn": "Ayrılma: {date}",
+        "consentShown": "Neyi onayladı",
+        "resend": "Onayı yeniden gönder",
+        "unsubscribe": "Abonelikten çıkar",
+        "confirmUnsubscribe": "{email} abonelikten çıkarılsın mı? Kendisi yeniden kaydolabilir.",
+        "delete": "Sil",
+        "confirmDelete": "{email} ve geçmişi kalıcı olarak silinsin mi? Biri unutulmak istediğinde bunu kullanın.",
+        "pagination": "Sayfalar",
+        "previous": "Önceki",
+        "next": "Sonraki",
+        "pageOf": "Sayfa {page} / {pages}",
+        "importHeading": "Başka bir hizmetten içe aktar",
+        "importIntro": "E-posta sütunu ve isteğe bağlı ad ve dil içeren bir CSV, örneğin Mailchimp dışa aktarımı. Listede olanlar olduğu gibi kalır, abonelikten çıkanlar yeniden eklenmez.",
+        "importConsent": "Bu kişiler bu mağazadan e-posta almayı kabul etti ve istenirse bunu gösterebilirim.",
+        "importing": "İçe aktarılıyor…",
+        "import": "İçe aktar",
+        "importDone": "{added, plural, =0 {Eklenecek yeni kimse yok.} one {# abone eklendi.} other {# abone eklendi.}}",
+        "importSkipped": "Atlananlar: {existing} zaten listede, {unsubscribed} abonelikten çıkmış, {duplicates} tekrar, {invalid} geçersiz adres.",
+        "importBadLine": "Satır {line}: {value}",
+        "errors": {
+          "notAuthorized": "İçe aktarmayı yalnızca mağaza sahibi yapabilir.",
+          "noFile": "Bir CSV dosyası seçin.",
+          "tooLarge": "Dosya çok büyük: tek seferde en fazla 10.000 kişi ve 2 MB.",
+          "noConsent": "Bu kişilerin onay verdiğini kutuyu işaretleyerek doğrulayın.",
+          "empty": "Dosyada adres yok.",
+          "failed": "İçe aktarma durdu: {message}"
+        },
+        "importConsentRecord": "{date} tarihinde {shop} sahibi tarafından içe aktarıldı; sahibi, bu kişinin mağazadan e-posta almayı kabul ettiğini doğruladı."
       }
     }
   },
@@ -3020,12 +3348,59 @@ cat > src/messages/tr.json <<'EOF'
       "discountPercent": "%{percent} indirim",
       "discountAmount": "{amount} indirim",
       "discountFreeShipping": "Ücretsiz kargo"
+    },
+    "subscribe": {
+      "subject": "{shop}: lütfen aboneliğinizi onaylayın",
+      "headline": "Bir adım kaldı",
+      "intro": "Lütfen {shop} mağazasından e-postayla haber ve teklif almak istediğinizi onaylayın.",
+      "button": "Aboneliğimi onayla",
+      "expires": "Düğme 7 gün boyunca çalışır.",
+      "ignore": "Abone olmadıysanız bu e-postayı yok sayın: listeye eklenmeyeceksiniz ve bizden bir daha haber almayacaksınız."
     }
   },
   "Home": {
     "__after__": "Nav",
     "tagline": "{shop} mağazasına hoş geldiniz",
     "browse": "Mağazaya göz atın"
+  },
+  "Newsletter": {
+    "heading": "Haberdar olun",
+    "intro": "{shop} mağazasından haberler, yeni ürünler ve teklifler, yaklaşık ayda bir.",
+    "email": "E-posta adresi",
+    "firstName": "Ad (isteğe bağlı)",
+    "submit": "Abone ol",
+    "sending": "Abone olunuyor…",
+    "consent": "Evet, {shop} mağazasından e-postayla haber ve teklifler almak istiyorum. İstediğim zaman abonelikten çıkabilirim.",
+    "thanks": "Neredeyse tamam: size bir e-posta gönderdik. Aboneliğinizi onaylamak için içindeki düğmeye basın.",
+    "invalidEmail": "Lütfen geçerli bir e-posta adresi girin.",
+    "failed": "Olmadı. Lütfen birazdan tekrar deneyin.",
+    "checkoutOptIn": "Bana e-postayla haber ve teklifler gönderin. İstediğim zaman abonelikten çıkabilirim.",
+    "backToShop": "Mağazaya dön",
+    "confirm": {
+      "title": "Aboneliğinizi onaylayın",
+      "body": "{email} adresine {shop} mağazasından haber ve teklifler almaya başlamak için düğmeye basın.",
+      "button": "Aboneliğimi onayla",
+      "confirmed": "Abone oldunuz. Hoş geldiniz!",
+      "alreadySubscribed": "Zaten abonesiniz.",
+      "unsubscribed": "Bu bağlantı abonelikten çıkmadan önceye ait olduğu için artık çalışmıyor. Herhangi bir sayfanın altından yeniden abone olabilirsiniz.",
+      "invalid": "Bu bağlantı çalışmıyor. Kopyalanırken kısalmış olabilir.",
+      "expired": "Bu bağlantının süresi doldu. Yenisini almak için herhangi bir sayfanın altından yeniden abone olun.",
+      "unavailable": "Bülten şu anda kullanılamıyor."
+    },
+    "unsubscribe": {
+      "title": "Abonelikten çık",
+      "body": "{email} adresine {shop} mağazasından haber ve teklif almayı bırakmak için düğmeye basın.",
+      "button": "Abonelikten çık",
+      "done": "Abonelikten çıktınız. {shop} mağazasından artık haber almayacaksınız.",
+      "changedMind": "Fikrinizi mi değiştirdiniz? Herhangi bir sayfanın altından yeniden abone olabilirsiniz.",
+      "alreadyDone": "Zaten abonelikten çıktınız.",
+      "invalid": "Bu bağlantı çalışmıyor. Kopyalanırken kısalmış olabilir.",
+      "unavailable": "Abonelikten çıkma şu anda kullanılamıyor. Lütfen bunun yerine e-postayı yanıtlayın.",
+      "preview": "Bu bir önizleme. Gerçek bir e-postada bu bağlantı okuyucuyu, aboneliğini sonlandıran bir düğmeyle bu sayfaya götürür."
+    }
+  },
+  "Footer": {
+    "copyright": "© {year} {shop}"
   }
 }
 EOF
@@ -3414,7 +3789,7 @@ cat > src/messages/ar.json <<'EOF'
     "email": {
       "heading": "حملات البريد الإلكتروني",
       "subheading": "قوالب للنشرات والعروض. اعرضها بكل لغات المتجر وأرسل لنفسك رسالة تجريبية قبل أن يصل أي شيء إلى العملاء.",
-      "comingSoon": "الإرسال إلى المشتركين قيد الإعداد؛ حتى ذلك الحين أرسل لنفسك تجربة من أي قالب.",
+      "comingSoon": "إرسال الحملات إلى المشتركين قيد الإعداد؛ حتى ذلك الحين أرسل لنفسك تجربة من أي قالب.",
       "notConfigured": "يتطلب الإرسال التجريبي وجود RESEND_API_KEY وEMAIL_FROM في إعدادات المتجر. المعاينة تعمل بدونهما.",
       "newHeading": "قالب جديد",
       "name": "الاسم",
@@ -3463,7 +3838,7 @@ cat > src/messages/ar.json <<'EOF'
         "desktop": "سطح المكتب",
         "phone": "الهاتف",
         "frameTitle": "معاينة الرسالة بعرض {width} بكسل",
-        "sampleNote": "تعرض وسوم الدمج مشتركًا تجريبيًا اسمه {name}. إلى أن تتوفر قائمة المشتركين، يؤدي رابط إلغاء الاشتراك إلى الصفحة الرئيسية للمتجر."
+        "sampleNote": "تعرض وسوم الدمج مشتركًا تجريبيًا اسمه {name}. يفتح رابط إلغاء الاشتراك صفحة الإلغاء كمعاينة."
       },
       "renderFailed": {
         "invalidDocument": "تتعذر قراءة هذا القالب: {issues}",
@@ -3686,6 +4061,84 @@ cat > src/messages/ar.json <<'EOF'
           "logoWidth": "عرض الشعار",
           "removeLogo": "إزالة الشعار"
         }
+      },
+      "tabs": {
+        "label": "البريد",
+        "templates": "القوالب",
+        "subscribers": "المشتركون"
+      },
+      "subscribers": {
+        "heading": "المشتركون",
+        "subheading": "كل من اشترك في النشرة، مع وقت موافقته وطريقتها. لا تصل الحملات إلا إلى المشتركين المؤكَّدين.",
+        "disabled": {
+          "email-not-configured": "الاشتراك متوقف: البريد غير مُعد (RESEND_API_KEY وEMAIL_FROM)، فلا يمكن إرسال رسالة التأكيد.",
+          "no-signing-secret": "الاشتراك متوقف: EMAIL_SIGNING_SECRET مفقود أو أقصر من 32 حرفًا.",
+          "no-site-url": "الاشتراك متوقف: NEXT_PUBLIC_SITE_URL غير مضبوط، فلن تجد روابط الرسائل وجهة."
+        },
+        "notices": {
+          "unsubscribed": "أُلغي الاشتراك.",
+          "deleted": "حُذف مع سجله.",
+          "resent": "أُعيد إرسال رسالة التأكيد.",
+          "not_authorized": "هذا متاح لصاحب المتجر فقط.",
+          "not_found": "هذا المشترك لم يعد موجودًا.",
+          "not_pending": "لا تُعاد رسالة التأكيد إلا لمن لم يؤكد بعد.",
+          "failed": "حدث خطأ. يرجى المحاولة مجددًا."
+        },
+        "status": {
+          "pending": "بانتظار التأكيد",
+          "subscribed": "مشترك",
+          "unsubscribed": "ألغى الاشتراك"
+        },
+        "search": "البحث بالبريد",
+        "searchButton": "بحث",
+        "exportAll": "تنزيل الكل بصيغة CSV",
+        "exportFiltered": "تنزيل “{status}” بصيغة CSV",
+        "noMatches": "لا نتائج مطابقة.",
+        "empty": "لم يشترك أحد بعد. نموذج الاشتراك في أسفل كل صفحة.",
+        "columns": {
+          "email": "البريد",
+          "language": "اللغة",
+          "status": "الحالة",
+          "source": "طريقة الاشتراك",
+          "dates": "متى",
+          "actions": "الإجراءات"
+        },
+        "sources": {
+          "footer": "نموذج التذييل",
+          "checkout": "الدفع",
+          "import": "استيراد",
+          "admin": "الإدارة"
+        },
+        "signedUp": "طلب في {date}",
+        "confirmedOn": "أكّد في {date}",
+        "unsubscribedOn": "ألغى في {date}",
+        "consentShown": "ما وافق عليه",
+        "resend": "إعادة إرسال التأكيد",
+        "unsubscribe": "إلغاء الاشتراك",
+        "confirmUnsubscribe": "إلغاء اشتراك {email}؟ يمكنه الاشتراك مجددًا بنفسه.",
+        "delete": "حذف",
+        "confirmDelete": "حذف {email} وسجله نهائيًا؟ استخدم هذا عندما يطلب أحد أن يُنسى.",
+        "pagination": "الصفحات",
+        "previous": "السابق",
+        "next": "التالي",
+        "pageOf": "الصفحة {page} من {pages}",
+        "importHeading": "الاستيراد من خدمة أخرى",
+        "importIntro": "ملف CSV فيه عمود للبريد، واختياريًا الاسم الأول واللغة، مثل تصدير من Mailchimp. يبقى الموجودون في القائمة كما هم، ولا يُعاد من ألغى اشتراكه.",
+        "importConsent": "وافق هؤلاء على تلقي رسائل من هذا المتجر، ويمكنني إثبات ذلك عند الطلب.",
+        "importing": "جارٍ الاستيراد…",
+        "import": "استيراد",
+        "importDone": "{added, plural, =0 {لا أحد جديد لإضافته.} one {أُضيف مشترك واحد.} other {أُضيف # مشتركين.}}",
+        "importSkipped": "تم تخطي: {existing} موجودون بالفعل، {unsubscribed} ألغوا الاشتراك، {duplicates} مكررون، {invalid} ليست عناوين بريد.",
+        "importBadLine": "السطر {line}: {value}",
+        "errors": {
+          "notAuthorized": "الاستيراد متاح لصاحب المتجر فقط.",
+          "noFile": "اختر ملف CSV.",
+          "tooLarge": "الملف كبير جدًا: 10,000 شخص و2 ميغابايت كحد أقصى في المرة.",
+          "noConsent": "ضع العلامة لتأكيد موافقة هؤلاء الأشخاص.",
+          "empty": "لا توجد عناوين في الملف.",
+          "failed": "توقف الاستيراد: {message}"
+        },
+        "importConsentRecord": "استُورد في {date} بواسطة صاحب {shop}، الذي أكد أن هذا الشخص وافق على تلقي رسائل من المتجر."
       }
     }
   },
@@ -3818,12 +4271,59 @@ cat > src/messages/ar.json <<'EOF'
       "discountPercent": "خصم {percent}٪",
       "discountAmount": "خصم {amount}",
       "discountFreeShipping": "شحن مجاني"
+    },
+    "subscribe": {
+      "subject": "{shop}: يرجى تأكيد اشتراكك",
+      "headline": "خطوة واحدة بعد",
+      "intro": "يرجى تأكيد رغبتك في تلقي أخبار {shop} وعروضه بالبريد الإلكتروني.",
+      "button": "تأكيد اشتراكي",
+      "expires": "يعمل الزر لمدة 7 أيام.",
+      "ignore": "إن لم تشترك بنفسك فتجاهل هذه الرسالة: لن تُضاف ولن تسمع منا مجددًا."
     }
   },
   "Home": {
     "__after__": "Nav",
     "tagline": "مرحبًا بك في {shop}",
     "browse": "تصفّح المتجر"
+  },
+  "Newsletter": {
+    "heading": "ابقَ على اطلاع",
+    "intro": "أخبار ومنتجات جديدة وعروض من {shop}، مرة في الشهر تقريبًا.",
+    "email": "البريد الإلكتروني",
+    "firstName": "الاسم الأول (اختياري)",
+    "submit": "اشترك",
+    "sending": "جارٍ الاشتراك…",
+    "consent": "نعم، أرسلوا لي أخبار {shop} وعروضه بالبريد الإلكتروني. يمكنني إلغاء الاشتراك في أي وقت.",
+    "thanks": "اقتربت: أرسلنا إليك رسالة. اضغط على الزر فيها لتأكيد اشتراكك.",
+    "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح.",
+    "failed": "لم ينجح ذلك. يرجى المحاولة بعد قليل.",
+    "checkoutOptIn": "أرسلوا لي الأخبار والعروض بالبريد. يمكنني إلغاء الاشتراك في أي وقت.",
+    "backToShop": "العودة إلى المتجر",
+    "confirm": {
+      "title": "تأكيد اشتراكك",
+      "body": "اضغط على الزر لتبدأ بتلقي أخبار {shop} وعروضه على {email}.",
+      "button": "تأكيد اشتراكي",
+      "confirmed": "أنت مشترك الآن. أهلًا بك!",
+      "alreadySubscribed": "أنت مشترك بالفعل.",
+      "unsubscribed": "هذا الرابط من قبل إلغاء اشتراكك، لذا لم يعد يعمل. يمكنك الاشتراك مجددًا من أسفل أي صفحة.",
+      "invalid": "هذا الرابط لا يعمل. ربما انقطع عند نسخه.",
+      "expired": "انتهت صلاحية هذا الرابط. اشترك مجددًا من أسفل أي صفحة لتحصل على رابط جديد.",
+      "unavailable": "النشرة غير متاحة حاليًا."
+    },
+    "unsubscribe": {
+      "title": "إلغاء الاشتراك",
+      "body": "اضغط على الزر لتتوقف عن تلقي أخبار {shop} وعروضه على {email}.",
+      "button": "إلغاء الاشتراك",
+      "done": "ألغيت اشتراكك. لن تصلك أخبار {shop} بعد الآن.",
+      "changedMind": "غيرت رأيك؟ يمكنك الاشتراك مجددًا من أسفل أي صفحة.",
+      "alreadyDone": "اشتراكك ملغى بالفعل.",
+      "invalid": "هذا الرابط لا يعمل. ربما انقطع عند نسخه.",
+      "unavailable": "إلغاء الاشتراك غير متاح حاليًا. يرجى الرد على الرسالة بدلًا من ذلك.",
+      "preview": "هذه معاينة. في رسالة حقيقية يأخذ هذا الرابط القارئ إلى هذه الصفحة مع زر يلغي اشتراكه."
+    }
+  },
+  "Footer": {
+    "copyright": "© {year} {shop}"
   }
 }
 EOF
