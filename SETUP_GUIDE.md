@@ -125,8 +125,14 @@ changes to those first.
 ## 5. Create the storage bucket
 
 In the Supabase dashboard, go to **Storage → New bucket** and create a
-**public** bucket named `product-images`. Its upload and read policies were
-already applied in step 3. The admin panel stores product images here.
+**public** bucket named `product-images`. Its policies were already applied
+in step 3: anyone can read, only the shop owner can upload, replace or
+delete. The admin panel stores product images and email images here.
+
+**Shops generated before 2026-11-05** let any signed-in user, customers
+included, upload to and delete from this bucket. Fix it by running
+`lib/storage-policies.sql` from shopforge in the Supabase SQL editor; it
+replaces the old policies and is safe to run more than once.
 
 ## 6. Configure environment variables
 

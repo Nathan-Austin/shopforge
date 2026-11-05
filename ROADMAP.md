@@ -11,11 +11,7 @@ details for each item are in the numbered sections below.
 1. **Email marketing and template builder** (section 2d), in the phases
    listed there, one at a time. A, B and C (model, saved templates and
    test sends, the designer) are done; D (subscribers) is next.
-2. **Storage upload policy** (section 2): any signed-in customer can
-   upload to and delete from the `product-images` bucket today. Restrict
-   insert and delete to `is_shop_owner()`. Found 2026-11-05; awaiting the
-   owner's go-ahead.
-3. **Translate the auth pages** (section 2b). Move the hardcoded English on
+2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -90,10 +86,11 @@ details for each item are in the numbered sections below.
 
 ## 2. Admin and store settings
 
-- [ ] Storage policies: `0004_storage_policies.sql` lets any authenticated
-      user (customers included) insert into and delete from
-      `product-images`. Only `is_shop_owner()` should, through policies
-      that call it; public read stays
+- [x] Storage policies — fixed 2026-11-05: `product-images` uploads,
+      replacements and deletes are the shop owner's alone
+      (`lib/storage-policies.sql`, tested by `test/sql/storage_policies.sql`);
+      before, any signed-in user could. Existing shops run the file once in
+      the SQL editor (setup guide, step 5)
 
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
