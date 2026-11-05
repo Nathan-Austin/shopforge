@@ -238,11 +238,20 @@ products use. Codes are per order, not per customer.
 ### Email campaign templates
 
 `/admin/email` holds the templates for newsletters and offers. Create one
-from a starting layout, open it to preview it in each of your languages
-at desktop and phone width, and send yourself a test. A test uses the
-same `RESEND_API_KEY` and `EMAIL_FROM` as the receipts, goes to one
-address with `[Test]` in the subject, and fills merge tags with a sample
-subscriber called Alex. Each attempt is also written as one line of JSON
+from a starting layout and open it in the designer: add blocks from the
+menu, click a block to edit it, drag it (or use the arrows) to move it,
+and switch language at the top to write each language's text. The
+numbers next to each language count the fields still to translate;
+until they are, readers see the main language's text. The preview on
+the right updates as you type, at desktop or phone width. Save with the
+button or Ctrl+S; Ctrl+Z undoes, outside a text field. Uploaded images
+go to the `product-images` bucket under `email/`, as JPEG, PNG or GIF
+(Outlook for Windows does not show WebP), at most 1200 pixels wide.
+
+A test send uses the same `RESEND_API_KEY` and `EMAIL_FROM` as the
+receipts, goes to one address with `[Test]` in the subject, and fills
+merge tags with a sample subscriber called Alex. It sends the last saved
+version. Each attempt is also written as one line of JSON
 to `$EMAIL_TMP_DIR/logs/test-sends-<date>.jsonl` (recipient masked); on
 Vercel that directory is temporary, so read the result on the page.
 

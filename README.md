@@ -62,12 +62,16 @@ support for languages such as Arabic.
   Percent and amount codes are mirrored as Stripe coupons and applied by
   Stripe at checkout; customers enter codes on the cart or checkout page
   and the order records what was taken off
-- **Email campaign templates** (first part of the email builder): at
-  `/admin/email`, create a template from a ready-made layout (chilli shops
-  get their own), preview it in every shop language at desktop and phone
-  width with a list of anything to fix, and send yourself a test through
-  Resend. The drag-and-drop designer, the subscriber list with double
-  opt-in and sending campaigns are next on the roadmap
+- **Email campaign designer:** at `/admin/email`, build newsletters and
+  offers from blocks (headings, text with a word-processor toolbar,
+  images, buttons, products, discount codes, dividers, spacing and two- or
+  three-column rows) without touching HTML. Drag blocks around, write
+  each language's text with untranslated fields flagged, insert personal
+  details like the subscriber's first name, watch a live preview at
+  desktop and phone width, undo anything, and send yourself a test
+  through Resend. Chilli shops get heat on product blocks and their own
+  starter layouts. The subscriber list with double opt-in and sending
+  campaigns are next on the roadmap
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt

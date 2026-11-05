@@ -9,9 +9,13 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A (template model and renderer) and B
-   (saved templates and test sends) are done; C (the designer) is next.
-2. **Translate the auth pages** (section 2b). Move the hardcoded English on
+   listed there, one at a time. A, B and C (model, saved templates and
+   test sends, the designer) are done; D (subscribers) is next.
+2. **Storage upload policy** (section 2): any signed-in customer can
+   upload to and delete from the `product-images` bucket today. Restrict
+   insert and delete to `is_shop_owner()`. Found 2026-11-05; awaiting the
+   owner's go-ahead.
+3. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
 
@@ -85,6 +89,11 @@ details for each item are in the numbered sections below.
       store can be upgraded without re-running the whole (idempotent) schema
 
 ## 2. Admin and store settings
+
+- [ ] Storage policies: `0004_storage_policies.sql` lets any authenticated
+      user (customers included) insert into and delete from
+      `product-images`. Only `is_shop_owner()` should, through policies
+      that call it; public read stays
 
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
@@ -193,7 +202,14 @@ loose in `/tmp`.
       `$EMAIL_TMP_DIR/logs/`. A plain `/admin/email` page to create a
       template from a starter, preview it (desktop/phone, per language),
       duplicate, delete and test-send it, until the designer replaces it
-- [ ] **C. The designer** at `/admin/email`: block palette, reorder,
+- [x] **C. The designer** — done 2026-11-05 on `/admin/email/[id]`:
+      `components/email-designer/` (Tiptap 3 toolbar, drag and drop into
+      and out of columns, product search, live codes, image upload as
+      JPEG/PNG/GIF at most 1200px, language bar with untranslated counts,
+      browser-side preview, undo/redo, Ctrl+S), document operations in
+      `src/lib/email/campaigns/editor.ts`, Tiptap output folded into the
+      schema by `richTextSanitize.ts`. Checked by hand in Chrome
+      (English, German, Arabic admin, phone width). Block palette, reorder,
       settings panel per block, Tiptap toolbar, product and discount-code
       pickers, column sections, a merge-tag menu, a locale switcher that
       flags missing translations, desktop/phone preview, starter templates
