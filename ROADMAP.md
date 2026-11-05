@@ -8,9 +8,9 @@ The current priority list. Keep it up to date as work lands: remove or tick
 finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
-1. **Email marketing builder** (section 2). The block-based campaign editor
-   with an opt-in/unsubscribe subscriber list, now that discount codes
-   exist to put in it.
+1. **Email marketing and template builder** (section 2d), in the phases
+   listed there, one at a time: A (template model and renderer), then B
+   (saved templates and test sends), then C (the designer), and so on.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -114,11 +114,8 @@ details for each item are in the numbered sections below.
 - [ ] Localized order confirmation, refund and shipping emails — done
       2026-11-04 for all three (strings in `Email.*`); listed here only so
       the next email (marketing) follows the same pattern
-- [ ] Email marketing page in the admin: a block builder where the owner
-      composes a campaign from image, text, button/link and discount-code
-      blocks, previews it, and sends to a customer list. Needs the discount
-      codes above, a subscriber list with opt-in and unsubscribe, and the
-      transactional email provider already wired in for sending
+- [ ] Email marketing page in the admin: broken down into phases in
+      section 2d
 
 ## 2b. Accounts and sign-in
 
@@ -154,6 +151,58 @@ details for each item are in the numbered sections below.
       hint (Google's preferred alternative to redirects)
 - [ ] UCP / agentic checkout eligibility attributes in the feed when Google
       opens it beyond the US early-access programme
+
+## 2d. Email marketing and template builder
+
+An in-house alternative to Mailchimp for small shops (a few thousand
+subscribers, about one campaign a month) that sends through the Resend
+account the shop already uses for receipts, with adapters for shops that
+outgrow it or already use another service. The owner never writes HTML:
+campaigns are composed from blocks with a word-processor style toolbar.
+Both store modes get it; chilli shops get heat on product blocks and their
+own starter templates.
+
+Working files from development and tests (build logs, send logs, preview
+HTML) go under `/tmp/sf-<branch>-email-builder/` (`EMAIL_TMP_DIR`), never
+loose in `/tmp`.
+
+- [ ] **A. Template model and renderer.** A Zod 4 schema for a campaign
+      document: heading, rich text (a Tiptap JSON subset: bold, italic,
+      underline, strike, links, font sizes, colour, lists, alignment),
+      image, button, product, discount code, divider, spacer, and 2 or 3
+      column sections that stack on phones. Text per locale with the shop's
+      fallback (`de-at` -> `de` -> default), merge tags (`{{subscriber.first_name|there}}`)
+      checked against a registry, a brand theme, and size limits. A pure
+      renderer to table-based email HTML plus plain text that drops a bad
+      block with a warning instead of failing the email. Unit tests
+- [ ] **B. Saved templates and test sends.** `email_templates` table
+      (owner-only RLS, document validated on every save), save, duplicate
+      and delete actions, and "send a test to me" through Resend returning
+      a structured result that is also appended as JSON lines to
+      `$EMAIL_TMP_DIR/logs/`
+- [ ] **C. The designer** at `/admin/email`: block palette, reorder,
+      settings panel per block, Tiptap toolbar, product and discount-code
+      pickers, column sections, a merge-tag menu, a locale switcher that
+      flags missing translations, desktop/phone preview, starter templates
+      per store mode
+- [ ] **D. Subscribers.** `email_subscribers` with double opt-in and a
+      consent record, a signed unsubscribe link and one-click
+      `List-Unsubscribe` (RFC 8058), sign-up in the footer and at checkout,
+      the admin list with CSV import and export
+- [ ] **E. Sending campaigns.** A provider adapter: Resend (contacts and
+      broadcasts) first, then Mailchimp (sync members, create a campaign
+      with our HTML, send or schedule). Campaign rows with status, schedule
+      and a per-send log; the provider's limits shown before sending
+- [ ] **F. Provider keys.** The generator asks for the campaign provider
+      and its key (`.env.local`); the admin shows which provider is active,
+      tests the key, and accepts a key typed in the dashboard (where it is
+      stored is an open decision: Supabase Vault or env-only)
+- [ ] **G. Transactional templates.** The builder's brand theme (logo,
+      colours, footer) and editable intro/footer copy per locale applied to
+      the receipt, shipping and refund emails, with the order details
+      still generated in code
+- [ ] **H. More providers** behind the same adapter as shops ask: Brevo,
+      MailerLite, Kit
 
 ## 3. Languages
 
