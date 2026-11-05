@@ -1147,6 +1147,13 @@ cat > src/messages/en.json <<'EOF'
       "refundedSoFar": "Refunded so far: {refunded} of {total}.",
       "viewOrders": "View your orders",
       "footer": "The money goes back to the card or account you paid with. Banks usually show it within 5 to 10 working days."
+    },
+    "campaign": {
+      "footerReason": "You are receiving this email because you subscribed to news from {shop}.",
+      "unsubscribe": "Unsubscribe",
+      "viewProduct": "View product",
+      "discountTitle": "Your code",
+      "discountHint": "Enter it in your cart or at checkout."
     }
   },
   "Home": {
@@ -1657,6 +1664,13 @@ cat > src/messages/de.json <<'EOF'
       "refundedSoFar": "Bisher erstattet: {refunded} von {total}.",
       "viewOrders": "Ihre Bestellungen ansehen",
       "footer": "Das Geld geht auf die Karte oder das Konto zurück, mit dem Sie bezahlt haben. Banken zeigen es meist innerhalb von 5 bis 10 Werktagen an."
+    },
+    "campaign": {
+      "footerReason": "Sie erhalten diese E-Mail, weil Sie Neuigkeiten von {shop} abonniert haben.",
+      "unsubscribe": "Abmelden",
+      "viewProduct": "Zum Produkt",
+      "discountTitle": "Ihr Code",
+      "discountHint": "Geben Sie ihn im Warenkorb oder an der Kasse ein."
     }
   },
   "Home": {
@@ -2167,6 +2181,13 @@ cat > src/messages/tr.json <<'EOF'
       "refundedSoFar": "Şimdiye kadar iade edilen: {total} tutarının {refunded} kadarı.",
       "viewOrders": "Siparişlerinizi görüntüleyin",
       "footer": "Para, ödeme yaptığınız karta veya hesaba geri gönderilir. Bankalar genellikle 5 ila 10 iş günü içinde gösterir."
+    },
+    "campaign": {
+      "footerReason": "{shop} bültenine abone olduğunuz için bu e-postayı alıyorsunuz.",
+      "unsubscribe": "Abonelikten çık",
+      "viewProduct": "Ürünü görüntüle",
+      "discountTitle": "Kodunuz",
+      "discountHint": "Sepetinizde veya ödeme sırasında girin."
     }
   },
   "Home": {
@@ -2677,6 +2698,13 @@ cat > src/messages/ar.json <<'EOF'
       "refundedSoFar": "المسترد حتى الآن: {refunded} من {total}.",
       "viewOrders": "عرض طلباتك",
       "footer": "يعود المبلغ إلى البطاقة أو الحساب الذي دفعت به. تعرضه البنوك عادةً خلال 5 إلى 10 أيام عمل."
+    },
+    "campaign": {
+      "footerReason": "تصلك هذه الرسالة لأنك اشتركت في أخبار {shop}.",
+      "unsubscribe": "إلغاء الاشتراك",
+      "viewProduct": "عرض المنتج",
+      "discountTitle": "رمزك",
+      "discountHint": "أدخله في سلة التسوق أو عند الدفع."
     }
   },
   "Home": {
