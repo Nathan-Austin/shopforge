@@ -1,8 +1,10 @@
 /**
- * A campaign that uses every block type, for the unit tests. Not
- * imported by the app.
+ * A campaign that uses every block type, and the context to render it,
+ * for the unit tests and the preview files they write. Not imported by
+ * the app.
  */
 
+import type { CampaignRenderContext } from './render';
 import type { CampaignDocumentInput, RichDoc } from './schema';
 
 export const PRODUCT_ID = '11111111-1111-4111-8111-111111111111';
@@ -71,5 +73,36 @@ export function sampleDocument(): CampaignDocumentInput {
       { id: 'sp', type: 'spacer', height: 16 },
       { id: 'btn', type: 'button', label: { en: 'Shop now', de: 'Jetzt einkaufen' }, href: '{{shop.url}}/en/shop' }
     ]
+  };
+}
+
+export function sampleContext(overrides: Partial<CampaignRenderContext> = {}): CampaignRenderContext {
+  return {
+    locale: 'en',
+    strings: {
+      footerReason: 'You are receiving this email because you subscribed to news from Your Shop.',
+      unsubscribe: 'Unsubscribe',
+      viewProduct: 'View product',
+      discountTitle: 'Your code',
+      discountHint: 'Enter it in your cart or at checkout.'
+    },
+    shop: { name: 'Your Shop', url: 'https://shop.example/' },
+    recipient: { email: 'alex@example.com', firstName: 'Alex' },
+    unsubscribeUrl: 'https://shop.example/unsubscribe?t=abc',
+    products: {
+      [PRODUCT_ID]: {
+        id: PRODUCT_ID,
+        name: 'Ghost Pepper Sauce',
+        url: 'https://shop.example/en/shop/ghost-pepper',
+        priceCents: 899,
+        compareAtPriceCents: 1099,
+        currency: 'EUR',
+        imageUrl: 'https://cdn.example/ghost.jpg',
+        extras: ['Hot · 8/10']
+      }
+    },
+    discounts: { SPRING15: { code: 'SPRING15', label: '15% off' } },
+    now: new Date('2026-11-05T12:00:00Z'),
+    ...overrides
   };
 }
