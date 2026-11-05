@@ -11,6 +11,7 @@ import {
   type EmailTemplateActionResult
 } from '../actions/emailTemplates';
 import ConfirmSubmitButton from '../components/ConfirmSubmitButton';
+import EmailTabs from '../components/EmailTabs';
 import NewEmailTemplateForm from '../components/NewEmailTemplateForm';
 import { actionErrorText, isEmailTemplateActionError } from '../components/emailTemplateErrors';
 import { STARTER_KEYS } from './mode';
@@ -64,6 +65,7 @@ export default async function AdminEmailPage({
         <p className="text-sm text-stone-600">{t('subheading')}</p>
         <p className="text-sm text-stone-500">{t('comingSoon')}</p>
       </div>
+      <EmailTabs locale={locale} current="templates" />
 
       {!configured && (
         <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{t('notConfigured')}</p>
