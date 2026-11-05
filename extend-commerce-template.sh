@@ -1208,11 +1208,12 @@ export default function CheckoutForm({
         body: JSON.stringify({ ...body, locale })
       });
 
-      const result = await response.json();
+      // Read once: a second response.json() always fails, which hid the
+      // discount_invalid answer behind the generic error.
+      const result = (await response.json().catch(() => null)) as { url?: string; code?: string } | null;
 
-      if (!response.ok || !result.url) {
-        const body = (await response.json().catch(() => null)) as { code?: string } | null;
-        if (response.status === 409 && body?.code === 'discount_invalid') {
+      if (!response.ok || !result?.url) {
+        if (response.status === 409 && result?.code === 'discount_invalid') {
           setError(t('discountInvalid'));
           router.refresh();
           return;
