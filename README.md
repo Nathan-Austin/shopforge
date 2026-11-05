@@ -69,6 +69,12 @@ support for languages such as Arabic.
   one-click unsubscribe is supported. The admin lists subscribers with
   search and counts, unsubscribes or deletes on request, and imports and
   exports CSV (a Mailchimp export works as it is)
+- **Campaigns through Resend:** pick a template, sync the list to Resend
+  (one audience per language, kept in step with unsubscribes both ways),
+  and send now or at a chosen time. One broadcast goes out per language,
+  with each reader's name and unsubscribe link filled in by Resend. The
+  campaign page shows each language's status and keeps a copy of the
+  template as sent
 - **Email campaign designer:** at `/admin/email`, build newsletters and
   offers from blocks (headings, text with a word-processor toolbar,
   images, buttons, products, discount codes, dividers, spacing and two- or
@@ -77,7 +83,7 @@ support for languages such as Arabic.
   details like the subscriber's first name, watch a live preview at
   desktop and phone width, undo anything, and send yourself a test
   through Resend. Chilli shops get heat on product blocks and their own
-  starter layouts. Sending campaigns to the list is next on the roadmap
+  starter layouts
 - **Refunds from the admin:** open an order, choose the rest of the order,
   particular items, a percentage or an amount (never more than what is
   left), type REFUND, and the money goes back through Stripe. Every attempt

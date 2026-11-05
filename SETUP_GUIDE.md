@@ -257,8 +257,9 @@ only after pressing it (on the shop's page, not just by opening the
 link, since mail scanners open links) are they subscribed. Their row
 keeps what they agreed to, in their language, when they asked, when they
 confirmed and, later, when they left, with a dated history behind it.
-Unsubscribe links never expire; mail clients' own "Unsubscribe" button
-works too (one-click, RFC 8058), once campaign sending exists.
+Unsubscribe links in campaigns are Resend's and never expire; the
+shop's own unsubscribe page and one-click endpoint (RFC 8058) serve the
+links in previews and tests and any email the shop sends itself.
 
 `/admin/email/subscribers` lists everyone with their status. You can
 unsubscribe someone, delete them and their history (when someone asks to
@@ -275,6 +276,31 @@ it existed use `NEXTAUTH_SECRET` instead. Re-running
 older shop; for the footer, add `<SiteFooter locale={locale} />` (from
 `@/components/newsletter/SiteFooter`) under `<main>` in
 `src/app/[locale]/layout.tsx`.
+
+### Sending campaigns
+
+Campaigns go out through [Resend Broadcasts](https://resend.com/broadcasts)
+with the same `RESEND_API_KEY` and `EMAIL_FROM` as the receipts; nothing
+else to set up. The sender's domain must be verified in Resend. On
+`/admin/email/campaigns`:
+
+1. **Create a draft** from a template. The draft keeps a copy of the
+   template as it is now; editing the template later does not change it.
+2. **Sync the list.** Everyone who confirmed is pushed to a Resend
+   audience for their language (created for you, named after the shop),
+   and anyone who unsubscribed through Resend's own link in an earlier
+   campaign is unsubscribed in the shop too. Resend takes one person per
+   request, about two a second, so the first sync of a large list takes a
+   while (roughly 25 minutes for 3,000 people); leave the page open, it
+   keeps going by itself. Later syncs push only what changed.
+3. **Send now or schedule** (up to 30 days ahead, in your own time zone).
+   One broadcast per language with subscribers; the page then shows each
+   language's status and a Refresh button. To cancel a scheduled
+   campaign, cancel its broadcasts in the Resend dashboard and refresh.
+
+Resend's free plan includes a limited number of audience contacts and
+broadcast emails; check the plan against your list size before the first
+send. Mailchimp support is on the roadmap.
 
 ### Email campaign templates
 

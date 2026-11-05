@@ -9,9 +9,10 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A to D (model, saved templates and test
-   sends, the designer, subscribers) are done; E (sending campaigns) is
-   next.
+   listed there, one at a time. A to E (model, saved templates and test
+   sends, the designer, subscribers, sending through Resend) are done; F
+   (provider keys in the dashboard) is next, then G (transactional
+   templates), E2 (Mailchimp) and H.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -226,12 +227,27 @@ loose in `/tmp`.
       consent record, a signed unsubscribe link and one-click
       `List-Unsubscribe` (RFC 8058), sign-up in the footer and at checkout,
       the admin list with CSV import and export
-- [ ] **E. Sending campaigns.** A provider adapter: Resend (contacts and
-      broadcasts) first, then Mailchimp (sync members, create a campaign
-      with our HTML, send or schedule). Campaign rows with status, schedule
-      and a per-send log; the provider's limits shown before sending.
+- [x] **E. Sending campaigns** — done 2026-11-05 with Resend Broadcasts:
+      `email_campaigns` and `email_audiences`, `src/lib/email/providers/resend.ts`,
+      `subscribers/sync.ts` (one audience per language, Resend's own
+      unsubscribes read back, one contact per request within a time
+      budget), `campaigns/send.ts` (one broadcast per language, send now
+      or schedule, status read back), `/admin/email/campaigns`. Checked end
+      to end against PostgREST and a stand-in for Resend's API; not yet
+      against Resend itself. Decided 2026-11-05: Resend only for now,
+      Mailchimp is a later item (below). Follow-ups: cancelling a scheduled
+      campaign from the admin (today: in Resend's dashboard, then refresh);
+      a Resend webhook so an unsubscribe at Resend reaches the shop at once
+      rather than at the next sync; bounces and complaints; a batch
+      contacts endpoint if Resend adds one (a first sync of 3,000 people
+      takes about 25 minutes at two requests a second); the audience's
+      size against the Resend plan shown before sending.
       Campaigns never go through the transactional send path, which is
       for receipts and single test sends only
+- [ ] **E2. Mailchimp** behind the same shape as the Resend provider:
+      sync members to a list (tags per language), create a campaign with
+      our HTML, send or schedule, read status back; our merge tags mapped
+      to `*|FNAME|*` and `*|UNSUB|*`. Deferred 2026-11-05
 - [ ] **F. Provider keys.** The generator asks for the campaign provider
       and its key (`.env.local`); the admin shows which provider is active.
       A key typed in the dashboard is write-only (decided 2026-11-05): the
