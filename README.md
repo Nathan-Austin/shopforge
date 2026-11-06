@@ -1,5 +1,7 @@
 # shopforge
 
+[![CI](https://github.com/Nathan-Austin/shopforge/actions/workflows/ci.yml/badge.svg)](https://github.com/Nathan-Austin/shopforge/actions/workflows/ci.yml)
+
 Generate your own multilingual online shop with **Next.js 16, Supabase,
 Tailwind CSS 4 and Stripe**, ready to deploy on Vercel.
 
@@ -299,6 +301,27 @@ shipping, price formatting and the campaign email renderer (which also
 writes previews to `$EMAIL_TMP_DIR/previews/index.html`, desktop and
 phone width side by side). Run them in your shop with `pnpm test`, or
 `pnpm test:watch` while you work.
+
+### CI
+
+`.github/workflows/ci.yml` runs the same two scripts on GitHub Actions, on
+every pull request, on pushes to `main`, and once a day:
+
+| Job | What it runs |
+| --- | --- |
+| Shell scripts parse | `bash -n` over every tracked `.sh`, and the mode bit on the four entry points. Seconds, and it gates the rest |
+| Migrations apply and replay | `test/check-schema.sh --mode=all` |
+| Generate and build | `test/generate-and-check.sh` twice in parallel: `generic` with `--shipping=form`, `chilli` with `--shipping=stripe` |
+
+No secrets and no Supabase project: the generator runs with
+`--skip-supabase`, and the scratch Postgres comes from the `postgres:16`
+Docker image on the runner.
+
+The daily run is the point of the schedule. The generator installs the latest
+of everything at generation time, so this pipeline fails when a new Next,
+Tailwind, next-intl or Supabase CLI release breaks the scaffold — with nothing
+in this repository having changed. A failed build uploads its log as an
+artifact, kept for 14 days.
 
 ## Roadmap
 

@@ -305,9 +305,14 @@ loose in `/tmp`.
 
 - [x] Vitest in generated stores, with unit tests for the heat scale,
       product field parsing, shipping and formatting — done 2026-11-02
-- [ ] CI that generates a store and builds it: run
-      `test/generate-and-check.sh --mode=generic` and `--mode=chilli` (needs
-      Node, pnpm and python3; no Supabase project required)
+- [x] CI that generates a store and builds it — done 2026-11-06:
+      `.github/workflows/ci.yml` runs `test/generate-and-check.sh` for
+      `generic` (`--shipping=form`) and `chilli` (`--shipping=stripe`) as a
+      two-job matrix, behind a seconds-long `bash -n` gate, alongside
+      `test/check-schema.sh --mode=all`. On pull requests, pushes to `main`,
+      and daily — the schedule is what catches an upstream Next or Tailwind
+      release breaking the scaffold with nothing here having changed. No
+      secrets and no Supabase project; a failed build uploads its log
 
 ## Notes for future turns
 
