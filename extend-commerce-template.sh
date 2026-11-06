@@ -399,7 +399,10 @@ import { getEmailConfig } from '@/lib/email/config';
 import { getTranslations } from 'next-intl/server';
 
 import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
+import { renderDisputeNotification } from '@/lib/email/disputeNotification';
 import { requestSubscription } from '@/lib/email/subscribers/service';
+import { formatPrice } from '@/lib/format';
+import { DEFAULT_LOCALE } from '@/i18n/config';
 
 /**
  * Stripe webhook.
@@ -426,6 +429,136 @@ export const dynamic = 'force-dynamic';
 function countryCode(value: string | null | undefined): string | null {
   const code = value?.trim().toUpperCase() ?? '';
   return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
+/**
+ * Stripe sends a reference either as a bare id or as the expanded object,
+ * depending on the event and the account's expansion settings. Both shapes
+ * reach the same place.
+ */
+function idOf(value: string | { id: string } | null | undefined): string | null {
+  if (!value) return null;
+  return typeof value === 'string' ? value : value.id ?? null;
+}
+
+/**
+ * Tell the shop owner about a chargeback.
+ *
+ * Only twice in a dispute's life: when it opens (the deadline is the thing
+ * that matters, and missing it loses the dispute by default) and when it
+ * closes. The statuses in between are visible in the admin and are not worth
+ * an email each.
+ *
+ * Best effort throughout: the dispute is already recorded, and no email
+ * problem may fail the delivery and have Stripe retry the whole thing.
+ */
+interface DisputedOrderRef {
+  id: string;
+  currency: string;
+  locale: string | null;
+}
+
+interface DisputeRow {
+  notified_at: string | null;
+  // supabase-js cannot tell a many-to-one embed from a one-to-many one
+  // without generated types, so accept either shape and let one() unwrap it.
+  orders: DisputedOrderRef | DisputedOrderRef[] | null;
+}
+
+async function notifyOwnerOfDispute(
+  supabase: ReturnType<typeof createAdminClient>,
+  disputeId: string,
+  dispute: Stripe.Dispute
+): Promise<void> {
+  const owner = getEmailConfig().ownerNotificationEmail;
+  if (!owner) return;
+
+  const closed = dispute.status === 'won' || dispute.status === 'lost';
+  const outcome: 'opened' | 'won' | 'lost' = closed
+    ? (dispute.status as 'won' | 'lost')
+    : 'opened';
+
+  const { data } = await supabase
+    .from('order_disputes')
+    .select('notified_at, orders ( id, currency, locale )')
+    .eq('id', disputeId)
+    .maybeSingle();
+
+  const row = data as unknown as DisputeRow | null;
+  if (!row) return;
+  // notified_at covers the opening email only; a close is a new thing to say.
+  if (!closed && row.notified_at) return;
+
+  const order = one(row.orders);
+  if (!order) return;
+
+  try {
+    const locale = order.locale || DEFAULT_LOCALE;
+    const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
+    const reference = order.id.slice(0, 8).toUpperCase();
+    const currency = (dispute.currency ?? order.currency ?? 'eur').toUpperCase();
+    const amount = formatPrice(dispute.amount ?? 0, currency, locale);
+    const dueAt = dispute.evidence_details?.due_by
+      ? new Date(dispute.evidence_details.due_by * 1000)
+      : null;
+    const dueDate = dueAt
+      ? new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short' }).format(dueAt)
+      : '';
+
+    const t = await getTranslations({ locale, namespace: 'Email.dispute' });
+    // Stripe's reason codes are a known list; anything new falls back to the
+    // raw code rather than showing a missing-translation error.
+    const reasonKey = dispute.reason ?? '';
+    const reasons = ['fraudulent', 'product_not_received', 'product_unacceptable',
+      'duplicate', 'subscription_canceled', 'unrecognized', 'credit_not_processed',
+      'general'];
+    const reason = reasonKey
+      ? reasons.includes(reasonKey)
+        ? t(`reasons.${reasonKey}` as never)
+        : reasonKey
+      : null;
+
+    const email = renderDisputeNotification(
+      {
+        reference,
+        shopName,
+        reason,
+        evidenceDueAt: dueAt,
+        orderUrl: siteUrl ? `${siteUrl}/${locale}/admin/orders/${order.id}` : null,
+        outcome
+      },
+      {
+        subject: t(`subject.${outcome}`, { shop: shopName, amount, reference }),
+        headline: t(`headline.${outcome}`),
+        summary: t(`summary.${outcome}`, { amount, reference }),
+        reasonLabel: t('reasonLabel'),
+        deadline: t('deadline', { date: dueDate }),
+        deadlineWarning: t('deadlineWarning'),
+        viewOrder: t('viewOrder'),
+        footer: t('footer')
+      },
+      locale
+    );
+
+    const result = await sendEmail({
+      to: owner,
+      subject: email.subject,
+      html: email.html,
+      text: email.text
+    });
+
+    if (result.sent) {
+      // Only the opening email is marked: a close is allowed to send again.
+      if (!closed) {
+        await supabase.rpc('mark_order_dispute_notified', { p_dispute_id: disputeId });
+      }
+    } else if (result.reason === 'failed') {
+      console.error(`Could not email the shop owner about dispute ${dispute.id}:`, result.error);
+    }
+  } catch (error) {
+    console.error(`Could not email the shop owner about dispute ${dispute.id}:`, error);
+  }
 }
 
 function shippingSnapshot(session: Stripe.Checkout.Session) {
@@ -748,6 +881,73 @@ export async function POST(request: Request) {
 
     if (clearError) {
       console.error('Could not clear the cart:', clearError.message);
+    }
+  }
+
+  // A refund made somewhere other than this admin — most often straight from
+  // the Stripe dashboard. The database reconciles against the cumulative
+  // amount Stripe reports, so a refund the admin itself made (already in the
+  // ledger under the same id) is not counted a second time.
+  if (event.type === 'charge.refunded') {
+    const charge = event.data.object as Stripe.Charge;
+    const paymentIntentId = idOf(charge.payment_intent);
+
+    if (!paymentIntentId) {
+      console.error('charge.refunded has no payment intent:', charge.id);
+      return NextResponse.json({ received: true });
+    }
+
+    const { error: refundError } = await supabase.rpc('reconcile_order_refunds', {
+      p_payment_intent_id: paymentIntentId,
+      p_amount_refunded_cents: charge.amount_refunded ?? 0,
+      // The whole list, not just the newest: if an earlier delivery was
+      // missed, this is what fills the gap.
+      p_refunds: (charge.refunds?.data ?? []).map((refund) => ({
+        id: refund.id,
+        amount: refund.amount,
+        currency: refund.currency,
+        reason: refund.reason,
+        created: refund.created
+      }))
+    });
+
+    if (refundError) {
+      console.error(`Could not reconcile refunds for ${paymentIntentId}:`, refundError.message);
+      // Let Stripe retry: release the claim first, or the retry is turned
+      // away as a duplicate and the refund never lands.
+      await supabase.from('stripe_events').delete().eq('id', event.id);
+      return NextResponse.json({ error: 'Could not reconcile refunds' }, { status: 500 });
+    }
+  }
+
+  // A chargeback. Every charge.dispute.* event goes through the same path:
+  // what matters is the status on the dispute, not which event carried it.
+  if (event.type.startsWith('charge.dispute.')) {
+    const dispute = event.data.object as Stripe.Dispute;
+    const paymentIntentId = idOf(dispute.payment_intent);
+
+    const { data: disputeId, error: disputeError } = await supabase.rpc('record_order_dispute', {
+      p_payment_intent_id: paymentIntentId,
+      p_stripe_dispute_id: dispute.id,
+      p_amount_cents: dispute.amount ?? 0,
+      p_currency: dispute.currency ?? null,
+      p_reason: dispute.reason ?? null,
+      p_status: dispute.status ?? null,
+      p_evidence_due_at: dispute.evidence_details?.due_by
+        ? new Date(dispute.evidence_details.due_by * 1000).toISOString()
+        : null,
+      p_opened_at: dispute.created ? new Date(dispute.created * 1000).toISOString() : null
+    });
+
+    if (disputeError) {
+      console.error(`Could not record dispute ${dispute.id}:`, disputeError.message);
+      await supabase.from('stripe_events').delete().eq('id', event.id);
+      return NextResponse.json({ error: 'Could not record dispute' }, { status: 500 });
+    }
+
+    // Null means the payment is not one of ours: nothing to tell anyone about.
+    if (disputeId) {
+      await notifyOwnerOfDispute(supabase, disputeId as string, dispute);
     }
   }
 
@@ -1349,5 +1549,7 @@ echo "✨ All components and libraries updated to production-grade."
 echo "💡 Next steps:"
 echo "   • Put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET in .env.local"
 echo "   • For order confirmation and refund emails, set RESEND_API_KEY and EMAIL_FROM (optional)"
-echo "   • Point a Stripe webhook at /api/webhooks/stripe for checkout.session.completed"
+echo "   • Point a Stripe webhook at /api/webhooks/stripe and subscribe it to
+     checkout.session.completed, charge.refunded and charge.dispute.* —
+     without the last two, a dashboard refund or a chargeback never reaches the admin"
 echo "   • Set your rates in src/lib/shipping/config.ts"

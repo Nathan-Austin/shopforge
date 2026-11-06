@@ -681,7 +681,8 @@ cat > src/messages/en.json <<'EOF'
       "paid": "Paid",
       "fulfilled": "Shipped",
       "cancelled": "Cancelled",
-      "refunded": "Refunded"
+      "refunded": "Refunded",
+      "disputed": "Disputed"
     }
   },
   "Shop": {
@@ -895,6 +896,28 @@ cat > src/messages/en.json <<'EOF'
       },
       "customerEmailed": "Customer emailed",
       "customerNotEmailed": "Customer not emailed"
+    },
+    "dispute": {
+      "heading": "Chargeback",
+      "openNotice": "A customer has disputed this payment. Stripe has held {amount} back from your balance while the card issuer decides.",
+      "wonNotice": "You won this dispute. {amount} has gone back to your balance.",
+      "lostNotice": "This dispute was lost. {amount} did not come back, and the order stays marked as disputed.",
+      "deadline": "Evidence is due by {date}.",
+      "noDeadline": "Stripe did not give a deadline for this one.",
+      "reason": "Reason: {reason}",
+      "opened": "Opened {date}",
+      "closed": "Closed {date}",
+      "answerInStripe": "Answer the dispute from your Stripe dashboard.",
+      "refundBlocked": "An order cannot be refunded while it is being disputed.",
+      "statuses": {
+        "warning_needs_response": "Early warning: a response is needed",
+        "warning_under_review": "Early warning: under review",
+        "warning_closed": "Early warning: closed",
+        "needs_response": "Needs a response",
+        "under_review": "Under review",
+        "won": "Won",
+        "lost": "Lost"
+      }
     },
     "discounts": {
       "heading": "Discount codes",
@@ -1610,6 +1633,38 @@ cat > src/messages/en.json <<'EOF'
       "viewOrders": "View your orders",
       "footer": "The money goes back to the card or account you paid with. Banks usually show it within 5 to 10 working days."
     },
+    "dispute": {
+      "subject": {
+        "opened": "{shop}: {amount} charged back on order {reference}",
+        "won": "{shop}: you won the dispute on order {reference}",
+        "lost": "{shop}: the dispute on order {reference} was lost"
+      },
+      "headline": {
+        "opened": "A customer has disputed a payment",
+        "won": "The dispute was resolved in your favour",
+        "lost": "The dispute was lost"
+      },
+      "summary": {
+        "opened": "{amount} on order {reference} has been charged back. Stripe has held the amount back from your balance while the card issuer decides.",
+        "won": "The card issuer decided in your favour. {amount} from order {reference} has gone back to your balance.",
+        "lost": "The card issuer decided against you. {amount} from order {reference} will not come back."
+      },
+      "reasonLabel": "Reason given:",
+      "deadline": "Respond by {date}.",
+      "deadlineWarning": "If you do not send evidence to Stripe by then, the dispute is lost automatically.",
+      "viewOrder": "Open the order",
+      "footer": "Answer the dispute from your Stripe dashboard. The order is marked as disputed in your admin panel and cannot be refunded while the dispute is open.",
+      "reasons": {
+        "fraudulent": "the cardholder says they did not authorise the payment",
+        "product_not_received": "the customer says the order never arrived",
+        "product_unacceptable": "the customer says the goods were not as described, or arrived damaged",
+        "duplicate": "the customer says they were charged twice",
+        "subscription_canceled": "the customer says the subscription was cancelled",
+        "unrecognized": "the cardholder does not recognise the charge",
+        "credit_not_processed": "the customer says a refund they were promised never arrived",
+        "general": "no reason was given"
+      }
+    },
     "campaign": {
       "footerReason": "You are receiving this email because you subscribed to news from {shop}.",
       "unsubscribe": "Unsubscribe",
@@ -1708,7 +1763,8 @@ cat > src/messages/de.json <<'EOF'
       "paid": "Bezahlt",
       "fulfilled": "Versandt",
       "cancelled": "Storniert",
-      "refunded": "Erstattet"
+      "refunded": "Erstattet",
+      "disputed": "Zahlung angefochten"
     }
   },
   "Shop": {
@@ -1922,6 +1978,28 @@ cat > src/messages/de.json <<'EOF'
       },
       "customerEmailed": "Kunde benachrichtigt",
       "customerNotEmailed": "Kunde nicht benachrichtigt"
+    },
+    "dispute": {
+      "heading": "Rückbuchung",
+      "openNotice": "Diese Zahlung wurde angefochten. Stripe hält {amount} von Ihrem Guthaben zurück, solange die Bank entscheidet.",
+      "wonNotice": "Sie haben diesen Fall gewonnen. {amount} ist zurück auf Ihrem Guthaben.",
+      "lostNotice": "Dieser Fall ging verloren. {amount} kam nicht zurück, und die Bestellung bleibt als angefochten markiert.",
+      "deadline": "Nachweise sind fällig bis zum {date}.",
+      "noDeadline": "Stripe hat hierfür keine Frist genannt.",
+      "reason": "Grund: {reason}",
+      "opened": "Eröffnet am {date}",
+      "closed": "Abgeschlossen am {date}",
+      "answerInStripe": "Bearbeiten Sie den Fall in Ihrem Stripe-Dashboard.",
+      "refundBlocked": "Eine Bestellung kann nicht erstattet werden, solange sie angefochten wird.",
+      "statuses": {
+        "warning_needs_response": "Frühwarnung: Antwort nötig",
+        "warning_under_review": "Frühwarnung: in Prüfung",
+        "warning_closed": "Frühwarnung: abgeschlossen",
+        "needs_response": "Antwort nötig",
+        "under_review": "In Prüfung",
+        "won": "Gewonnen",
+        "lost": "Verloren"
+      }
     },
     "discounts": {
       "heading": "Gutscheincodes",
@@ -2637,6 +2715,38 @@ cat > src/messages/de.json <<'EOF'
       "viewOrders": "Ihre Bestellungen ansehen",
       "footer": "Das Geld geht auf die Karte oder das Konto zurück, mit dem Sie bezahlt haben. Banken zeigen es meist innerhalb von 5 bis 10 Werktagen an."
     },
+    "dispute": {
+      "subject": {
+        "opened": "{shop}: {amount} zu Bestellung {reference} zurückgebucht",
+        "won": "{shop}: Sie haben den Fall zu Bestellung {reference} gewonnen",
+        "lost": "{shop}: der Fall zu Bestellung {reference} ging verloren"
+      },
+      "headline": {
+        "opened": "Eine Kundin oder ein Kunde hat eine Zahlung angefochten",
+        "won": "Der Fall wurde zu Ihren Gunsten entschieden",
+        "lost": "Der Fall ging verloren"
+      },
+      "summary": {
+        "opened": "{amount} aus Bestellung {reference} wurde zurückgebucht. Stripe hält den Betrag von Ihrem Guthaben zurück, solange die Bank entscheidet.",
+        "won": "Die Bank hat zu Ihren Gunsten entschieden. {amount} aus Bestellung {reference} ist zurück auf Ihrem Guthaben.",
+        "lost": "Die Bank hat gegen Sie entschieden. {amount} aus Bestellung {reference} kommt nicht zurück."
+      },
+      "reasonLabel": "Angegebener Grund:",
+      "deadline": "Antworten Sie bis zum {date}.",
+      "deadlineWarning": "Wenn Sie Stripe bis dahin keine Nachweise schicken, gilt der Fall automatisch als verloren.",
+      "viewOrder": "Bestellung öffnen",
+      "footer": "Bearbeiten Sie den Fall in Ihrem Stripe-Dashboard. Die Bestellung ist in Ihrem Adminbereich als angefochten markiert und kann nicht erstattet werden, solange der Fall offen ist.",
+      "reasons": {
+        "fraudulent": "die Karteninhaberin oder der Karteninhaber gibt an, die Zahlung nicht autorisiert zu haben",
+        "product_not_received": "die Bestellung ist laut Kundschaft nie angekommen",
+        "product_unacceptable": "die Ware war laut Kundschaft nicht wie beschrieben oder beschädigt",
+        "duplicate": "es wurde laut Kundschaft doppelt abgebucht",
+        "subscription_canceled": "das Abo war laut Kundschaft gekündigt",
+        "unrecognized": "die Karteninhaberin oder der Karteninhaber erkennt die Abbuchung nicht wieder",
+        "credit_not_processed": "eine zugesagte Erstattung ist laut Kundschaft nie angekommen",
+        "general": "es wurde kein Grund angegeben"
+      }
+    },
     "campaign": {
       "footerReason": "Sie erhalten diese E-Mail, weil Sie Neuigkeiten von {shop} abonniert haben.",
       "unsubscribe": "Abmelden",
@@ -2735,7 +2845,8 @@ cat > src/messages/tr.json <<'EOF'
       "paid": "Ödendi",
       "fulfilled": "Kargolandı",
       "cancelled": "İptal edildi",
-      "refunded": "İade edildi"
+      "refunded": "İade edildi",
+      "disputed": "İtiraz edildi"
     }
   },
   "Shop": {
@@ -2949,6 +3060,28 @@ cat > src/messages/tr.json <<'EOF'
       },
       "customerEmailed": "Müşteriye e-posta gönderildi",
       "customerNotEmailed": "Müşteriye e-posta gönderilmedi"
+    },
+    "dispute": {
+      "heading": "Ters ibraz",
+      "openNotice": "Bir müşteri bu ödemeye itiraz etti. Kart bankası karar verene kadar Stripe {amount} tutarını bakiyenizden tutuyor.",
+      "wonNotice": "Bu itirazı kazandınız. {amount} bakiyenize geri döndü.",
+      "lostNotice": "Bu itiraz kaybedildi. {amount} geri gelmedi ve sipariş itirazlı olarak işaretli kalıyor.",
+      "deadline": "Kanıtların son tarihi: {date}.",
+      "noDeadline": "Stripe bunun için bir son tarih vermedi.",
+      "reason": "Gerekçe: {reason}",
+      "opened": "{date} tarihinde açıldı",
+      "closed": "{date} tarihinde kapatıldı",
+      "answerInStripe": "İtirazı Stripe kontrol panelinizden yanıtlayın.",
+      "refundBlocked": "Bir sipariş itiraz sürecindeyken iade edilemez.",
+      "statuses": {
+        "warning_needs_response": "Erken uyarı: yanıt gerekiyor",
+        "warning_under_review": "Erken uyarı: inceleniyor",
+        "warning_closed": "Erken uyarı: kapatıldı",
+        "needs_response": "Yanıt gerekiyor",
+        "under_review": "İnceleniyor",
+        "won": "Kazanıldı",
+        "lost": "Kaybedildi"
+      }
     },
     "discounts": {
       "heading": "İndirim kodları",
@@ -3664,6 +3797,38 @@ cat > src/messages/tr.json <<'EOF'
       "viewOrders": "Siparişlerinizi görüntüleyin",
       "footer": "Para, ödeme yaptığınız karta veya hesaba geri gönderilir. Bankalar genellikle 5 ila 10 iş günü içinde gösterir."
     },
+    "dispute": {
+      "subject": {
+        "opened": "{shop}: {reference} numaralı siparişte {amount} ters ibraz edildi",
+        "won": "{shop}: {reference} numaralı siparişteki itirazı kazandınız",
+        "lost": "{shop}: {reference} numaralı siparişteki itiraz kaybedildi"
+      },
+      "headline": {
+        "opened": "Bir müşteri ödemeye itiraz etti",
+        "won": "İtiraz sizin lehinize sonuçlandı",
+        "lost": "İtiraz kaybedildi"
+      },
+      "summary": {
+        "opened": "{reference} numaralı siparişteki {amount} tutarı ters ibraz edildi. Kart bankası karar verene kadar Stripe bu tutarı bakiyenizden tutuyor.",
+        "won": "Kart bankası sizin lehinize karar verdi. {reference} numaralı siparişteki {amount} tutarı bakiyenize geri döndü.",
+        "lost": "Kart bankası aleyhinize karar verdi. {reference} numaralı siparişteki {amount} tutarı geri gelmeyecek."
+      },
+      "reasonLabel": "Belirtilen gerekçe:",
+      "deadline": "{date} tarihine kadar yanıt verin.",
+      "deadlineWarning": "O tarihe kadar Stripe'a kanıt göndermezseniz itiraz otomatik olarak kaybedilir.",
+      "viewOrder": "Siparişi aç",
+      "footer": "İtirazı Stripe kontrol panelinizden yanıtlayın. Sipariş yönetim panelinizde itirazlı olarak işaretlenir ve itiraz açıkken iade edilemez.",
+      "reasons": {
+        "fraudulent": "kart sahibi ödemeyi yetkilendirmediğini söylüyor",
+        "product_not_received": "müşteri siparişin hiç ulaşmadığını söylüyor",
+        "product_unacceptable": "müşteri ürünün açıklandığı gibi olmadığını veya hasarlı geldiğini söylüyor",
+        "duplicate": "müşteri iki kez tahsilat yapıldığını söylüyor",
+        "subscription_canceled": "müşteri aboneliğin iptal edildiğini söylüyor",
+        "unrecognized": "kart sahibi bu tahsilatı tanımıyor",
+        "credit_not_processed": "müşteri söz verilen iadenin hiç gelmediğini söylüyor",
+        "general": "herhangi bir gerekçe belirtilmedi"
+      }
+    },
     "campaign": {
       "footerReason": "{shop} bültenine abone olduğunuz için bu e-postayı alıyorsunuz.",
       "unsubscribe": "Abonelikten çık",
@@ -3762,7 +3927,8 @@ cat > src/messages/ar.json <<'EOF'
       "paid": "مدفوع",
       "fulfilled": "تم الشحن",
       "cancelled": "ملغى",
-      "refunded": "مسترد"
+      "refunded": "مسترد",
+      "disputed": "متنازع عليه"
     }
   },
   "Shop": {
@@ -3976,6 +4142,28 @@ cat > src/messages/ar.json <<'EOF'
       },
       "customerEmailed": "تم إشعار العميل",
       "customerNotEmailed": "لم يتم إشعار العميل"
+    },
+    "dispute": {
+      "heading": "ردّ المبلغ",
+      "openNotice": "اعترض أحد العملاء على عملية الدفع هذه. تحتجز Stripe مبلغ {amount} من رصيدك ريثما يقرر مُصدر البطاقة.",
+      "wonNotice": "ربحت هذا النزاع. أُعيد مبلغ {amount} إلى رصيدك.",
+      "lostNotice": "خسر هذا النزاع. لم يعد مبلغ {amount}، ويبقى الطلب مُعلَّمًا بأنه متنازع عليه.",
+      "deadline": "موعد تسليم الأدلة: {date}.",
+      "noDeadline": "لم تحدد Stripe موعدًا نهائيًا لهذه الحالة.",
+      "reason": "السبب: {reason}",
+      "opened": "فُتح في {date}",
+      "closed": "أُغلق في {date}",
+      "answerInStripe": "ردّ على النزاع من لوحة تحكم Stripe.",
+      "refundBlocked": "لا يمكن استرداد الطلب ما دام متنازعًا عليه.",
+      "statuses": {
+        "warning_needs_response": "إنذار مبكر: الرد مطلوب",
+        "warning_under_review": "إنذار مبكر: قيد المراجعة",
+        "warning_closed": "إنذار مبكر: مغلق",
+        "needs_response": "الرد مطلوب",
+        "under_review": "قيد المراجعة",
+        "won": "رُبح",
+        "lost": "خُسر"
+      }
     },
     "discounts": {
       "heading": "رموز الخصم",
@@ -4690,6 +4878,38 @@ cat > src/messages/ar.json <<'EOF'
       "refundedSoFar": "المسترد حتى الآن: {refunded} من {total}.",
       "viewOrders": "عرض طلباتك",
       "footer": "يعود المبلغ إلى البطاقة أو الحساب الذي دفعت به. تعرضه البنوك عادةً خلال 5 إلى 10 أيام عمل."
+    },
+    "dispute": {
+      "subject": {
+        "opened": "{shop}: تم رد مبلغ {amount} من الطلب {reference}",
+        "won": "{shop}: ربحت النزاع على الطلب {reference}",
+        "lost": "{shop}: خسر النزاع على الطلب {reference}"
+      },
+      "headline": {
+        "opened": "اعترض أحد العملاء على عملية دفع",
+        "won": "تم حسم النزاع لصالحك",
+        "lost": "خسر النزاع"
+      },
+      "summary": {
+        "opened": "تم رد مبلغ {amount} من الطلب {reference}. تحتجز Stripe المبلغ من رصيدك ريثما يقرر مُصدر البطاقة.",
+        "won": "قرر مُصدر البطاقة لصالحك. أُعيد مبلغ {amount} من الطلب {reference} إلى رصيدك.",
+        "lost": "قرر مُصدر البطاقة ضدك. لن يعود مبلغ {amount} من الطلب {reference}."
+      },
+      "reasonLabel": "السبب المذكور:",
+      "deadline": "يرجى الرد قبل {date}.",
+      "deadlineWarning": "إذا لم ترسل أدلة إلى Stripe قبل ذلك التاريخ، يُعدّ النزاع خاسرًا تلقائيًا.",
+      "viewOrder": "فتح الطلب",
+      "footer": "ردّ على النزاع من لوحة تحكم Stripe. الطلب مُعلَّم بأنه متنازع عليه في لوحة الإدارة ولا يمكن استرداده ما دام النزاع مفتوحًا.",
+      "reasons": {
+        "fraudulent": "يقول حامل البطاقة إنه لم يصرّح بعملية الدفع",
+        "product_not_received": "يقول العميل إن الطلب لم يصل إطلاقًا",
+        "product_unacceptable": "يقول العميل إن البضاعة لم تكن كما وُصفت أو وصلت تالفة",
+        "duplicate": "يقول العميل إنه دُفع منه مرتين",
+        "subscription_canceled": "يقول العميل إن الاشتراك قد أُلغي",
+        "unrecognized": "لا يتعرف حامل البطاقة على عملية الخصم",
+        "credit_not_processed": "يقول العميل إن استردادًا وُعد به لم يصل قط",
+        "general": "لم يُذكر أي سبب"
+      }
     },
     "campaign": {
       "footerReason": "تصلك هذه الرسالة لأنك اشتركت في أخبار {shop}.",
