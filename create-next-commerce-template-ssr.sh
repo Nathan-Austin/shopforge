@@ -557,17 +557,27 @@ fi
 echo "📝 Preparing database migrations (${STORE_MODE})..."
 mkdir -p supabase/migrations
 
-# 1. Base Schema
-cp "$MODE_DIR/schema.sql" supabase/migrations/0001_init.sql
+# 1. Schema, as a numbered series (see lib/migrations/README.md). 0001_init is
+# the mode's own base schema; 0002+ are the feature migrations every mode
+# shares. A mode may override a shared file by shipping the same name, so the
+# mode's directory is copied second. Numbers 0001-0099 are the schema; the
+# seeds and policies below take 0100+, so a schema migration added later can
+# never collide with a number a live shop has already applied.
+for migration in "$SCRIPT_DIR"/lib/migrations/[0-9]*.sql; do
+  cp "$migration" "supabase/migrations/$(basename "$migration")"
+done
+for migration in "$MODE_DIR"/migrations/[0-9]*.sql; do
+  cp "$migration" "supabase/migrations/$(basename "$migration")"
+done
 
 # 2. Seed Data
 if [ -f "$MODE_DIR/seeds.sql" ]; then
-  cp "$MODE_DIR/seeds.sql" supabase/migrations/0002_seeds.sql
+  cp "$MODE_DIR/seeds.sql" supabase/migrations/0100_seeds.sql
   # Seed heat values are written on a 0-10 basis as __HEAT_n__ and rescaled
   # to whatever heat scale this shop chose.
   HEAT_MAX="${SHOPFORGE_HEAT_MAX:-10}" python3 <<'PYSEED'
 import os, pathlib, re
-path = pathlib.Path('supabase/migrations/0002_seeds.sql')
+path = pathlib.Path('supabase/migrations/0100_seeds.sql')
 text = path.read_text()
 max_level = int(os.environ['HEAT_MAX'])
 text = re.sub(
@@ -581,12 +591,11 @@ fi
 
 # 3. Single Store Brand
 if [ "$NEXT_PUBLIC_STORE_MODE" = "single" ] && [ -f "$MODE_DIR/brand-single.sql" ]; then
-  cp "$MODE_DIR/brand-single.sql" supabase/migrations/0003_brand_single.sql
+  cp "$MODE_DIR/brand-single.sql" supabase/migrations/0101_brand_single.sql
 fi
 
-# 4. Storage Policies (Standard for all templates): public read, owner-only
-# writes. Kept in lib/ so test/check-schema.sh can test them too.
-cp "$SCRIPT_DIR/lib/storage-policies.sql" supabase/migrations/0004_storage_policies.sql
+# Storage policies (public read, owner-only writes) are 0102 and come from
+# lib/migrations/ with the rest; test/check-schema.sh applies them from there.
 
 if [ "$SKIP_SUPABASE" = "true" ]; then
   echo "🗄️ Migrations written to supabase/migrations (not pushed: --skip-supabase)."
@@ -6693,7 +6702,7 @@ echo ""
 echo "📋 Supabase summary:"
 echo "  • Project: $NEXT_PUBLIC_SUPABASE_URL (ref: $SUPABASE_PROJECT_REF)"
 echo "  • Store mode: $STORE_MODE"
-echo "  • Migration applied: supabase/migrations/0001_init.sql"
+echo "  • Migrations applied: $(ls supabase/migrations/*.sql 2>/dev/null | wc -l | tr -d ' ') files in supabase/migrations/"
 echo "  • Storage bucket: product-images (public read + authenticated upload policies)"
 if [ -f "$MODE_DIR/seeds.sql" ]; then
   echo "  • Seed data source: $MODE_DIR/seeds.sql"

@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-# Applies each store mode's schema and lib/storage-policies.sql to a scratch
-# Postgres, twice (both must be idempotent), then runs the SQL tests in
-# test/sql/ against it: row-level security and the checks that back up the
-# app's own validation.
+# Applies each store mode's migration series to a scratch Postgres, in the
+# same order the generator writes it, twice (every file must be idempotent and
+# the whole series must be replayable), then runs the SQL tests in test/sql/
+# against it: row-level security and the checks that back up the app's own
+# validation.
+#
+# The series is the mode's store-modes/<mode>/migrations/ plus the shared
+# lib/migrations/, merged by filename with the mode's copy winning — see
+# lib/migrations/README.md. Seeds are not applied: they still carry the
+# generator's __HEAT_n__ placeholders.
 #
 #   test/check-schema.sh [--mode=generic|chilli|all] [--tmp-dir=/tmp/sf-<name>-...]
 #
@@ -65,26 +71,42 @@ psql_in() {
   docker exec -i "$CONTAINER" psql -U postgres -q -v ON_ERROR_STOP=1 "$@"
 }
 
+# The migration series for a mode, one absolute path per line, in the order
+# the generator writes them: shared files from lib/migrations/, overridden by
+# a same-named file in the mode's own migrations/.
+migration_series() {
+  local mode=$1 file key
+  declare -A pick=()
+  # The mode's directory is read second, so its copy wins a name collision.
+  for file in "$ROOT"/lib/migrations/[0-9]*.sql "$ROOT/store-modes/$mode"/migrations/[0-9]*.sql; do
+    [ -e "$file" ] || continue
+    pick["$(basename "$file")"]="$file"
+  done
+  [ ${#pick[@]} -eq 0 ] && return 0
+  for key in $(printf '%s\n' "${!pick[@]}" | sort); do
+    printf '%s\n' "${pick[$key]}"
+  done
+}
+
 for mode in $MODES; do
   echo "=== $mode"
+  mapfile -t SERIES < <(migration_series "$mode")
+  if [ ${#SERIES[@]} -eq 0 ]; then
+    echo "❌ $mode: no migrations found." >&2
+    exit 1
+  fi
   psql_in -c "create database shop_$mode" >/dev/null
   psql_in -d "shop_$mode" < "$ROOT/test/supabase-stub.sql"
   for pass in first second; do
-    if ! psql_in -d "shop_$mode" < "$ROOT/store-modes/$mode/schema.sql" > /dev/null 2>"$DATA_DIR/err.log"; then
-      grep -v NOTICE "$DATA_DIR/err.log" >&2
-      echo "❌ $mode schema failed to apply ($pass pass)." >&2
-      exit 1
-    fi
+    for migration in "${SERIES[@]}"; do
+      if ! psql_in -d "shop_$mode" < "$migration" > /dev/null 2>"$DATA_DIR/err.log"; then
+        grep -v NOTICE "$DATA_DIR/err.log" >&2
+        echo "❌ $mode: $(basename "$migration") failed to apply ($pass pass)." >&2
+        exit 1
+      fi
+    done
   done
-  echo "schema applied twice"
-  for pass in first second; do
-    if ! psql_in -d "shop_$mode" < "$ROOT/lib/storage-policies.sql" > /dev/null 2>"$DATA_DIR/err.log"; then
-      grep -v NOTICE "$DATA_DIR/err.log" >&2
-      echo "❌ storage policies failed to apply ($pass pass)." >&2
-      exit 1
-    fi
-  done
-  echo "storage policies applied twice"
+  echo "${#SERIES[@]} migrations applied twice, in order"
   for test in "$ROOT"/test/sql/*.sql; do
     if ! psql_in -d "shop_$mode" < "$test" 2>"$DATA_DIR/err.log"; then
       grep -v NOTICE "$DATA_DIR/err.log" >&2

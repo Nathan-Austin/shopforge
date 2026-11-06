@@ -1,5 +1,6 @@
 -- product-images: anyone reads, only the shop owner uploads, replaces or
--- deletes. Run by test/check-schema.sh after lib/storage-policies.sql.
+-- deletes. Run by test/check-schema.sh after the migration series, which
+-- ends with lib/migrations/0102_storage_policies.sql.
 
 \set ON_ERROR_STOP on
 
