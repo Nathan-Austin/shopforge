@@ -381,9 +381,24 @@ current version. The server-side calls the shop makes to Stripe always use
 the version pinned by the `stripe` package, independent of this setting.
 
 In the Stripe dashboard, add an endpoint at
-`https://your-site/api/webhooks/stripe` subscribed to
-`checkout.session.completed`, and copy its signing secret into
-`STRIPE_WEBHOOK_SECRET`.
+`https://your-site/api/webhooks/stripe` and copy its signing secret into
+`STRIPE_WEBHOOK_SECRET`. Subscribe it to three things:
+
+| Event | What the shop does with it |
+| --- | --- |
+| `checkout.session.completed` | Writes the order, decrements stock, empties the cart, emails the confirmation. Without it there is no shop |
+| `charge.refunded` | Records a refund you made **from the Stripe dashboard** rather than from the admin, so `refunded_cents` and the order status follow. Refunds made in the admin arrive here too and are not counted twice |
+| `charge.dispute.*` | A chargeback. Marks the order disputed, records the deadline, and emails you. Without it the first you hear of a dispute is the missing money |
+
+`charge.dispute.*` covers `created`, `updated`, `closed`, `funds_withdrawn`
+and `funds_reinstated`; the shop reads the status on the dispute rather than
+caring which event carried it, so subscribing to all of them is right.
+
+A chargeback is the one worth getting right. Stripe gives you a deadline to
+send evidence and the dispute is lost automatically if you miss it, so the
+email goes to `SHOP_OWNER_EMAIL` as soon as the dispute opens. While a dispute
+is open the order cannot be refunded from the admin — paying a refund *and*
+a chargeback means paying twice.
 
 Locally, forward events instead:
 

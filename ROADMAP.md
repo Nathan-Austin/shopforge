@@ -72,15 +72,30 @@ details for each item are in the numbered sections below.
       `SHOP_OWNER_EMAIL` in CC. `order_refunds` is the ledger; `refunded`
       can no longer be picked by hand
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
-- [ ] Webhook handlers for `charge.refunded` and `charge.dispute.*`, so a
-      refund made in the Stripe dashboard, or a chargeback, is reflected in
-      `refunded_cents` and the order status. Disputes are the one the owner
-      really needs to hear about
+- [x] Webhook handlers for `charge.refunded` and `charge.dispute.*` — done
+      2026-11-06 in `0009_disputes.sql`. `charge.refunded` is reconciled from
+      the charge's cumulative `amount_refunded` and its whole refund list, so
+      a replay cannot double-count and a missed delivery is repaired by the
+      next one; a refund the admin made is already in the ledger under the
+      same Stripe id. Every `charge.dispute.*` event takes one path keyed on
+      the dispute's status: opening marks the order `disputed` and remembers
+      what it was, winning restores it, losing leaves it disputed. The owner
+      is emailed when a dispute opens and when it closes, with the evidence
+      deadline, and `/admin/orders/[id]` shows the dispute above the refund
+      form. A disputed order cannot be refunded (`begin_order_refund`), and
+      neither a disputed nor a refunded order can be moved by hand any more
+      (`set_order_status` only checked the target status before)
 - [ ] Optional restock on refund: a checkbox on the refund form that puts
       the refunded units back into stock
 - [ ] "Reconcile with Stripe" for a refund row stuck in `pending` (the app
       died between reserving and Stripe answering): look the attempt up by
-      idempotency key / metadata and complete or fail the row
+      idempotency key / metadata and complete or fail the row.
+      Half-helped by `charge.refunded` (2026-11-06): the money is now counted
+      against the order whatever happens, because `refunded_cents` follows
+      Stripe's cumulative total. What is left is the stale row — the webhook
+      adds a `succeeded` row under Stripe's refund id and the abandoned
+      `pending` one stays next to it in the history, so the amounts are right
+      but the list reads oddly. Matching the two by metadata is the fix
 - [ ] Zero-decimal currencies (JPY, KRW, ...): amounts are sent to Stripe as
       stored cents everywhere, which is off by 100 for these
 - [x] Numbered migration files for changes after `0001_init.sql`, so a live
