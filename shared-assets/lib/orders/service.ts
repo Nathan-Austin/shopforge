@@ -164,12 +164,21 @@ export function orderReference(order: Pick<Order, 'id'>): string {
 }
 
 /** Every status an order can be in, in lifecycle order. */
-export const ORDER_STATUSES = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded'] as const;
+export const ORDER_STATUSES = [
+  'pending',
+  'paid',
+  'fulfilled',
+  'cancelled',
+  'refunded',
+  'disputed'
+] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 /**
  * Statuses the owner may set by hand. 'refunded' is not one of them: it is
  * set by the refund flow once the whole amount has gone back through Stripe.
+ * Neither is 'disputed', which only the Stripe webhook sets, when the
+ * customer's bank pulls the money back.
  */
 export const MANUAL_ORDER_STATUSES: readonly OrderStatus[] = ['pending', 'paid', 'fulfilled', 'cancelled'];
 
@@ -281,6 +290,76 @@ function toRefundItems(value: unknown): OrderRefundItem[] {
       quantity: Number(item.quantity ?? 0),
       amountCents: Number(item.amountCents ?? 0)
     }));
+}
+
+/**
+ * A chargeback, as Stripe reported it. Written only by the webhook, and
+ * readable only by the shop owner: a dispute is between the shop and the
+ * card network, and the customer who raised it already knows.
+ */
+export interface OrderDispute {
+  id: string;
+  orderId: string;
+  stripeDisputeId: string;
+  amountCents: number;
+  currency: string;
+  /** Stripe's reason code, e.g. 'fraudulent'. Null when none was given. */
+  reason: string | null;
+  /** Stripe's dispute status, e.g. 'needs_response', 'won', 'lost'. */
+  status: string;
+  /** When evidence is due. Null once closed, or if Stripe gave no date. */
+  evidenceDueAt: string | null;
+  openedAt: string;
+  closedAt: string | null;
+}
+
+interface OrderDisputeRow {
+  id: string;
+  order_id: string;
+  stripe_dispute_id: string;
+  amount_cents: number;
+  currency: string;
+  reason: string | null;
+  status: string;
+  evidence_due_at: string | null;
+  opened_at: string;
+  closed_at: string | null;
+}
+
+/**
+ * Whether a dispute is still live. Mirrors dispute_is_open() in
+ * 0009_disputes.sql, which is what actually blocks a refund.
+ */
+export function isDisputeOpen(dispute: Pick<OrderDispute, 'status'>): boolean {
+  return !['won', 'lost', 'warning_closed'].includes(dispute.status);
+}
+
+/** Disputes on an order, oldest first, through the caller's client. */
+export async function listOrderDisputes(
+  supabase: SupabaseClient,
+  orderId: string
+): Promise<OrderDispute[]> {
+  const { data, error } = await supabase
+    .from('order_disputes')
+    .select(
+      'id, order_id, stripe_dispute_id, amount_cents, currency, reason, status, evidence_due_at, opened_at, closed_at'
+    )
+    .eq('order_id', orderId)
+    .order('opened_at', { ascending: true });
+
+  if (error || !data) return [];
+  return (data as unknown as OrderDisputeRow[]).map((row) => ({
+    id: row.id,
+    orderId: row.order_id,
+    stripeDisputeId: row.stripe_dispute_id,
+    amountCents: row.amount_cents,
+    currency: row.currency,
+    reason: row.reason,
+    status: row.status,
+    evidenceDueAt: row.evidence_due_at,
+    openedAt: row.opened_at,
+    closedAt: row.closed_at
+  }));
 }
 
 /** Refund attempts on an order, oldest first, through the caller's client. */

@@ -6,6 +6,8 @@ import { formatPrice } from '@/lib/format';
 import { refundedQuantities, remainingRefundableCents } from '@/lib/orders/refunds';
 import {
   getOrderById,
+  isDisputeOpen,
+  listOrderDisputes,
   listOrderRefunds,
   orderReference,
   REFUNDABLE_ORDER_STATUSES,
@@ -32,11 +34,29 @@ export default async function AdminOrderPage({
   if (!order) notFound();
 
   const refunds = await listOrderRefunds(supabase, order.id);
+  const disputes = await listOrderDisputes(supabase, order.id);
   const alreadyRefunded = refundedQuantities(refunds);
   const remaining = remainingRefundableCents(order);
   const refundable = REFUNDABLE_ORDER_STATUSES.includes(order.status as OrderStatus);
+  // The database refuses a refund while a dispute is live (0009_disputes);
+  // say so here rather than letting the owner find out from an error.
+  const openDispute = disputes.find(isDisputeOpen) ?? null;
   const money = (cents: number) => formatPrice(cents, order.currency, locale);
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const tDispute = await getTranslations({ locale, namespace: 'Admin.dispute' });
+  // Stripe's status list grows; an unknown one shows as itself rather than
+  // breaking the page with a missing-translation error.
+  const KNOWN_DISPUTE_STATUSES = [
+    'warning_needs_response',
+    'warning_under_review',
+    'warning_closed',
+    'needs_response',
+    'under_review',
+    'won',
+    'lost'
+  ];
+  const disputeStatus = (status: string) =>
+    KNOWN_DISPUTE_STATUSES.includes(status) ? tDispute(`statuses.${status}`) : status;
 
   const action = refundOrder.bind(null, { locale, orderId: order.id });
 
@@ -94,13 +114,70 @@ export default async function AdminOrderPage({
         </tfoot>
       </table>
 
+      {disputes.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold">{tDispute('heading')}</h3>
+          <ul className="space-y-3">
+            {disputes.map((dispute) => {
+              const open = isDisputeOpen(dispute);
+              const amount = formatPrice(dispute.amountCents, dispute.currency, locale);
+              return (
+                <li
+                  key={dispute.id}
+                  className={`space-y-1 rounded-lg border p-3 text-sm ${
+                    open || dispute.status === 'lost'
+                      ? 'border-red-300 bg-red-50 text-red-900'
+                      : 'border-emerald-300 bg-emerald-50 text-emerald-900'
+                  }`}
+                >
+                  <p className="font-semibold">
+                    {open
+                      ? tDispute('openNotice', { amount })
+                      : dispute.status === 'won'
+                        ? tDispute('wonNotice', { amount })
+                        : tDispute('lostNotice', { amount })}
+                  </p>
+                  {open && (
+                    <p>
+                      {dispute.evidenceDueAt
+                        ? tDispute('deadline', {
+                            date: dateFormat.format(new Date(dispute.evidenceDueAt))
+                          })
+                        : tDispute('noDeadline')}
+                    </p>
+                  )}
+                  {dispute.reason && <p>{tDispute('reason', { reason: dispute.reason })}</p>}
+                  {open && <p>{tDispute('answerInStripe')}</p>}
+                  <p className="text-xs opacity-75">
+                    {disputeStatus(dispute.status)} ·{' '}
+                    {tDispute('opened', { date: dateFormat.format(new Date(dispute.openedAt)) })}
+                    {dispute.closedAt && (
+                      <>
+                        {' · '}
+                        {tDispute('closed', {
+                          date: dateFormat.format(new Date(dispute.closedAt))
+                        })}
+                      </>
+                    )}
+                    {' · '}
+                    {dispute.stripeDisputeId}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <section className="space-y-3">
         <div>
           <h3 className="text-lg font-semibold">{t('refund.heading')}</h3>
           <p className="text-sm text-stone-600">{t('refund.subheading')}</p>
         </div>
 
-        {!refundable ? (
+        {openDispute ? (
+          <p className="text-sm text-stone-600">{tDispute('refundBlocked')}</p>
+        ) : !refundable ? (
           <p className="text-sm text-stone-600">{t('refund.notRefundable')}</p>
         ) : remaining <= 0 ? (
           <p className="text-sm text-stone-600">{t('refund.nothingLeft')}</p>

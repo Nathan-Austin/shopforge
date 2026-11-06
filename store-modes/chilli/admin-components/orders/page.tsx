@@ -1,7 +1,20 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-import { listOrders, orderReference, MANUAL_ORDER_STATUSES } from '@/lib/orders/service';
+import {
+  listOrders,
+  orderReference,
+  MANUAL_ORDER_STATUSES,
+  type OrderStatus
+} from '@/lib/orders/service';
+
+/**
+ * Statuses the owner cannot move an order out of here: both are set by what
+ * actually happened to the money, not by a choice. Leaving the select live
+ * would let a stray save quietly clear them — set_order_status would accept
+ * 'paid' on a charged-back order and the dispute would vanish from the list.
+ */
+const LOCKED_ORDER_STATUSES: readonly OrderStatus[] = ['refunded', 'disputed'];
 import { hasTracking, normalizeTracking } from '@/lib/orders/notifications';
 import { formatPrice } from '@/lib/format';
 import { requireShopOwner } from '../lib/auth';
@@ -131,11 +144,11 @@ export default async function AdminOrdersPage({
                         id={`status-${order.id}`}
                         name="status"
                         defaultValue={order.status}
-                        disabled={order.status === 'refunded'}
+                        disabled={LOCKED_ORDER_STATUSES.includes(order.status as OrderStatus)}
                         className={`${inputClass} disabled:opacity-60`}
                       >
-                        {order.status === 'refunded' && (
-                          <option value="refunded">{tStatus('status.refunded')}</option>
+                        {LOCKED_ORDER_STATUSES.includes(order.status as OrderStatus) && (
+                          <option value={order.status}>{tStatus(`status.${order.status}`)}</option>
                         )}
                         {MANUAL_ORDER_STATUSES.map((status) => (
                           <option key={status} value={status}>
@@ -145,7 +158,7 @@ export default async function AdminOrdersPage({
                       </select>
                       <button
                         type="submit"
-                        disabled={order.status === 'refunded'}
+                        disabled={LOCKED_ORDER_STATUSES.includes(order.status as OrderStatus)}
                         className="rounded-md bg-stone-900 px-3 py-1 font-semibold text-white hover:bg-stone-700 disabled:opacity-50"
                       >
                         {t('orders.save')}
