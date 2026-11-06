@@ -1,0 +1,145 @@
+name: CI
+
+# The generator installs the latest of everything at generation time, so the
+# regression this pipeline is really watching for is upstream drift: a new
+# Next, Tailwind, next-intl or Supabase CLI that the scaffold no longer
+# survives. That is why it also runs on a schedule and not only on a push.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Daily. Nothing in the repo has to change for this to start failing.
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+
+jobs:
+  # A few seconds, and it fails the obvious way before anything spends
+  # twenty minutes installing node_modules.
+  scripts:
+    name: Shell scripts parse
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n every script
+        run: |
+          status=0
+          while IFS= read -r script; do
+            if bash -n "$script"; then
+              echo "ok    $script"
+            else
+              echo "FAIL  $script" >&2
+              status=1
+            fi
+          done < <(git ls-files '*.sh')
+          exit $status
+
+      - name: Scripts that must stay executable
+        run: |
+          status=0
+          for script in create-next-commerce-template-ssr.sh \
+                        extend-commerce-template.sh \
+                        test/generate-and-check.sh \
+                        test/check-schema.sh; do
+            if [ ! -x "$script" ]; then
+              echo "FAIL  $script is not executable (chmod +x and commit the mode bit)" >&2
+              status=1
+            fi
+          done
+          exit $status
+
+  # Applies each store mode's migration series to a scratch Postgres twice and
+  # runs the row-level-security tests. No Supabase project needed.
+  migrations:
+    name: Migrations apply and replay
+    runs-on: ubuntu-latest
+    needs: scripts
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # --tmp-dir keeps the scratch Postgres data files in one named place
+      # instead of a random mktemp directory, the same way the generate jobs
+      # below do. The script removes it and the container on exit.
+      - name: Apply both modes' migration series
+        run: ./test/check-schema.sh --mode=all --tmp-dir=/tmp/sf-ci-migrations
+
+  # The real check: generate a store the way a user would, then run everything
+  # a first Vercel deploy runs. The two jobs between them cover both store
+  # modes and both delivery-address modes.
+  generate:
+    name: Generate and build (${{ matrix.mode }}, ${{ matrix.shipping }})
+    runs-on: ubuntu-latest
+    needs: scripts
+    timeout-minutes: 45
+    strategy:
+      # One mode breaking should not hide whether the other one does too.
+      fail-fast: false
+      matrix:
+        include:
+          - mode: generic
+            shipping: form
+          - mode: chilli
+            shipping: stripe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The generator wants Node 20.9 or newer and checks for it. Current
+          # LTS is what a shop owner following the setup guide would install.
+          node-version: lts/*
+
+      - name: Enable pnpm
+        id: pnpm
+        run: |
+          corepack enable
+          # There is no root package.json to carry a packageManager field, so
+          # without this corepack would use whichever pnpm it happens to
+          # bundle. Latest matches what the setup guide tells an owner to
+          # install, and keeps pnpm itself in the set of things CI notices.
+          corepack prepare pnpm@latest --activate
+          pnpm --version
+          # Ask pnpm rather than hardcoding: the store path carries a version
+          # suffix (…/store/v11) that changes with major pnpm releases.
+          echo "store=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+      # Only the downloaded tarballs. Version resolution still happens fresh
+      # every run, so this does not hide an upstream release.
+      - name: Cache the pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-store-${{ runner.os }}-${{ matrix.mode }}-${{ github.run_id }}
+          restore-keys: pnpm-store-${{ runner.os }}-${{ matrix.mode }}-
+
+      - name: Generate, type-check, lint, test and build
+        run: |
+          ./test/generate-and-check.sh \
+            --mode=${{ matrix.mode }} \
+            --shipping=${{ matrix.shipping }} \
+            --tmp-dir=/tmp/sf-ci-${{ matrix.mode }}
+
+      # generate-and-check.sh deletes the build log on success, so whatever is
+      # left here belongs to a failure worth reading.
+      - name: Keep the build log from a failed run
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ matrix.mode }}-${{ matrix.shipping }}
+          path: /tmp/sf-ci-${{ matrix.mode }}/build/
+          if-no-files-found: ignore
+          retention-days: 14
