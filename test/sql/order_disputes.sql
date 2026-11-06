@@ -170,6 +170,37 @@ begin
     then raise exception 'marking twice went wrong'; end if;
 end $$;
 
+-- Neither a disputed nor a refunded order can be moved by hand: the UI
+-- disables the control, but this is what a hand-made POST meets.
+select pg_temp.act_as('00000000-0000-4000-8000-0000000000a9') \gset
+do $$ begin
+  begin
+    perform public.set_order_status('00000000-0000-4000-8000-00000000d001', 'paid');
+    raise exception 'a disputed order could be moved by hand';
+  exception when invalid_parameter_value then null;
+  end;
+end $$;
+reset role;
+
+-- But an ordinary order still moves, tracking and all.
+do $$ begin
+  update public.orders set status = 'paid' where id = '00000000-0000-4000-8000-00000000d002';
+end $$;
+select pg_temp.act_as('00000000-0000-4000-8000-0000000000a9') \gset
+do $$ begin
+  perform public.set_order_status('00000000-0000-4000-8000-00000000d002', 'fulfilled', 'DHL', '123', 'https://track.test/123');
+  if (select status from public.orders where id = '00000000-0000-4000-8000-00000000d002') <> 'fulfilled'
+    then raise exception 'an ordinary status change stopped working'; end if;
+  if (select tracking_number from public.orders where id = '00000000-0000-4000-8000-00000000d002') <> '123'
+    then raise exception 'tracking details were lost'; end if;
+  begin
+    perform public.set_order_status('00000000-0000-4000-8000-0000000000ff', 'paid');
+    raise exception 'an unknown order did not raise';
+  exception when no_data_found then null;
+  end;
+end $$;
+reset role;
+
 -- A dispute on a payment we never saw is ignored.
 do $$ begin
   if public.record_order_dispute('pi_not_ours', 'dp_x', 100, 'eur', null, 'needs_response', null, now()) is not null
