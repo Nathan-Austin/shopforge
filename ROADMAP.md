@@ -83,14 +83,23 @@ details for each item are in the numbered sections below.
       idempotency key / metadata and complete or fail the row
 - [ ] Zero-decimal currencies (JPY, KRW, ...): amounts are sent to Stripe as
       stored cents everywhere, which is off by 100 for these
-- [ ] Numbered migration files for changes after `0001_init.sql`, so a live
+- [x] Numbered migration files for changes after `0001_init.sql`, so a live
       store can be upgraded without re-running the whole (idempotent) schema
+      — done 2026-11-06: `store-modes/<mode>/schema.sql` is split into
+      `store-modes/<mode>/migrations/0001_init.sql` (the base, the only part
+      that differs per mode) plus `lib/migrations/0002_orders` …
+      `0008_email_campaigns`, shared by both modes. Seeds, the single-store
+      brand and the storage policies move to the reserved `0100+` band so a
+      schema migration added later can never take a number a live shop has
+      already applied. `test/check-schema.sh` applies the whole series twice,
+      in generator order; `lib/migrations/README.md` has the rules
 
 ## 2. Admin and store settings
 
 - [x] Storage policies — fixed 2026-11-05: `product-images` uploads,
       replacements and deletes are the shop owner's alone
-      (`lib/storage-policies.sql`, tested by `test/sql/storage_policies.sql`);
+      (`lib/migrations/0102_storage_policies.sql`, tested by
+      `test/sql/storage_policies.sql`);
       before, any signed-in user could. Existing shops run the file once in
       the SQL editor (setup guide, step 5)
 

@@ -131,8 +131,8 @@ delete. The admin panel stores product images and email images here.
 
 **Shops generated before 2026-11-05** let any signed-in user, customers
 included, upload to and delete from this bucket. Fix it by running
-`lib/storage-policies.sql` from shopforge in the Supabase SQL editor; it
-replaces the old policies and is safe to run more than once.
+`lib/migrations/0102_storage_policies.sql` from shopforge in the Supabase SQL
+editor; it replaces the old policies and is safe to run more than once.
 
 ## 6. Configure environment variables
 
@@ -500,4 +500,21 @@ exists and is public, and that you're signed in as the shop owner.
 
 **Changing the schema later.** Add a new file under `supabase/migrations/` in
 your shop and run `npx supabase@3 db push --remote`. The files in shopforge's
-`store-modes/` only affect shops generated afterwards.
+`lib/migrations/` and `store-modes/` only affect shops generated afterwards.
+
+**Picking up shopforge's later schema changes.** Your shop's
+`supabase/migrations/` is a numbered series: `0001_init.sql` (the base schema
+for your store mode), then one file per feature, then `0100_seeds.sql` and the
+storage policies. When shopforge adds a feature that needs new tables, it adds
+a new numbered file rather than changing an existing one, so you can upgrade by
+copying the files you don't have yet out of shopforge's `lib/migrations/` into
+your shop and running `npx supabase@3 db push --remote`. Each file's header
+comment says what it adds and which migration it needs first, and re-running one
+you already have is harmless.
+
+**Shops generated before 2026-11-06** have the whole schema in a single
+`0001_init.sql` instead. They are not broken and need no action: that one file
+holds everything up to and including the email campaign tables. To move onto the
+numbered series, replace your `supabase/migrations/` with a fresh copy from
+shopforge, then run `npx supabase@3 migration repair --status applied <version>`
+for each new file — the SQL itself is identical, so nothing is re-applied.

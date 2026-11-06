@@ -251,12 +251,14 @@ written to `src/lib/checkout/config.ts`, which you can edit later.
 ```
 create-next-commerce-template-ssr.sh   scaffolds a new shop
 extend-commerce-template.sh            adds checkout, webhook + profile API to a shop
-store-modes/<mode>/                    schema, seeds, storefront and admin components
+store-modes/<mode>/migrations/         0001_init.sql, the mode's base schema
+store-modes/<mode>/                    seeds, storefront and admin components
+lib/migrations/                        0002+ feature migrations, shared by every mode
 shared-assets/lib/                     helpers copied into every shop
 shared-assets/components/              components copied into every shop
 lib/product-fields.py                  reads the catalogue for the field picker
 test/generate-and-check.sh             generates a store and runs install, tsc, lint, build
-test/check-schema.sh                   applies each schema to a scratch Postgres and runs test/sql/
+test/check-schema.sh                   applies each migration series to a scratch Postgres and runs test/sql/
 ```
 
 ## Testing the generator
@@ -280,10 +282,16 @@ the same mode apart.
 test/check-schema.sh
 ```
 
-applies each mode's schema twice to a throwaway Postgres 16 in Docker (it
-must be idempotent) and runs the SQL tests in `test/sql/`, which check
-row-level security and the database's own constraints. No Supabase
+applies each mode's migration series twice to a throwaway Postgres 16 in
+Docker, in the order the generator writes it (every file must be idempotent
+and the series must be replayable) and runs the SQL tests in `test/sql/`,
+which check row-level security and the database's own constraints. No Supabase
 project needed; `test/supabase-stub.sql` stands in for its `auth` schema.
+
+The schema is a numbered series rather than one file so that a live shop can
+take a new feature without re-running everything — see
+[`lib/migrations/README.md`](lib/migrations/README.md) for the numbering and
+how to add one.
 
 Generated shops come with [Vitest](https://vitest.dev) and unit tests for
 the logic that ships with them — the heat scale, product field parsing,
