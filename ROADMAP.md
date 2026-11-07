@@ -9,10 +9,10 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A to F (model, saved templates and test
-   sends, the designer, subscribers, sending through Resend, provider keys
-   in the dashboard) are done; E2 (Mailchimp) is next, then G
-   (transactional templates) and H.
+   listed there, one at a time. A to F and E2 (model, saved templates and
+   test sends, the designer, subscribers, sending through Resend, provider
+   keys in the dashboard, Mailchimp) are done; G (transactional templates)
+   is next, then H (more providers, now that the adapter exists).
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -268,10 +268,29 @@ loose in `/tmp`.
       size against the Resend plan shown before sending.
       Campaigns never go through the transactional send path, which is
       for receipts and single test sends only
-- [ ] **E2. Mailchimp** behind the same shape as the Resend provider:
-      sync members to a list (tags per language), create a campaign with
-      our HTML, send or schedule, read status back; our merge tags mapped
-      to `*|FNAME|*` and `*|UNSUB|*`. Deferred 2026-11-05
+- [x] **E2. Mailchimp** — done 2026-11-07. `providers/types.ts` is the shape
+      a campaign provider has to answer; Resend and Mailchimp both do, so
+      `subscribers/sync.ts` and `campaigns/send.ts` are written once and
+      neither knows which is behind them. `providers/mailchimp.ts` bridges
+      the two differences in Mailchimp's model: one audience with a tag per
+      language rather than an audience each (creating a list through the API
+      needs a postal address the shop has not got), and members addressed by
+      the MD5 of their lowercased address. An audience id is therefore
+      `"<list id>:<tag>"`, packed and unpacked in that file alone, so nothing
+      above it changed. Merge tags map to `*|FNAME|*`, `*|EMAIL|*` and
+      `*|UNSUB|*`; a schedule is rounded up to the quarter hour Mailchimp
+      insists on. `0011_mailchimp.sql` widens the three provider columns,
+      puts the provider in `email_audiences`' key, and keeps one `is_active`
+      key by partial unique index. `/admin/email/settings` picks the
+      provider and holds a key for each. Receipts stay with Resend — there
+      is no transactional product behind a Mailchimp key. Checked against a
+      stand-in for Mailchimp's API, not against Mailchimp itself.
+      Follow-ups: a Mailchimp webhook so an unsubscribe there reaches the
+      shop before the next sync, as for Resend; `listContacts` reads the
+      whole list per language because Mailchimp's members endpoint has no
+      tag filter, which is correct but wasteful on a big list; and moving
+      subscribers between providers, which today means syncing each language
+      again from empty
 - [x] **F. Provider keys** — done 2026-11-07. `/admin/email/settings` (a
       fourth tab) shows the active provider and sender, and takes the key.
       The key is tested with `listAudiences` and only a key the provider
@@ -300,7 +319,9 @@ loose in `/tmp`.
       still generated in code (scope confirmed 2026-11-05)
 - [ ] **H. More providers** behind the same adapter, the popular ones for
       small shops: Brevo, MailerLite, Kit, Klaviyo (e-commerce focused) and
-      Mailjet
+      Mailjet. The adapter is `src/lib/email/providers/types.ts` since E2;
+      each new one is a file there, a name in `CAMPAIGN_PROVIDERS`, and the
+      three provider checks widened in a migration
 
 ## 3. Languages
 

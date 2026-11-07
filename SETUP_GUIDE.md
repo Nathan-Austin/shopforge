@@ -204,6 +204,41 @@ Vault is enabled by default on Supabase. On a project without it, saving a
 key fails with a message saying so, and `RESEND_API_KEY` remains the way to
 configure email.
 
+#### Sending campaigns with Mailchimp instead
+
+Newsletters can go through **Mailchimp** rather than Resend Broadcasts. Pick
+it under **Admin → Email → Settings**, where you can hold a key for each
+provider and switch between them.
+
+**Receipts always stay with Resend.** Mailchimp has no transactional product
+behind this key — that is Mandrill, a separate product with its own key — so
+the two settings are genuinely different things. A shop can perfectly well
+send its newsletter with Mailchimp and its order confirmations with Resend,
+and most will.
+
+What differs with Mailchimp:
+
+| | Resend | Mailchimp |
+| --- | --- | --- |
+| Audiences | One per language, created for you | **Your existing audience**, with a tag per language (`lang-en`, `lang-de`, …) |
+| Key | From API Keys in the dashboard | Account → Extras → API keys. It ends in your data centre, like `-us21` |
+| Which audience | n/a | The account's only one, or `MAILCHIMP_LIST_ID` if you have several |
+| Scheduling | Any time | Rounded **up** to the next quarter hour, which is all Mailchimp accepts |
+
+Mailchimp is the one to choose if your list already lives there. Creating an
+audience is not done for you: Mailchimp requires a postal address and
+campaign defaults that the shop does not hold, so make the audience in
+Mailchimp first and the shop will tag into it.
+
+**After switching, sync each language again.** The audiences at the new
+provider start empty, and a campaign refuses to send to a language whose list
+is not fully synced — so nobody is quietly missed, but the first sync after a
+switch is a full one.
+
+`EMAIL_CAMPAIGN_PROVIDER=resend|mailchimp` in the environment overrides the
+choice made in the dashboard, the same way the key variables override stored
+keys.
+
 The customer's receipt lists the items, the totals and the delivery address.
 `SHOP_OWNER_EMAIL` blind-copies you on every one. Each order records
 `confirmation_sent_at`, so a retried webhook never emails twice and you can
