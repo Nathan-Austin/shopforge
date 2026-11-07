@@ -287,9 +287,13 @@ loose in `/tmp`.
       `resolveEmailConfig()` / `resolveNewsletterStatus()` read the key from
       the environment first, then Vault, so `RESEND_API_KEY` still wins and
       remains the way out if Vault is unavailable; the settings page says so
-      when it is set. Follow-ups: a scoped "sending only" key check (today
-      any valid key passes), and reading the key once per request rather
-      than on a one-minute cache
+      when it is set. Not done from F's original wording: the generator
+      still only writes empty `RESEND_API_KEY` and `EMAIL_FROM` placeholders
+      rather than asking for them — the dashboard is the better route now,
+      and a prompt would have to stay quiet under `--skip-supabase`, which
+      CI uses. Other follow-ups: a scoped "sending only" key check, since
+      today any valid key passes the test; and reading the key once per
+      request rather than on a one-minute cache
 - [ ] **G. Transactional templates.** The builder's brand theme (logo,
       colours, footer) and editable intro/footer copy per locale applied to
       the receipt, shipping and refund emails, with the order details
