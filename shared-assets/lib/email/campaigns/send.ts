@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { getEmailConfig } from '@/lib/email/config';
+import { resolveEmailConfig } from '@/lib/email/config';
 import { createResendClient, type ResendClient } from '@/lib/email/providers/resend';
 import { appendEmailTmpLog } from '@/lib/email/tmpDir';
 import {
@@ -42,9 +42,9 @@ export interface CampaignRow {
   updated_at: string;
 }
 
-/** The campaign provider, when a key is set. */
-export function campaignProvider(): ResendClient | null {
-  const config = getEmailConfig();
+/** The campaign provider, when a key is set — in the environment or in Vault. */
+export async function campaignProvider(): Promise<ResendClient | null> {
+  const config = await resolveEmailConfig();
   return config.provider === 'resend' && config.apiKey ? createResendClient({ apiKey: config.apiKey }) : null;
 }
 
@@ -97,8 +97,8 @@ export type SendCampaignResult =
  * be missed.
  */
 export async function sendCampaign(supabase: SupabaseClient, campaign: CampaignRow, options: SendCampaignOptions): Promise<SendCampaignResult> {
-  const resend = campaignProvider();
-  const config = getEmailConfig();
+  const resend = await campaignProvider();
+  const config = await resolveEmailConfig();
   if (!resend || !config.from) return { ok: false, error: 'not-configured' };
 
   const readiness = await campaignReadiness(supabase, options.locales);
@@ -190,7 +190,7 @@ async function sendOne(
 
 /** Asks the provider how each language's broadcast is doing and records it. */
 export async function refreshCampaign(supabase: SupabaseClient, campaign: CampaignRow): Promise<CampaignRow> {
-  const resend = campaignProvider();
+  const resend = await campaignProvider();
   if (!resend || campaign.status === 'draft') return campaign;
   const locales: CampaignLocales = { ...campaign.locales };
   for (const [locale, state] of Object.entries(locales)) {

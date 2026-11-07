@@ -964,7 +964,7 @@ import { getTranslations } from 'next-intl/server';
 
 import CheckoutForm from '@/components/cart/CheckoutForm';
 import DiscountCodeForm from '@/components/cart/DiscountCodeForm';
-import { newsletterStatus } from '@/lib/email/subscribers/config';
+import { resolveNewsletterStatus } from '@/lib/email/subscribers/config';
 import { createClient } from '@/lib/supabase/server';
 import { getCart } from '@/lib/cart/service';
 import { resolveCartDiscount } from '@/lib/discounts/service';
@@ -1045,7 +1045,7 @@ export default async function CheckoutPage({
         />
       </div>
 
-      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} newsletter={newsletterStatus().enabled} />
+      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} newsletter={(await resolveNewsletterStatus()).enabled} />
     </main>
   );
 }

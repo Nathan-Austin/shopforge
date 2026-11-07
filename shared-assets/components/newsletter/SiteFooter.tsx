@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { subscribeToNewsletter } from '@/lib/email/subscribers/actions';
-import { newsletterStatus } from '@/lib/email/subscribers/config';
+import { resolveNewsletterStatus } from '@/lib/email/subscribers/config';
 import NewsletterSignup from './NewsletterSignup';
 
 /**
@@ -11,7 +11,7 @@ import NewsletterSignup from './NewsletterSignup';
 export default async function SiteFooter({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Footer' });
   const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
-  const newsletter = newsletterStatus().enabled;
+  const newsletter = (await resolveNewsletterStatus()).enabled;
 
   return (
     <footer className="mt-16 border-t border-gray-200 bg-gray-50">

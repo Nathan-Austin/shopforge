@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { sendEmail } from '@/lib/email/send';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { newsletterStatus } from './config';
+import { resolveNewsletterStatus } from './config';
 import { renderSubscriptionConfirmation } from './confirmationEmail';
 import { confirmUrl } from './links';
 import {
@@ -61,7 +61,7 @@ async function logEvent(supabase: SupabaseClient, subscriberId: string, event: E
 
 /** Sends (or re-sends) the confirmation email and records that it went. */
 async function sendConfirmation(supabase: SupabaseClient, subscriber: { id: string; email: string; locale: string }): Promise<boolean> {
-  const status = newsletterStatus();
+  const status = await resolveNewsletterStatus();
   if (!status.enabled) return false;
   const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
   const t = await getTranslations({ locale: subscriber.locale, namespace: 'Email.subscribe' });
@@ -106,7 +106,7 @@ export type SubscriptionRequestResult = { ok: true } | { ok: false; reason: 'inv
  * cannot be used to find out who is on the list.
  */
 export async function requestSubscription(request: SubscriptionRequest): Promise<SubscriptionRequestResult> {
-  if (!newsletterStatus().enabled) return { ok: false, reason: 'unavailable' };
+  if (!(await resolveNewsletterStatus()).enabled) return { ok: false, reason: 'unavailable' };
   const email = normalizeEmail(request.email);
   if (!email) return { ok: false, reason: 'invalid-email' };
   if (!isLocaleCode(request.locale)) return { ok: false, reason: 'failed' };
@@ -171,7 +171,7 @@ const ISSUE_SLACK_MS = 5_000;
 
 /** What a link from an email refers to, without changing anything. */
 export async function readSubscriberLink(token: unknown, purpose: 'confirm' | 'unsubscribe'): Promise<LinkState> {
-  const status = newsletterStatus();
+  const status = await resolveNewsletterStatus();
   if (!status.enabled) return { valid: false, reason: 'unavailable' };
   const check = verifySubscriberToken(token, purpose, status.secret);
   if (!check.ok) return { valid: false, reason: check.reason === 'expired' ? 'expired' : 'invalid' };

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getEmailConfig } from './config';
+import { resolveEmailConfig } from './config';
 
 /**
  * Sending transactional email.
@@ -29,7 +29,7 @@ export type SendResult =
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 
 export async function sendEmail(message: EmailMessage): Promise<SendResult> {
-  const config = getEmailConfig();
+  const config = await resolveEmailConfig();
 
   if (config.provider === 'none' || !config.apiKey || !config.from) {
     // Not an error: a shop without email configured simply doesn't send.

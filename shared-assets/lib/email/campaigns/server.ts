@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { CODE_PATTERN, discountStatus } from '@/lib/discounts/rules';
 import { DISCOUNT_COLUMNS, toDiscountCode, type DiscountRow } from '@/lib/discounts/service';
-import { getEmailConfig } from '@/lib/email/config';
+import { resolveEmailConfig } from '@/lib/email/config';
 import { sendEmail } from '@/lib/email/send';
 import { appendEmailTmpLog } from '@/lib/email/tmpDir';
 import {
@@ -267,7 +267,7 @@ async function renderAndSend(
   const { email } = rendered;
   const subject = `${request.subjectPrefix} ${email.subject}`.trim();
   const withSubject = { ...base, subject, warnings: email.warnings };
-  if (getEmailConfig().provider === 'none') return { ...withSubject, status: 'not-configured' };
+  if ((await resolveEmailConfig()).provider === 'none') return { ...withSubject, status: 'not-configured' };
 
   const sent = await sendEmail({ to: request.to, subject, html: email.html, text: email.text });
   const durationMs = Date.now() - started.getTime();
