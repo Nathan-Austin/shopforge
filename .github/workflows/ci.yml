@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  COREPACK_ENABLE_DOWNLOAD_PROMPT: ‘0’
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: 0
   GIT_AUTHOR_NAME: shopforge-ci
   GIT_AUTHOR_EMAIL: ci@shopforge.invalid
   GIT_COMMITTER_NAME: shopforge-ci
