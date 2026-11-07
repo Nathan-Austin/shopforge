@@ -3,7 +3,8 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { resolveEmailConfig } from '@/lib/email/config';
-import { createResendClient, type ResendClient } from '@/lib/email/providers/resend';
+import { createCampaignProvider, passthroughTagsFor, unsubscribePlaceholderFor } from '@/lib/email/providers/registry';
+import type { CampaignProviderClient, CampaignProviderName } from '@/lib/email/providers/types';
 import { appendEmailTmpLog } from '@/lib/email/tmpDir';
 import {
   broadcastName,
@@ -14,7 +15,6 @@ import {
   type CampaignLocaleState,
   type CampaignStatus
 } from './broadcast';
-import { RESEND_PASSTHROUGH_TAGS, RESEND_UNSUBSCRIBE_PLACEHOLDER } from '../providers/resend';
 import { buildCampaignContext, type CampaignModeHooks } from './server';
 
 /**
@@ -32,7 +32,7 @@ export interface CampaignRow {
   template_id: string | null;
   document: unknown;
   status: CampaignStatus;
-  provider: 'resend';
+  provider: CampaignProviderName;
   scheduled_at: string | null;
   sent_at: string | null;
   locales: CampaignLocales;
@@ -42,10 +42,13 @@ export interface CampaignRow {
   updated_at: string;
 }
 
-/** The campaign provider, when a key is set — in the environment or in Vault. */
-export async function campaignProvider(): Promise<ResendClient | null> {
-  const config = await resolveEmailConfig();
-  return config.provider === 'resend' && config.apiKey ? createResendClient({ apiKey: config.apiKey }) : null;
+/**
+ * The campaign provider this shop sends through — Resend or Mailchimp —
+ * when a key is set for it, in the environment or in Vault. Not the same
+ * question as whether receipts can be sent, which is resolveEmailConfig().
+ */
+export async function campaignProvider(): Promise<CampaignProviderClient | null> {
+  return createCampaignProvider();
 }
 
 export interface LocaleReadiness {
@@ -56,8 +59,12 @@ export interface LocaleReadiness {
 }
 
 /** Per language: how many will get it, how many still need syncing, whether an audience exists. */
-export async function campaignReadiness(supabase: SupabaseClient, locales: readonly string[]): Promise<LocaleReadiness[]> {
-  const { data: audiences } = await supabase.from('email_audiences').select('locale, audience_id');
+export async function campaignReadiness(
+  supabase: SupabaseClient,
+  locales: readonly string[],
+  provider: CampaignProviderName = 'resend'
+): Promise<LocaleReadiness[]> {
+  const { data: audiences } = await supabase.from('email_audiences').select('locale, audience_id').eq('provider', provider);
   const byLocale = new Map((audiences ?? []).map((row) => [row.locale as string, row.audience_id as string]));
   return Promise.all(
     locales.map(async (locale) => {
@@ -101,7 +108,7 @@ export async function sendCampaign(supabase: SupabaseClient, campaign: CampaignR
   const config = await resolveEmailConfig();
   if (!resend || !config.from) return { ok: false, error: 'not-configured' };
 
-  const readiness = await campaignReadiness(supabase, options.locales);
+  const readiness = await campaignReadiness(supabase, options.locales, resend.name);
   const targets = readiness.filter((entry) => entry.subscribed > 0);
   if (!targets.length) return { ok: false, error: 'nobody' };
   const unsynced = targets.find((entry) => entry.due > 0 || !entry.audienceId);
@@ -145,7 +152,7 @@ export async function sendCampaign(supabase: SupabaseClient, campaign: CampaignR
 
 async function sendOne(
   supabase: SupabaseClient,
-  resend: ResendClient,
+  resend: CampaignProviderClient,
   campaign: CampaignRow,
   entry: LocaleReadiness,
   options: SendCampaignOptions,
@@ -156,10 +163,10 @@ async function sendOne(
     const context = await buildCampaignContext(supabase, campaign.document, {
       locale: entry.locale,
       recipient: null,
-      unsubscribeUrl: RESEND_UNSUBSCRIBE_PLACEHOLDER,
+      unsubscribeUrl: unsubscribePlaceholderFor(resend.name),
       mode: options.mode
     });
-    const rendered = renderBroadcast(campaign.document, { ...context, passthroughTags: RESEND_PASSTHROUGH_TAGS });
+    const rendered = renderBroadcast(campaign.document, { ...context, passthroughTags: passthroughTagsFor(resend.name) });
     if (!rendered.ok) {
       return { broadcastId: null, recipients: entry.subscribed, status: 'failed', error: rendered.error, warnings: rendered.warnings };
     }

@@ -26,11 +26,12 @@ const resendCalls: { method: string; args: unknown[] }[] = [];
 let resendAnswers: Partial<Record<keyof ResendClient, (...args: unknown[]) => unknown>> = {};
 vi.mock('../providers/resend', async (importOriginal) => {
   const original = await importOriginal<typeof import('../providers/resend')>();
-  const methods: (keyof ResendClient)[] = ['createBroadcast', 'sendBroadcast', 'getBroadcast', 'listAudiences', 'createAudience', 'createContact', 'updateContact', 'deleteContact', 'listContacts'];
+  const methods: (keyof ResendClient)[] = ['verifyKey', 'createBroadcast', 'sendBroadcast', 'getBroadcast', 'listAudiences', 'createAudience', 'createContact', 'updateContact', 'deleteContact', 'listContacts'];
   const client = Object.fromEntries(
     methods.map((method) => [method, (...args: unknown[]) => { resendCalls.push({ method, args }); return Promise.resolve((resendAnswers[method] ?? (() => ({ ok: true, data: { id: 'b_1' } })))(...args)); }])
   );
-  return { ...original, createResendClient: () => client };
+  // name is what tells send.ts which provider's audiences and merge tags to use.
+  return { ...original, createResendClient: () => ({ name: 'resend', ...client }) };
 });
 
 const { sendCampaign, refreshCampaign, campaignReadiness } = await import('./send');
@@ -70,7 +71,7 @@ describe('campaignReadiness', () => {
     subscribers('de', 1);
     db.tables.email_subscribers.push({ id: db.id(), email: 'due@example.com', locale: 'de', status: 'subscribed', updated_at: '2026-11-03T00:00:00.000Z', provider_synced_at: null });
     db.tables.email_subscribers.push({ id: db.id(), email: 'pend@example.com', locale: 'en', status: 'pending', updated_at: '2026-11-03T00:00:00.000Z', provider_synced_at: null });
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en' });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en' });
     expect(await campaignReadiness(db as never, ['en', 'de'])).toEqual([
       { locale: 'en', subscribed: 2, due: 0, audienceId: 'aud_en' },
       { locale: 'de', subscribed: 2, due: 1, audienceId: null }
@@ -81,7 +82,7 @@ describe('campaignReadiness', () => {
 describe('sendCampaign', () => {
   it('sends one broadcast per language with subscribers, skipping empty ones', async () => {
     subscribers('en', 3);
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en' });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en' });
     const row = campaign();
     const result = await sendCampaign(db as never, row as never, options);
     expect(result.ok).toBe(true);
@@ -96,7 +97,7 @@ describe('sendCampaign', () => {
 
   it('schedules when asked', async () => {
     subscribers('de', 1);
-    db.tables.email_audiences.push({ locale: 'de', audience_id: 'aud_de' });
+    db.tables.email_audiences.push({ locale: 'de', provider: 'resend', audience_id: 'aud_de' });
     const row = campaign();
     await sendCampaign(db as never, row as never, { ...options, scheduledAt: '2026-12-01T09:00:00.000Z' });
     expect(resendCalls[1].args).toEqual(['b_1', '2026-12-01T09:00:00.000Z']);
@@ -107,7 +108,7 @@ describe('sendCampaign', () => {
     expect(await sendCampaign(db as never, campaign() as never, options)).toEqual({ ok: false, error: 'nobody' });
     subscribers('en', 1, { provider_synced_at: null });
     expect(await sendCampaign(db as never, campaign() as never, options)).toMatchObject({ ok: false, error: 'audience-missing', message: 'en' });
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en' });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en' });
     expect(await sendCampaign(db as never, campaign() as never, options)).toMatchObject({ ok: false, error: 'not-synced', message: 'en' });
     db.tables.email_subscribers[0].provider_synced_at = '2026-11-02T00:00:00.000Z';
     expect(await sendCampaign(db as never, campaign({ status: 'sent' }) as never, options)).toEqual({ ok: false, error: 'not-draft' });
@@ -116,7 +117,7 @@ describe('sendCampaign', () => {
 
   it('sends once however many times the button is pressed', async () => {
     subscribers('en', 1);
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en' });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en' });
     const row = campaign();
     await Promise.all([sendCampaign(db as never, row as never, options), sendCampaign(db as never, row as never, options)]);
     expect(resendCalls.filter((call) => call.method === 'sendBroadcast')).toHaveLength(1);
@@ -125,7 +126,7 @@ describe('sendCampaign', () => {
   it('records a provider refusal per language and marks the campaign failed', async () => {
     subscribers('en', 1);
     subscribers('de', 1);
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en' }, { locale: 'de', audience_id: 'aud_de' });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en' }, { locale: 'de', provider: 'resend', audience_id: 'aud_de' });
     resendAnswers.createBroadcast = (b: unknown) => ((b as { audienceId: string }).audienceId === 'aud_de' ? { ok: false, status: 422, message: 'from not verified', rateLimited: false } : { ok: true, data: { id: 'b_en' } });
     const row = campaign();
     const result = await sendCampaign(db as never, row as never, options);

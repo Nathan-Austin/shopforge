@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { ResendClient } from '@/lib/email/providers/resend';
+import type { CampaignProviderClient } from '@/lib/email/providers/types';
 import type { SubscriberStatus } from './rules';
 
 /**
@@ -43,6 +43,13 @@ interface AudienceRow {
   pulled_at: string | null;
 }
 
+/**
+ * Audience rows are per provider: an audience id means a Resend audience to
+ * one and a Mailchimp "<list>:<tag>" to the other, so a shop that switches
+ * must not read the old provider's id back.
+ */
+const AUDIENCE_COLUMNS = 'locale, audience_id, pulled_at';
+
 interface DueRow {
   id: string;
   email: string;
@@ -62,11 +69,16 @@ export function audienceName(shopName: string, locale: string): string {
 /** The audience for a language, created at the provider on first use. */
 export async function ensureAudience(
   supabase: SupabaseClient,
-  resend: ResendClient,
+  resend: CampaignProviderClient,
   locale: string,
   shopName: string
 ): Promise<{ ok: true; audience: AudienceRow } | { ok: false; error: string }> {
-  const { data: existing } = await supabase.from('email_audiences').select('locale, audience_id, pulled_at').eq('locale', locale).maybeSingle();
+  const { data: existing } = await supabase
+    .from('email_audiences')
+    .select(AUDIENCE_COLUMNS)
+    .eq('locale', locale)
+    .eq('provider', resend.name)
+    .maybeSingle();
   if (existing) return { ok: true, audience: existing as AudienceRow };
 
   // One may exist from an earlier shop install: reuse it by name.
@@ -81,8 +93,8 @@ export async function ensureAudience(
   }
   const { data: row, error } = await supabase
     .from('email_audiences')
-    .upsert({ locale, provider: 'resend', audience_id: audienceId }, { onConflict: 'locale' })
-    .select('locale, audience_id, pulled_at')
+    .upsert({ locale, provider: resend.name, audience_id: audienceId }, { onConflict: 'locale,provider' })
+    .select(AUDIENCE_COLUMNS)
     .single();
   if (error || !row) return { ok: false, error: error?.message ?? 'Could not record the audience' };
   return { ok: true, audience: row as AudienceRow };
@@ -92,7 +104,7 @@ export async function ensureAudience(
  * Reads the provider's unsubscribes back. Someone who clicked Resend's
  * unsubscribe link is unsubscribed here too, with that in their history.
  */
-export async function pullUnsubscribes(supabase: SupabaseClient, resend: ResendClient, audience: AudienceRow, now: Date): Promise<{ count: number; error: string | null }> {
+export async function pullUnsubscribes(supabase: SupabaseClient, resend: CampaignProviderClient, audience: AudienceRow, now: Date): Promise<{ count: number; error: string | null }> {
   const contacts = await resend.listContacts(audience.audience_id);
   if (!contacts.ok) return { count: 0, error: contacts.message };
   const left = contacts.data.filter((contact) => contact.unsubscribed).map((contact) => contact.email.toLowerCase());
@@ -109,7 +121,7 @@ export async function pullUnsubscribes(supabase: SupabaseClient, resend: ResendC
       await supabase.from('email_subscriber_events').insert({ subscriber_id: row.id, event: 'unsubscribed', source: 'provider' });
     }
   }
-  await supabase.from('email_audiences').update({ pulled_at: now.toISOString() }).eq('locale', audience.locale);
+  await supabase.from('email_audiences').update({ pulled_at: now.toISOString() }).eq('locale', audience.locale).eq('provider', resend.name);
   return { count, error: null };
 }
 
@@ -126,7 +138,7 @@ export async function countDue(supabase: SupabaseClient, locale: string): Promis
  */
 export async function pushDue(
   supabase: SupabaseClient,
-  resend: ResendClient,
+  resend: CampaignProviderClient,
   audience: AudienceRow,
   options: { budgetMs?: number; now?: () => number; sleep?: (ms: number) => Promise<unknown> } = {}
 ): Promise<{ pushed: number; rateLimited: boolean; error: string | null }> {
@@ -158,7 +170,7 @@ export async function pushDue(
 
     // Moved to another language: out of the old audience first.
     if (contactId && row.provider_locale && row.provider_locale !== row.locale) {
-      const { data: old } = await supabase.from('email_audiences').select('audience_id').eq('locale', row.provider_locale).maybeSingle();
+      const { data: old } = await supabase.from('email_audiences').select('audience_id').eq('locale', row.provider_locale).eq('provider', resend.name).maybeSingle();
       if (old) {
         const removed = await call(() => resend.deleteContact(old.audience_id, contactId as string));
         if (!removed.ok && removed.rateLimited) return { pushed, rateLimited: true, error: null };
@@ -212,7 +224,7 @@ async function markSynced(supabase: SupabaseClient, id: string, contactId: strin
 /** One sync step for a language: audience, pull (when due), one push round. */
 export async function syncAudienceStep(
   supabase: SupabaseClient,
-  resend: ResendClient,
+  resend: CampaignProviderClient,
   locale: string,
   shopName: string,
   options: { forcePull?: boolean; budgetMs?: number; now?: Date } = {}

@@ -9,52 +9,31 @@
  */
 
 import type { PassthroughTags } from '../campaigns/mergeTags';
+import type {
+  CampaignProviderClient,
+  NewBroadcast,
+  ProviderAudience,
+  ProviderBroadcast,
+  ProviderContact,
+  ProviderResult
+} from './types';
 
 const ENDPOINT = 'https://api.resend.com';
 
-export type ResendResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status: number; message: string; rateLimited: boolean };
+// Resend was the only provider once, so these names are kept as aliases of
+// the shared shapes in ./types rather than broken for every importer.
+export type ResendResult<T> = ProviderResult<T>;
+export type ResendAudience = ProviderAudience;
+export type ResendContact = ProviderContact;
+export type ResendBroadcast = ProviderBroadcast;
+export type { NewBroadcast };
 
 export interface ResendClientOptions {
   apiKey: string;
   fetch?: typeof fetch;
 }
 
-export interface ResendAudience {
-  id: string;
-  name: string;
-}
-
-export interface ResendContact {
-  id: string;
-  email: string;
-  first_name: string | null;
-  unsubscribed: boolean;
-}
-
-export type ResendBroadcastStatus = 'draft' | 'queued' | 'scheduled' | 'sent' | 'canceled' | 'failed' | string;
-
-export interface ResendBroadcast {
-  id: string;
-  status: ResendBroadcastStatus;
-  scheduled_at: string | null;
-  sent_at: string | null;
-}
-
-export interface NewBroadcast {
-  audienceId: string;
-  from: string;
-  replyTo?: string | null;
-  subject: string;
-  previewText?: string;
-  html: string;
-  text: string;
-  /** Shown in Resend's dashboard only. */
-  name: string;
-}
-
-export function createResendClient({ apiKey, fetch: fetchImpl = fetch }: ResendClientOptions) {
+export function createResendClient({ apiKey, fetch: fetchImpl = fetch }: ResendClientOptions): CampaignProviderClient {
   async function request<T>(method: string, path: string, body?: unknown): Promise<ResendResult<T>> {
     try {
       const response = await fetchImpl(`${ENDPOINT}${path}`, {
@@ -75,6 +54,12 @@ export function createResendClient({ apiKey, fetch: fetchImpl = fetch }: ResendC
   }
 
   return {
+    name: 'resend',
+    /** Resend has no dedicated ping; listing audiences is the cheapest call. */
+    verifyKey: () =>
+      request<{ data: ResendAudience[] }>('GET', '/audiences').then((r) =>
+        r.ok ? ({ ok: true as const, data: true as const }) : r
+      ),
     listAudiences: () => request<{ data: ResendAudience[] }>('GET', '/audiences').then((r) => (r.ok ? { ok: true as const, data: r.data.data } : r)),
     createAudience: (name: string) => request<{ id: string }>('POST', '/audiences', { name }),
     createContact: (audienceId: string, contact: { email: string; firstName?: string | null; unsubscribed: boolean }) =>
@@ -122,7 +107,7 @@ export function createResendClient({ apiKey, fetch: fetchImpl = fetch }: ResendC
   };
 }
 
-export type ResendClient = ReturnType<typeof createResendClient>;
+export type ResendClient = CampaignProviderClient;
 
 /** Resend's broadcast merge variables, in place of our recipient tags. */
 export const RESEND_PASSTHROUGH_TAGS: PassthroughTags = {

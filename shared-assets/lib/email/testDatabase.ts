@@ -141,8 +141,14 @@ export class FakeQuery {
         break;
       case 'insert': {
         for (const input of this.op.rows) {
-          const key = this.op.onConflict ?? (this.table === 'email_subscribers' ? 'email' : this.table === 'email_audiences' ? 'locale' : null);
-          const clash = key ? table.find((row) => row[key] === input[key]) : undefined;
+          // onConflict may name several columns ('locale,provider'), as the
+          // audience upsert does. Comparing the whole key matters: matching
+          // on one column of a composite would hit the wrong row.
+          const key = this.op.onConflict ?? (this.table === 'email_subscribers' ? 'email' : this.table === 'email_audiences' ? 'locale,provider' : null);
+          const columns = key ? key.split(',').map((column) => column.trim()).filter(Boolean) : [];
+          const clash = columns.length
+            ? table.find((row) => columns.every((column) => row[column] === input[column]))
+            : undefined;
           if (clash) {
             if (!this.op.upsert) return { data: null, error: { code: '23505', message: 'duplicate key' }, count: null };
             Object.assign(clash, input);

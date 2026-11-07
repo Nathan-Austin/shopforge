@@ -16,6 +16,7 @@ function fakeResend(overrides: Partial<Record<keyof ResendClient, unknown>> = {}
       return Promise.resolve(answer(...args));
     });
   const client = {
+    name: 'resend' as const,
     listAudiences: record('listAudiences', () => ({ ok: true, data: [] })),
     createAudience: record('createAudience', () => ({ ok: true, data: { id: 'aud_new' } })),
     createContact: record('createContact', () => ({ ok: true, data: { id: `c_${nextContact++}` } })),
@@ -36,7 +37,7 @@ const subscriber = (email: string, extra: Row = {}): Row => {
   db.tables.email_subscribers.push(row);
   return row;
 };
-const audience = { locale: 'de', audience_id: 'aud_de', pulled_at: null };
+const audience = { locale: 'de', provider: 'resend', audience_id: 'aud_de', pulled_at: null };
 const fast = { budgetMs: 10_000, sleep: async () => undefined };
 
 beforeEach(() => {
@@ -99,7 +100,7 @@ describe('pushDue', () => {
   });
 
   it('moves someone who changed language out of the old audience and into the new', async () => {
-    db.tables.email_audiences.push({ locale: 'en', audience_id: 'aud_en', pulled_at: null }, { ...audience });
+    db.tables.email_audiences.push({ locale: 'en', provider: 'resend', audience_id: 'aud_en', pulled_at: null }, { ...audience });
     const moved = subscriber('moved@example.com', { provider_contact_id: 'c_m', provider_locale: 'en', provider_synced_at: '2026-10-01T00:00:00.000Z' });
     const { client, calls } = fakeResend();
     await pushDue(db as never, client, audience, fast);
