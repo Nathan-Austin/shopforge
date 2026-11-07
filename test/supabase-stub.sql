@@ -20,6 +20,51 @@ grant usage on schema public, auth to anon, authenticated, service_role;
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+-- Supabase Vault, enough of it for 0010_email_provider_keys to run.
+--
+-- WARNING: this stand-in stores secrets in PLAINTEXT. It exists so the tests
+-- can exercise who may set and read a provider key, not to check the
+-- encryption, which is Vault's own and is not reimplemented here. Nothing
+-- outside test/ should ever create this schema.
+create schema if not exists vault;
+create table if not exists vault.secrets (
+  id uuid primary key default gen_random_uuid(),
+  name text unique,
+  description text default '',
+  secret text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create or replace view vault.decrypted_secrets as
+  select id, name, description, secret, secret as decrypted_secret, created_at, updated_at
+    from vault.secrets;
+create or replace function vault.create_secret(new_secret text, new_name text default null, new_description text default '')
+returns uuid language plpgsql as $$
+declare v_id uuid;
+begin
+  insert into vault.secrets (name, description, secret)
+  values (new_name, coalesce(new_description, ''), new_secret)
+  returning id into v_id;
+  return v_id;
+end $$;
+create or replace function vault.update_secret(secret_id uuid, new_secret text default null, new_name text default null, new_description text default null)
+returns void language plpgsql as $$
+begin
+  update vault.secrets
+     set secret = coalesce(new_secret, secret),
+         name = coalesce(new_name, name),
+         description = coalesce(new_description, description),
+         updated_at = now()
+   where id = secret_id;
+end $$;
+-- On Supabase the API roles cannot reach vault at all; only the service role
+-- and SECURITY DEFINER functions do. Mirror that: no grant to anon or
+-- authenticated, so a test that tries to read the secret directly fails the
+-- same way it would in production.
+revoke all on schema vault from anon, authenticated;
+revoke all on all tables in schema vault from anon, authenticated;
+revoke all on all functions in schema vault from anon, authenticated;
+
 create schema if not exists storage;
 create table if not exists storage.buckets (id text primary key, name text, public boolean);
 create table if not exists storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, owner uuid);
