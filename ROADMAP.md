@@ -9,10 +9,10 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A to E (model, saved templates and test
-   sends, the designer, subscribers, sending through Resend) are done; F
-   (provider keys in the dashboard) is next, then G (transactional
-   templates), E2 (Mailchimp) and H.
+   listed there, one at a time. A to F (model, saved templates and test
+   sends, the designer, subscribers, sending through Resend, provider keys
+   in the dashboard) are done; E2 (Mailchimp) is next, then G
+   (transactional templates) and H.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -143,7 +143,7 @@ details for each item are in the numbered sections below.
       codes restricted to categories or products, automatic discounts with
       no code, and syncing a code's Stripe-side redemption count back when
       a promotion code is also used outside the shop
-- [ ] Localized order confirmation, refund and shipping emails — done
+- [x] Localized order confirmation, refund and shipping emails — done
       2026-11-04 for all three (strings in `Email.*`); listed here only so
       the next email (marketing) follows the same pattern
 - [ ] Email marketing page in the admin: broken down into phases in
@@ -272,16 +272,24 @@ loose in `/tmp`.
       sync members to a list (tags per language), create a campaign with
       our HTML, send or schedule, read status back; our merge tags mapped
       to `*|FNAME|*` and `*|UNSUB|*`. Deferred 2026-11-05
-- [ ] **F. Provider keys.** The generator asks for the campaign provider
-      and its key (`.env.local`); the admin shows which provider is active.
-      A key typed in the dashboard is write-only (decided 2026-11-05): the
-      owner enters it, tests it, and only a successful test stores it,
-      encrypted (Supabase Vault, readable by the server alone); the input
-      is cleared and a "saved" message says plainly that the key cannot
-      and will not be shown again, that a copy has to come from the
-      provider, and that replacing it means entering a new one. The admin
-      only ever shows that a key is set, when, and its last four
-      characters at most
+- [x] **F. Provider keys** — done 2026-11-07. `/admin/email/settings` (a
+      fourth tab) shows the active provider and sender, and takes the key.
+      The key is tested with `listAudiences` and only a key the provider
+      accepted is stored, through `set_email_provider_key` into Supabase
+      Vault (`0010_email_provider_keys.sql`); `public.email_provider_keys`
+      holds the Vault secret's name, when it was set, who by, and the last
+      four characters, and never the key. Write-only is enforced, not just
+      shown: `get_email_provider_key` has execute revoked from
+      `authenticated`, so the signed-in owner cannot read back what they
+      typed even by calling the RPC. The field empties on success and the
+      notice says the key will not be shown again, that a copy comes from
+      the provider, and that replacing means entering a new one.
+      `resolveEmailConfig()` / `resolveNewsletterStatus()` read the key from
+      the environment first, then Vault, so `RESEND_API_KEY` still wins and
+      remains the way out if Vault is unavailable; the settings page says so
+      when it is set. Follow-ups: a scoped "sending only" key check (today
+      any valid key passes), and reading the key once per request rather
+      than on a one-minute cache
 - [ ] **G. Transactional templates.** The builder's brand theme (logo,
       colours, footer) and editable intro/footer copy per locale applied to
       the receipt, shipping and refund emails, with the order details

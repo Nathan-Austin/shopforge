@@ -180,6 +180,30 @@ customer a receipt as soon as the payment clears.
    address does not have to match the site's own URL. Keep a separate API
    key per environment so you can revoke one without touching the other.
 
+#### Setting the key from the dashboard instead
+
+`RESEND_API_KEY` in `.env.local` is one way. The other is **Admin → Email →
+Settings**, which takes the key without a redeploy: paste it, the shop tests
+it against Resend, and only a key Resend accepted is stored — encrypted in
+[Supabase Vault](https://supabase.com/docs/guides/database/vault), readable
+by the server alone.
+
+It is stored **write-only**. Once saved, nothing in the admin can show the
+key again — the page tells you only that one is set, when, and its last four
+characters. Keep your own copy in Resend; to change it, enter a new one.
+
+`EMAIL_FROM` is still an environment variable, because a sender address is
+not a secret and the shop needs it before it can send anything.
+
+If `RESEND_API_KEY` is set, **it wins** and a key stored in the dashboard is
+kept but ignored; the settings page says so rather than leaving you to guess
+which one is live. That order is deliberate: the environment variable is the
+way out if Vault is ever unavailable.
+
+Vault is enabled by default on Supabase. On a project without it, saving a
+key fails with a message saying so, and `RESEND_API_KEY` remains the way to
+configure email.
+
 The customer's receipt lists the items, the totals and the delivery address.
 `SHOP_OWNER_EMAIL` blind-copies you on every one. Each order records
 `confirmation_sent_at`, so a retried webhook never emails twice and you can
