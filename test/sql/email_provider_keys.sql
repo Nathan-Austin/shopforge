@@ -130,8 +130,9 @@ do $$ begin
     raise exception 'a key too short to be real was accepted';
   exception when invalid_parameter_value then null;
   end;
+  -- 'mailchimp' became a real provider in 0011; 'brevo' has not (roadmap H).
   begin
-    perform public.set_email_provider_key('mailchimp', 'abcdefghijklmnop');
+    perform public.set_email_provider_key('brevo', 'abcdefghijklmnop');
     raise exception 'an unknown provider was accepted';
   exception when invalid_parameter_value then null;
   end;
