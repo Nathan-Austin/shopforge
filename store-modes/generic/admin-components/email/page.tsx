@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { getEmailConfig } from '@/lib/email/config';
+import { resolveEmailConfig } from '@/lib/email/config';
 import { TEMPLATE_COLUMNS, toEmailTemplate, type EmailTemplateRow } from '@/lib/email/campaigns/templates';
 import {
   createEmailTemplate,
@@ -34,7 +34,7 @@ export default async function AdminEmailPage({
 
   const { data: rows } = await supabase.from('email_templates').select(TEMPLATE_COLUMNS).order('updated_at', { ascending: false });
   const templates = ((rows ?? []) as EmailTemplateRow[]).map(toEmailTemplate);
-  const configured = getEmailConfig().provider !== 'none';
+  const configured = (await resolveEmailConfig()).provider !== 'none';
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
 
   const create = createEmailTemplate.bind(null, { locale });

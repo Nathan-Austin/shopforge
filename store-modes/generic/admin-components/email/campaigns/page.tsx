@@ -52,7 +52,7 @@ export default async function AdminCampaignsPage({
         <p className="text-sm text-stone-600">{t('subheading')}</p>
       </div>
       <EmailTabs locale={locale} current="campaigns" />
-      {!campaignProvider() && <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{t('notConfigured')}</p>}
+      {!(await campaignProvider()) && <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{t('notConfigured')}</p>}
       {notice && (
         <p role="status" className={`rounded-md border px-3 py-2 text-sm ${notice === 'deleted' ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-red-200 bg-red-50 text-red-900'}`}>
           {notice === 'deleted' ? t('notices.deleted') : t(`errors.${['not_authorized', 'not_found', 'not_draft'].includes(notice) ? notice : 'failed'}`, { message: '' })}

@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
-import { getEmailConfig } from '@/lib/email/config';
+import { resolveEmailConfig } from '@/lib/email/config';
 import { CAMPAIGN_COLUMNS, campaignProvider, campaignReadiness, type CampaignRow } from '@/lib/email/campaigns/send';
 import { designerPreviewContext } from '@/lib/email/campaigns/context';
 import { renderCampaign } from '@/lib/email/campaigns/render';
@@ -41,7 +41,7 @@ export default async function AdminCampaignPage({
   const campaign = row as CampaignRow;
   const locales = Array.from(new Set([...(LOCALES as readonly string[]), DEFAULT_LOCALE]));
   const readiness = await campaignReadiness(supabase, locales);
-  const configured = Boolean(campaignProvider()) && Boolean(getEmailConfig().from);
+  const configured = Boolean(await campaignProvider()) && Boolean((await resolveEmailConfig()).from);
   const recipients = readiness.reduce((sum, entry) => sum + entry.subscribed, 0);
   const ready = configured && recipients > 0 && readiness.every((entry) => entry.subscribed === 0 || (entry.due === 0 && entry.audienceId));
 

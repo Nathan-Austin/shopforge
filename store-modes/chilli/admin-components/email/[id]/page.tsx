@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
-import { getEmailConfig } from '@/lib/email/config';
+import { resolveEmailConfig } from '@/lib/email/config';
 import { loadForEditing } from '@/lib/email/campaigns/editor';
 import { loadDesignerData } from '@/lib/email/campaigns/server';
 import { TEMPLATE_COLUMNS, toEmailTemplate, type EmailTemplateRow } from '@/lib/email/campaigns/templates';
@@ -39,6 +39,8 @@ export default async function AdminEmailTemplatePage({
   // The shop's languages, plus the template's own default if the shop has since dropped it.
   const locales = Array.from(new Set([...(LOCALES as readonly string[]), loaded.document.defaultLocale]));
   const data = await loadDesignerData(supabase, template.document, locales, CAMPAIGN_MODE);
+  // Resolved, not read from the environment: the key may be in Vault.
+  const emailConfigured = (await resolveEmailConfig()).provider !== 'none';
 
   return (
     <div className="space-y-4">
@@ -65,7 +67,7 @@ export default async function AdminEmailTemplatePage({
             defaultTo={user.email ?? ''}
             defaultLocale={loaded.document.defaultLocale}
             locales={locales}
-            configured={getEmailConfig().provider !== 'none'}
+            configured={emailConfigured}
           />
         }
       />

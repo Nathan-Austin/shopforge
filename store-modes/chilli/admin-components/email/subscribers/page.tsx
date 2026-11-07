@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { newsletterStatus } from '@/lib/email/subscribers/config';
+import { resolveNewsletterStatus } from '@/lib/email/subscribers/config';
 import { SUBSCRIBER_STATUSES, type SubscriberStatus } from '@/lib/email/subscribers/rules';
 import { SUBSCRIBER_COLUMNS, type SubscriberRow } from '@/lib/email/subscribers/service';
 import { LOCALES } from '@/i18n/config';
@@ -58,7 +58,7 @@ export default async function AdminSubscribersPage({
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const counts: Record<SubscriberStatus, number> = { pending: pending.count ?? 0, subscribed: subscribed.count ?? 0, unsubscribed: unsubscribed.count ?? 0 };
 
-  const setup = newsletterStatus();
+  const setup = await resolveNewsletterStatus();
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
   const filterHref = (changes: Record<string, string | null>) => {
     const params = new URLSearchParams();

@@ -1333,7 +1333,8 @@ cat > src/messages/en.json <<'EOF'
         "label": "Email",
         "templates": "Templates",
         "subscribers": "Subscribers",
-        "campaigns": "Campaigns"
+        "campaigns": "Campaigns",
+        "settings": "Settings"
       },
       "subscribers": {
         "heading": "Subscribers",
@@ -1509,6 +1510,44 @@ cat > src/messages/en.json <<'EOF'
           "sendNow": "Send now",
           "confirmNow": "Send this campaign to {count, plural, one {# person} other {# people}} now? This cannot be undone.",
           "confirmLater": "Schedule this campaign for {count, plural, one {# person} other {# people}} at {time}?"
+        }
+      },
+      "settings": {
+        "heading": "Email settings",
+        "subheading": "Which provider sends this shop’s email, and the key it uses.",
+        "providerLabel": "Provider",
+        "providerNone": "None — this shop cannot send email yet",
+        "providerResend": "Resend",
+        "senderLabel": "Sender address",
+        "senderMissing": "Not set",
+        "senderRequired": "Set EMAIL_FROM to a sender you have verified with the provider. Without it nothing can be sent, even with a key in place.",
+        "fromEnvironment": "RESEND_API_KEY is set in this shop’s environment, and that key is the one being used. A key stored here is kept but ignored until the environment variable is removed.",
+        "statusHeading": "Stored key",
+        "stored": "A key is stored. Added {date}.",
+        "storedWithHint": "A key ending {hint} is stored. Added {date}.",
+        "notStored": "No key is stored here yet.",
+        "addHeading": "Add a key",
+        "replaceHeading": "Replace the key",
+        "writeOnlyWarning": "The key is tested against the provider and only stored if it works. Once stored it is encrypted and cannot be shown again — not here, and not anywhere else in this admin. Keep your own copy with the provider; to change it, enter a new one.",
+        "keyLabel": "API key",
+        "keyPlaceholder": "re_…",
+        "keyHint": "From your Resend dashboard, under API Keys. Sending access is enough.",
+        "testing": "Testing…",
+        "testAndSave": "Test and save",
+        "savedNotice": "Saved. The key ending {hint} was accepted by the provider and is now in use. It cannot be shown again — if you need a copy, take it from the provider.",
+        "removeHeading": "Remove the key",
+        "removeHint": "Deletes the stored key. This shop stops sending email unless a key is set in its environment.",
+        "remove": "Remove the key",
+        "removing": "Removing…",
+        "removedNotice": "The stored key has been removed.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "empty": "Enter a key.",
+          "too_short": "That is too short to be a provider key.",
+          "rejected": "The provider refused that key. Check you copied all of it, and that it has not been revoked.",
+          "unreachable": "The provider could not be reached, so the key was not tested and nothing was saved. Try again in a moment.",
+          "no_vault": "Supabase Vault is not enabled on this project, so there is nowhere safe to keep the key. Enable it, or set RESEND_API_KEY in the environment instead.",
+          "failed": "The key could not be saved."
         }
       }
     }
@@ -2415,7 +2454,8 @@ cat > src/messages/de.json <<'EOF'
         "label": "E-Mail",
         "templates": "Vorlagen",
         "subscribers": "Abonnenten",
-        "campaigns": "Kampagnen"
+        "campaigns": "Kampagnen",
+        "settings": "Einstellungen"
       },
       "subscribers": {
         "heading": "Abonnenten",
@@ -2591,6 +2631,44 @@ cat > src/messages/de.json <<'EOF'
           "sendNow": "Jetzt senden",
           "confirmNow": "Diese Kampagne jetzt an {count, plural, one {# Person} other {# Personen}} senden? Das lässt sich nicht rückgängig machen.",
           "confirmLater": "Diese Kampagne für {count, plural, one {# Person} other {# Personen}} um {time} planen?"
+        }
+      },
+      "settings": {
+        "heading": "E-Mail-Einstellungen",
+        "subheading": "Welcher Anbieter die E-Mails dieses Shops verschickt und mit welchem Schlüssel.",
+        "providerLabel": "Anbieter",
+        "providerNone": "Keiner — dieser Shop kann noch keine E-Mails senden",
+        "providerResend": "Resend",
+        "senderLabel": "Absenderadresse",
+        "senderMissing": "Nicht gesetzt",
+        "senderRequired": "Setzen Sie EMAIL_FROM auf eine beim Anbieter bestätigte Absenderadresse. Ohne sie kann auch mit Schlüssel nichts verschickt werden.",
+        "fromEnvironment": "In der Umgebung dieses Shops ist RESEND_API_KEY gesetzt, und dieser Schlüssel wird verwendet. Ein hier gespeicherter Schlüssel bleibt erhalten, wird aber ignoriert, solange die Umgebungsvariable gesetzt ist.",
+        "statusHeading": "Gespeicherter Schlüssel",
+        "stored": "Ein Schlüssel ist gespeichert. Hinzugefügt am {date}.",
+        "storedWithHint": "Ein Schlüssel mit der Endung {hint} ist gespeichert. Hinzugefügt am {date}.",
+        "notStored": "Hier ist noch kein Schlüssel gespeichert.",
+        "addHeading": "Schlüssel hinzufügen",
+        "replaceHeading": "Schlüssel ersetzen",
+        "writeOnlyWarning": "Der Schlüssel wird beim Anbieter getestet und nur gespeichert, wenn er funktioniert. Danach ist er verschlüsselt und kann nicht wieder angezeigt werden — weder hier noch sonst im Adminbereich. Bewahren Sie Ihre eigene Kopie beim Anbieter auf; zum Ändern geben Sie einen neuen ein.",
+        "keyLabel": "API-Schlüssel",
+        "keyPlaceholder": "re_…",
+        "keyHint": "Aus Ihrem Resend-Dashboard unter „API Keys“. Senderechte genügen.",
+        "testing": "Wird getestet…",
+        "testAndSave": "Testen und speichern",
+        "savedNotice": "Gespeichert. Der Schlüssel mit der Endung {hint} wurde vom Anbieter akzeptiert und wird jetzt verwendet. Er kann nicht wieder angezeigt werden — eine Kopie bekommen Sie nur beim Anbieter.",
+        "removeHeading": "Schlüssel entfernen",
+        "removeHint": "Löscht den gespeicherten Schlüssel. Dieser Shop verschickt dann keine E-Mails mehr, sofern kein Schlüssel in der Umgebung gesetzt ist.",
+        "remove": "Schlüssel entfernen",
+        "removing": "Wird entfernt…",
+        "removedNotice": "Der gespeicherte Schlüssel wurde entfernt.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "empty": "Bitte geben Sie einen Schlüssel ein.",
+          "too_short": "Das ist zu kurz für einen Anbieter-Schlüssel.",
+          "rejected": "Der Anbieter hat diesen Schlüssel abgelehnt. Prüfen Sie, ob Sie ihn vollständig kopiert haben und ob er noch gültig ist.",
+          "unreachable": "Der Anbieter war nicht erreichbar, der Schlüssel wurde nicht getestet und nichts gespeichert. Versuchen Sie es gleich noch einmal.",
+          "no_vault": "Supabase Vault ist in diesem Projekt nicht aktiviert, es gibt also keinen sicheren Ort für den Schlüssel. Aktivieren Sie Vault oder setzen Sie stattdessen RESEND_API_KEY in der Umgebung.",
+          "failed": "Der Schlüssel konnte nicht gespeichert werden."
         }
       }
     }
@@ -3497,7 +3575,8 @@ cat > src/messages/tr.json <<'EOF'
         "label": "E-posta",
         "templates": "Şablonlar",
         "subscribers": "Aboneler",
-        "campaigns": "Kampanyalar"
+        "campaigns": "Kampanyalar",
+        "settings": "Ayarlar"
       },
       "subscribers": {
         "heading": "Aboneler",
@@ -3673,6 +3752,44 @@ cat > src/messages/tr.json <<'EOF'
           "sendNow": "Şimdi gönder",
           "confirmNow": "Bu kampanya şimdi {count, plural, one {# kişiye} other {# kişiye}} gönderilsin mi? Bu geri alınamaz.",
           "confirmLater": "Bu kampanya {count, plural, one {# kişi} other {# kişi}} için {time} zamanına ayarlansın mı?"
+        }
+      },
+      "settings": {
+        "heading": "E-posta ayarları",
+        "subheading": "Bu mağazanın e-postalarını hangi sağlayıcının, hangi anahtarla gönderdiği.",
+        "providerLabel": "Sağlayıcı",
+        "providerNone": "Yok — bu mağaza henüz e-posta gönderemiyor",
+        "providerResend": "Resend",
+        "senderLabel": "Gönderen adresi",
+        "senderMissing": "Ayarlanmamış",
+        "senderRequired": "EMAIL_FROM değerini sağlayıcıda doğruladığınız bir gönderen adresine ayarlayın. O olmadan anahtar olsa bile hiçbir şey gönderilemez.",
+        "fromEnvironment": "Bu mağazanın ortamında RESEND_API_KEY tanımlı ve kullanılan anahtar o. Burada saklanan anahtar korunur ancak ortam değişkeni kaldırılana kadar yok sayılır.",
+        "statusHeading": "Saklanan anahtar",
+        "stored": "Bir anahtar saklanıyor. {date} tarihinde eklendi.",
+        "storedWithHint": "{hint} ile biten bir anahtar saklanıyor. {date} tarihinde eklendi.",
+        "notStored": "Burada henüz bir anahtar saklanmıyor.",
+        "addHeading": "Anahtar ekle",
+        "replaceHeading": "Anahtarı değiştir",
+        "writeOnlyWarning": "Anahtar sağlayıcıda test edilir ve yalnızca çalışıyorsa saklanır. Saklandıktan sonra şifrelenir ve bir daha gösterilemez — ne burada ne de yönetim panelinin başka bir yerinde. Kendi kopyanızı sağlayıcıda saklayın; değiştirmek için yenisini girin.",
+        "keyLabel": "API anahtarı",
+        "keyPlaceholder": "re_…",
+        "keyHint": "Resend kontrol panelinizde API Keys bölümünden. Gönderim yetkisi yeterlidir.",
+        "testing": "Test ediliyor…",
+        "testAndSave": "Test et ve kaydet",
+        "savedNotice": "Kaydedildi. {hint} ile biten anahtar sağlayıcı tarafından kabul edildi ve artık kullanılıyor. Bir daha gösterilemez — kopyaya ihtiyacınız olursa sağlayıcıdan alın.",
+        "removeHeading": "Anahtarı kaldır",
+        "removeHint": "Saklanan anahtarı siler. Ortamda bir anahtar tanımlı değilse bu mağaza e-posta göndermeyi bırakır.",
+        "remove": "Anahtarı kaldır",
+        "removing": "Kaldırılıyor…",
+        "removedNotice": "Saklanan anahtar kaldırıldı.",
+        "errors": {
+          "not_authorized": "Buna izniniz yok.",
+          "empty": "Bir anahtar girin.",
+          "too_short": "Bu bir sağlayıcı anahtarı olamayacak kadar kısa.",
+          "rejected": "Sağlayıcı bu anahtarı reddetti. Tamamını kopyaladığınızdan ve anahtarın iptal edilmediğinden emin olun.",
+          "unreachable": "Sağlayıcıya ulaşılamadı, anahtar test edilmedi ve hiçbir şey kaydedilmedi. Birazdan tekrar deneyin.",
+          "no_vault": "Bu projede Supabase Vault etkin değil, bu yüzden anahtarı güvenle saklayacak bir yer yok. Vault’u etkinleştirin veya bunun yerine ortamda RESEND_API_KEY tanımlayın.",
+          "failed": "Anahtar kaydedilemedi."
         }
       }
     }
@@ -4579,7 +4696,8 @@ cat > src/messages/ar.json <<'EOF'
         "label": "البريد",
         "templates": "القوالب",
         "subscribers": "المشتركون",
-        "campaigns": "الحملات"
+        "campaigns": "الحملات",
+        "settings": "الإعدادات"
       },
       "subscribers": {
         "heading": "المشتركون",
@@ -4755,6 +4873,44 @@ cat > src/messages/ar.json <<'EOF'
           "sendNow": "إرسال الآن",
           "confirmNow": "إرسال هذه الحملة الآن إلى {count, plural, one {شخص واحد} other {# أشخاص}}؟ لا يمكن التراجع عن ذلك.",
           "confirmLater": "جدولة هذه الحملة لـ {count, plural, one {شخص واحد} other {# أشخاص}} في {time}؟"
+        }
+      },
+      "settings": {
+        "heading": "إعدادات البريد",
+        "subheading": "من هو المزوّد الذي يرسل بريد هذا المتجر، وبأي مفتاح.",
+        "providerLabel": "المزوّد",
+        "providerNone": "لا يوجد — لا يستطيع هذا المتجر إرسال البريد بعد",
+        "providerResend": "Resend",
+        "senderLabel": "عنوان المرسِل",
+        "senderMissing": "غير مضبوط",
+        "senderRequired": "اضبط EMAIL_FROM على عنوان مرسِل موثّق لدى المزوّد. بدونه لا يُرسل شيء حتى مع وجود مفتاح.",
+        "fromEnvironment": "المتغير RESEND_API_KEY مضبوط في بيئة هذا المتجر، وهو المفتاح المستخدم. المفتاح المحفوظ هنا يبقى لكنه مُهمَل حتى يُزال متغير البيئة.",
+        "statusHeading": "المفتاح المحفوظ",
+        "stored": "يوجد مفتاح محفوظ. أُضيف في {date}.",
+        "storedWithHint": "يوجد مفتاح ينتهي بـ {hint} محفوظ. أُضيف في {date}.",
+        "notStored": "لا يوجد مفتاح محفوظ هنا بعد.",
+        "addHeading": "إضافة مفتاح",
+        "replaceHeading": "استبدال المفتاح",
+        "writeOnlyWarning": "يُختبر المفتاح لدى المزوّد ولا يُحفظ إلا إذا نجح. بعد حفظه يُشفّر ولا يمكن عرضه مرة أخرى — لا هنا ولا في أي مكان آخر من لوحة الإدارة. احتفظ بنسختك لدى المزوّد؛ ولتغييره أدخل مفتاحًا جديدًا.",
+        "keyLabel": "مفتاح API",
+        "keyPlaceholder": "re_…",
+        "keyHint": "من لوحة تحكم Resend ضمن API Keys. صلاحية الإرسال تكفي.",
+        "testing": "جارٍ الاختبار…",
+        "testAndSave": "اختبر واحفظ",
+        "savedNotice": "تم الحفظ. قبِل المزوّد المفتاح المنتهي بـ {hint} وهو قيد الاستخدام الآن. لا يمكن عرضه مرة أخرى — إن احتجت نسخة فخذها من المزوّد.",
+        "removeHeading": "إزالة المفتاح",
+        "removeHint": "يحذف المفتاح المحفوظ. سيتوقف هذا المتجر عن إرسال البريد ما لم يكن هناك مفتاح في البيئة.",
+        "remove": "إزالة المفتاح",
+        "removing": "جارٍ الإزالة…",
+        "removedNotice": "تمت إزالة المفتاح المحفوظ.",
+        "errors": {
+          "not_authorized": "لا يُسمح لك بذلك.",
+          "empty": "أدخل مفتاحًا.",
+          "too_short": "هذا أقصر من أن يكون مفتاح مزوّد.",
+          "rejected": "رفض المزوّد هذا المفتاح. تأكد من نسخه كاملًا ومن أنه لم يُلغَ.",
+          "unreachable": "تعذّر الوصول إلى المزوّد، فلم يُختبر المفتاح ولم يُحفظ شيء. أعد المحاولة بعد قليل.",
+          "no_vault": "خاصية Supabase Vault غير مُفعّلة في هذا المشروع، فلا يوجد مكان آمن لحفظ المفتاح. فعّلها، أو اضبط RESEND_API_KEY في البيئة بدلًا من ذلك.",
+          "failed": "تعذّر حفظ المفتاح."
         }
       }
     }

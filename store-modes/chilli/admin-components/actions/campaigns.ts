@@ -68,7 +68,7 @@ export async function syncAudience(locale: string, forcePull: boolean): Promise<
   const { error, supabase } = await ensureShopOwner();
   if (error || !supabase) return refused('not_authorized');
   if (!(LOCALES as readonly string[]).includes(locale)) return refused('not_found');
-  const resend = campaignProvider();
+  const resend = await campaignProvider();
   if (!resend) return refused('not_configured');
   const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
   return syncAudienceStep(supabase, resend, locale, shopName, { forcePull });

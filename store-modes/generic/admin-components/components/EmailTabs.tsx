@@ -1,13 +1,20 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-/** Templates and Subscribers, the two halves of the email section. */
-export default async function EmailTabs({ locale, current }: { locale: string; current: 'templates' | 'subscribers' | 'campaigns' }) {
+/** Templates, Subscribers, Campaigns and Settings: the email section. */
+export default async function EmailTabs({
+  locale,
+  current
+}: {
+  locale: string;
+  current: 'templates' | 'subscribers' | 'campaigns' | 'settings';
+}) {
   const t = await getTranslations({ locale, namespace: 'Admin.email.tabs' });
   const tabs = [
     { key: 'templates' as const, href: `/${locale}/admin/email` },
     { key: 'subscribers' as const, href: `/${locale}/admin/email/subscribers` },
-    { key: 'campaigns' as const, href: `/${locale}/admin/email/campaigns` }
+    { key: 'campaigns' as const, href: `/${locale}/admin/email/campaigns` },
+    { key: 'settings' as const, href: `/${locale}/admin/email/settings` }
   ];
   return (
     <nav className="flex gap-2 border-b border-border text-sm" aria-label={t('label')}>
