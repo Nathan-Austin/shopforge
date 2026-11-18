@@ -2,6 +2,47 @@
 
 Planned work for shopforge, roughly in order.
 
+## 0. Direction: from generator to one codebase set up in the browser
+
+Today a shop is created by running the shell generator and then customised
+with a coding agent. The aim is a path where a shop owner never needs a
+terminal or an agent to get started, and where an agent is only needed to
+customise a shop beyond what the admin offers.
+
+- **Choices become settings, not generated code.** Mode (generic or chilli),
+  currency, languages, shipping zones and product fields live in the database
+  and are switched in the admin. Chilli mode becomes a feature toggle rather
+  than a separate template. Several existing items already lead here: store
+  settings in the database, the product-field toggles, the heat scale admin.
+- **Deploy button.** A "Deploy to Vercel" button in the README, using
+  Vercel's Supabase integration to create and link the database.
+- **First-run setup wizard in the admin.** Shop name and logo, mode,
+  currency and languages, connecting Stripe with a test step, the email
+  provider, legal pages.
+- **Updates.** Every shop runs the same codebase, so updating is pulling the
+  new version and running the numbered migrations. This replaces the need to
+  carry template changes into generated stores by hand.
+- **Two audiences.** Shop owners use the deploy button and the wizard.
+  Developers fork the repo and customise it, with or without a coding agent
+  (see section 4).
+- **Not a desktop app.** A cross-platform GUI would still need the Node
+  toolchain and the same cloud accounts, plus code signing, notarisation and
+  auto-updates on three platforms. The browser path gets the same result
+  with far less to maintain.
+
+First step: a plan-only session that lists everything decided at generation
+time today (flags, mode, prompts in the scripts, files that differ between
+modes) and, for each one, what it would take to make it a runtime setting.
+No code changes in that session.
+
+- [ ] Plan: inventory of generation-time choices and the route for each to
+      become a runtime setting
+- [ ] Single codebase with the modes as settings; the generator stays only
+      as a developer tool, if at all
+- [ ] Deploy to Vercel button with the Supabase integration
+- [ ] First-run setup wizard in the admin
+- [ ] Upgrade path for shops created by the old generator
+
 ## Next up
 
 The current priority list. Keep it up to date as work lands: remove or tick
@@ -108,6 +149,17 @@ details for each item are in the numbered sections below.
       schema migration added later can never take a number a live shop has
       already applied. `test/check-schema.sh` applies the whole series twice,
       in generator order; `lib/migrations/README.md` has the rules
+- [ ] VAT: prices shown including VAT, EU OSS rates by the customer's
+      country, VAT shown per order and on emails
+- [ ] Invoices: PDF with sequential invoice numbers, attached to the order
+      confirmation email and downloadable from the account and the admin
+- [ ] Cookie consent banner, GDPR compliant, with analytics off until consent
+- [ ] Subscriptions through Stripe Billing: recurring products and boxes,
+      with the customer able to pause or cancel from their account
+- [ ] Abandoned cart emails, reusing the email builder and subscriber consent
+- [ ] Shipping labels through Sendcloud or DHL; carrier tracking feeds the
+      "delivered" status and its email
+- [ ] Gift cards
 
 ## 2. Admin and store settings
 
@@ -148,6 +200,12 @@ details for each item are in the numbered sections below.
       the next email (marketing) follows the same pattern
 - [ ] Email marketing page in the admin: broken down into phases in
       section 2d
+- [ ] Import from Shopify and WooCommerce product CSV exports (variants,
+      images, prices, stock), and customers where the export allows
+- [ ] Legal page templates: Impressum, AGB, Widerrufsbelehrung, privacy
+      policy, editable in the admin
+- [ ] Sales dashboard in the admin: revenue, orders, top products, low stock
+- [ ] Low stock alert email to the owner
 
 ## 2b. Accounts and sign-in
 
@@ -161,6 +219,9 @@ details for each item are in the numbered sections below.
       out. Deferred 2026-11-03: unenrolling the factor from the Supabase
       dashboard is the recovery path for now
 - [ ] Account page beyond orders: addresses, email change, delete account
+- [ ] Staff accounts with limited admin roles
+- [ ] Rate limiting on sign-in, sign-up and checkout
+- [ ] Content Security Policy and security headers
 
 ## 2c. International SEO and Merchant Center
 
@@ -348,6 +409,16 @@ loose in `/tmp`.
 - [ ] Node CLI replacing the heredocs in the shell scripts
 - [ ] Docker self-hosting path alongside Vercel
 - [ ] Payment adapters: Stripe, Mollie, PayPal
+- [ ] Until the single codebase lands: a documented way to bring template
+      improvements into an existing generated store
+- [ ] Demo store, screenshots and a short feature list in the README
+- [ ] `AGENTS.md` in every shop: structure, conventions, where things live,
+      what not to touch (migrations, RLS), how to run the checks
+- [ ] Guide: customising your shop with an AI assistant, as example requests
+      plus what to check afterwards (theme, new product field, new page,
+      new email)
+- [ ] Generator: when the machine has no git identity, skip the first commit
+      with a warning instead of failing
 
 ## 5. CI
 
@@ -361,6 +432,13 @@ loose in `/tmp`.
       and daily — the schedule is what catches an upstream Next or Tailwind
       release breaking the scaffold with nothing here having changed. No
       secrets and no Supabase project; a failed build uploads its log
+- [ ] End-to-end checkout test in CI with Stripe test mode: cart, payment,
+      webhook, order, confirmation email
+- [ ] Lighthouse and accessibility checks in CI with a performance budget
+- [ ] Renovate or Dependabot for dependency updates
+- [ ] Tests: fixtures must not match real key formats (a Mailchimp-shaped
+      test key was blocked by GitHub push protection on 2026-11-07); use
+      values like `test-mailchimp-key-us21`
 
 ## Notes for future turns
 
