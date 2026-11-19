@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { supabase } from '@/lib/supabase/client';
 import { mergeGuestCartAction } from '@/lib/cart/actions';
+import { authErrorKey } from '@/lib/auth/messages';
 
 /**
  * Email + one-time code sign-in, for shops generated with customer sign-in
@@ -30,6 +32,7 @@ export default function OtpSignIn({
   next?: string | null;
 }) {
   const router = useRouter();
+  const t = useTranslations('Auth');
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
@@ -46,7 +49,8 @@ export default function OtpSignIn({
     });
     setBusy(false);
     if (error) {
-      setErr(error.message);
+      console.error('Sending the sign-in code failed:', error.code, error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
       return;
     }
     setSent(true);
@@ -62,8 +66,9 @@ export default function OtpSignIn({
       type: 'email'
     });
     if (error) {
+      console.error('The sign-in code was refused:', error.code, error.message);
       setBusy(false);
-      setErr(error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
       return;
     }
 
@@ -79,16 +84,17 @@ export default function OtpSignIn({
       <form onSubmit={sendCode} className="space-y-3">
         <input
           className="w-full border p-2 rounded"
-          placeholder="Email"
+          placeholder={t('email')}
+          aria-label={t('email')}
           type="email"
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        {err && <p className="text-red-600 text-sm">{err}</p>}
+        {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
         <button className="w-full rounded bg-black text-white p-2" disabled={busy}>
-          {busy ? 'Sending…' : 'Email me a code'}
+          {busy ? t('sending') : t('otp.send')}
         </button>
       </form>
     );
@@ -97,11 +103,12 @@ export default function OtpSignIn({
   return (
     <form onSubmit={verifyCode} className="space-y-3">
       <p className="text-sm text-gray-600">
-        We sent a six-digit code to <strong>{email}</strong>. Enter it below.
+        {t.rich('otp.sent', { email, strong: (chunks) => <strong>{chunks}</strong> })}
       </p>
       <input
         className="w-full border p-2 rounded tracking-widest"
         placeholder="123456"
+        aria-label={t('code')}
         inputMode="numeric"
         autoComplete="one-time-code"
         pattern="[0-9]{6,8}"
@@ -109,9 +116,9 @@ export default function OtpSignIn({
         onChange={(e) => setCode(e.target.value)}
         required
       />
-      {err && <p className="text-red-600 text-sm">{err}</p>}
+      {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
       <button className="w-full rounded bg-black text-white p-2" disabled={busy}>
-        {busy ? 'Checking…' : 'Sign in'}
+        {busy ? t('checking') : t('signIn.submit')}
       </button>
       <button
         type="button"
@@ -122,7 +129,7 @@ export default function OtpSignIn({
           setErr(null);
         }}
       >
-        Use a different email or resend the code
+        {t('otp.restart')}
       </button>
     </form>
   );

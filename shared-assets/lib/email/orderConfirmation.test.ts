@@ -168,6 +168,21 @@ describe('renderOrderConfirmation', () => {
     expect(email.text.endsWith('Written by the owner.')).toBe(true);
   });
 
+  it("fills the tags in the owner's wording from the order", () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      copy: {
+        ...DEFAULT_EMAIL_BRAND.copy,
+        confirmation: { intro: { en: 'Hi {{customer.first_name|there}}, {{order.reference}} is in.' }, footer: { en: '{{shop.name}} team' } }
+      }
+    };
+    const email = renderOrderConfirmation(baseOrder, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('Hi Jo, A1B2C3D4 is in.');
+    expect(email.text.endsWith('Test Shop team')).toBe(true);
+    const guest = renderOrderConfirmation({ ...baseOrder, shipping: null }, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(guest.html).toContain('Hi there, A1B2C3D4 is in.');
+  });
+
   it('formats money in the locale and sets the document direction', () => {
     const de = renderOrderConfirmation(baseOrder, strings, 'de');
     expect(de.text).toMatch(/Total: 30,00\s€/);

@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { isBlankString, pickLocalized, type Localized } from './campaigns/localize';
 import { localized, themeSchema, type CampaignTheme } from './campaigns/schema';
+import { describeWordingTagProblem, wordingTagProblems } from './wordingTags';
 
 /** The store_settings key the brand is stored under. */
 export const EMAIL_BRAND_KEY = 'email_brand';
@@ -27,11 +28,21 @@ export type TransactionalKind = (typeof TRANSACTIONAL_KINDS)[number];
 /** An intro or a footer line: a short paragraph, per locale. */
 export const EMAIL_COPY_MAX = 1000;
 
+/** Owner wording: plain text that may use the tags in ./wordingTags. */
+const wordingSchema = z
+  .string()
+  .max(EMAIL_COPY_MAX)
+  .superRefine((value, ctx) => {
+    for (const problem of wordingTagProblems(value)) {
+      ctx.addIssue({ code: 'custom', message: describeWordingTagProblem(problem) });
+    }
+  });
+
 const copyEntrySchema = z.object({
   /** Replaces the first paragraph; empty means the shop's built-in wording. */
-  intro: localized(z.string().max(EMAIL_COPY_MAX)).default({}),
+  intro: localized(wordingSchema).default({}),
   /** Replaces the last line; empty means the shop's built-in wording. */
-  footer: localized(z.string().max(EMAIL_COPY_MAX)).default({})
+  footer: localized(wordingSchema).default({})
 });
 
 export const emailBrandSchema = themeSchema.extend({

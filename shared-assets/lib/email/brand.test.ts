@@ -101,6 +101,13 @@ describe('transactionalCopyFor', () => {
     expect(transactionalCopyFor(brand.brand, 'confirmation', 'en', 'en')).toEqual({ intro: null, footer: null });
   });
 
+  it('refuses a tag the customer emails do not know', () => {
+    const result = parseEmailBrand({ copy: { shipping: { intro: { en: 'Hi {{subscriber.first_name}}' } } } });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues[0].message).toContain('Unknown tag');
+    expect(parseEmailBrand({ copy: { shipping: { intro: { en: 'Hi {{customer.first_name|there}}' } } } }).ok).toBe(true);
+  });
+
   it('refuses wording that is too long', () => {
     expect(parseEmailBrand({ copy: { refund: { intro: { en: 'x'.repeat(1001) } } } }).ok).toBe(false);
   });

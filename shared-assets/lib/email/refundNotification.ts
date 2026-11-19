@@ -10,6 +10,7 @@
 
 import { formatPrice } from '../format';
 import { escapeHtml } from './escape';
+import { firstNameOf } from './wordingTags';
 import { copyFor, emailButton, emailParagraph, emailStyles, footerAddressFor, renderTransactionalEmail, type TransactionalOptions } from './layout';
 import type { RenderedEmail } from './orderConfirmation';
 
@@ -35,6 +36,8 @@ export interface RefundNotification {
   reason?: string | null;
   /** Absolute URL to the customer's orders, if the shop knows its address. */
   orderUrl?: string | null;
+  /** The name on the order, for {{customer.first_name}} in the owner's wording. */
+  customerName?: string | null;
 }
 
 /**
@@ -62,7 +65,11 @@ export function renderRefundNotification(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
-  const copy = copyFor(options, 'refund', locale);
+  const copy = copyFor(options, 'refund', locale, {
+    'customer.first_name': firstNameOf(refund.customerName),
+    'order.reference': refund.reference,
+    'shop.name': refund.shopName
+  });
   const footer = copy.footer ?? strings.footer;
   const money = (cents: number) => formatPrice(cents, refund.currency, locale);
   const isFull = refund.refundedCents >= refund.totalCents;

@@ -11,6 +11,7 @@
 
 import { formatPrice } from '../format';
 import { escapeHtml } from './escape';
+import { firstNameOf } from './wordingTags';
 import {
   copyFor,
   emailButton,
@@ -104,7 +105,11 @@ export function renderOrderConfirmation(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
-  const copy = copyFor(options, 'confirmation', locale);
+  const copy = copyFor(options, 'confirmation', locale, {
+    'customer.first_name': firstNameOf(order.shipping?.name),
+    'order.reference': order.reference,
+    'shop.name': order.shopName
+  });
   const footer = copy.footer ?? strings.footer;
   const money = (cents: number) => formatPrice(cents, order.currency, locale);
   const discount = order.discountCents ?? 0;

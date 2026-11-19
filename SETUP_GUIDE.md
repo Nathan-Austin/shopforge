@@ -531,7 +531,10 @@ git push -u origin main
 3. Click **Deploy**.
 4. In Supabase, go to **Authentication → URL Configuration** and set the
    **Site URL** to the same domain, so sign-up and password-reset emails link to
-   your live shop.
+   your live shop. Under **Redirect URLs** add `https://<your-domain>/auth/callback`
+   (and `http://localhost:3000/auth/callback` for local work): confirmation
+   and password-reset links go through it, and Supabase refuses a link to an
+   address that is not on the list.
 
 ## 10. Check the deployment
 

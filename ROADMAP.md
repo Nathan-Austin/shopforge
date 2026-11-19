@@ -55,9 +55,8 @@ details for each item are in the numbered sections below.
    provider keys in the dashboard, Mailchimp, the brand and wording on
    receipts) are done; H (more providers, now that the adapter exists) is
    what is left.
-2. **Translate the auth pages** (section 2b). Move the hardcoded English on
-   `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
-   files.
+2. **Section 0 inventory** (plan only): every choice the generator makes
+   today, and how each would become a runtime setting.
 
 ## 1. Storefront and orders
 
@@ -218,8 +217,18 @@ details for each item are in the numbered sections below.
       generation; admin always by password — done 2026-11-03
 - [x] Authenticator-app second factor for the admin, required by default —
       done 2026-11-03
-- [ ] Translate the auth pages (sign-in, sign-up, email code, MFA, reset);
-      they are English-only today
+- [x] Translate the auth pages — done 2026-11-19: sign-in, sign-up, the
+      email-code form, MFA, reset and the header's account links read
+      `Auth.*` and `Nav.*` (en, de). Supabase's English errors are mapped by
+      code to translated messages (`lib/auth/messages.ts`, generic fallback,
+      raw text to the console only). Fixed on the way: the reset link
+      pointed at an `/auth/update-password` page that did not exist (it now
+      goes through `/auth/callback` to a new `/[locale]/auth/update-password`),
+      sign-in had no "forgot your password?" or sign-up link, the
+      `?error=confirmation_failed` the callback sends was never shown, and
+      the callback redirected to `origin + next` unchecked, so
+      `?next=@evil.com` led off-site (`safeNextPath()` now allows same-site
+      paths only)
 - [ ] Recovery codes for admin MFA, so a lost phone does not lock the owner
       out. Deferred 2026-11-03: unenrolling the factor from the Supabase
       dashboard is the recovery path for now
@@ -411,9 +420,10 @@ loose in `/tmp`.
       transactional path (subject prefixed `[sample]`, nothing recorded).
       The hairline between rows is now a fixed light grey (Outlook for
       Windows drops colours with alpha). No migration: it is the same
-      `email_brand` row. Follow-ups: a merge tag or two in the wording
-      (customer first name, order reference); the sample subject prefix is
-      English in every language
+      `email_brand` row. Since then (same day): the wording takes
+      `{{customer.first_name|there}}`, `{{order.reference}}` and
+      `{{shop.name}}` (`lib/email/wordingTags.ts`, checked on save), and
+      the sample's subject prefix is translated
 - [ ] **H. More providers** behind the same adapter, the popular ones for
       small shops: Brevo, MailerLite, Kit, Klaviyo (e-commerce focused) and
       Mailjet. The adapter is `src/lib/email/providers/types.ts` since E2;
@@ -642,8 +652,6 @@ Decided on 2026-11-02:
 - Promo codes are per order, not per customer: nothing stops the same
   person using a code twice from two carts. The usage cap is the only
   brake. Per-email limits are a listed follow-up.
-- The auth pages (sign-in, sign-up, email code, MFA) are English-only, even
-  in a multilingual shop.
 - Money is entered in major units and stored as cents everywhere, but the
   currency is per product and free text. A store-level currency belongs with
   the store settings work above.

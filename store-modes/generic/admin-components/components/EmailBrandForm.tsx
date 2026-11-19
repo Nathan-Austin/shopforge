@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { FONT_FAMILIES } from '@/lib/email/campaigns/schema';
 import { TRANSACTIONAL_KINDS, type EmailBrand, type TransactionalKind } from '@/lib/email/brand';
 import type { EmailBrandActionResult } from '../actions/emailBrand';
+import { WORDING_TAGS } from '@/lib/email/wordingTags';
 import ImageField from './email-designer/ImageField';
 import { Field, inputClass } from './email-designer/fields';
 
@@ -117,6 +118,15 @@ export default function EmailBrandForm({ save, brand, locales, builtIn }: EmailB
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium">{t('copy.heading')}</legend>
         <p className="text-xs text-stone-500">{t('copy.hint')}</p>
+        <p className="text-xs text-stone-500">
+          {t('copy.tagsHint')}{' '}
+          {WORDING_TAGS.map((tag, index) => (
+            <span key={tag}>
+              {index > 0 && ', '}
+              <code className="rounded bg-stone-100 px-1">{tag === 'customer.first_name' ? `{{${tag}|${t('copy.fallbackName')}}}` : `{{${tag}}}`}</code>
+            </span>
+          ))}
+        </p>
         {TRANSACTIONAL_KINDS.map((kind) => (
           <details key={kind} className="rounded-md border border-border p-3" open={kind === 'confirmation'}>
             <summary className="cursor-pointer text-sm font-medium">{t(`copy.kinds.${kind}`)}</summary>

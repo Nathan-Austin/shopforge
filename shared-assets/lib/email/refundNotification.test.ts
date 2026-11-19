@@ -112,6 +112,15 @@ describe('renderRefundNotification', () => {
     expect(email.text).toContain('Sorry it did not work out.');
   });
 
+  it('greets the customer by first name when the wording asks for it', () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      copy: { ...DEFAULT_EMAIL_BRAND.copy, refund: { intro: { en: 'Hello {{customer.first_name|there}}.' }, footer: {} } }
+    };
+    const email = renderRefundNotification({ ...partial, customerName: 'Jo Smith' }, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('Hello Jo.');
+  });
+
   it('formats item amounts in the locale and sets the direction', () => {
     const email = renderRefundNotification(partial, strings, 'de');
     // Intl puts a non-breaking space before the euro sign in German.

@@ -14,6 +14,7 @@ import { directionOf, hreflangOf } from '../i18n/locales';
 import { DEFAULT_EMAIL_BRAND, brandFooterFor, transactionalCopyFor, type EmailBrand, type TransactionalCopy, type TransactionalKind } from './brand';
 import { EMAIL_WIDTH, FONT_STACKS, contrastingText } from './campaigns/render';
 import { escapeHtml } from './escape';
+import { interpolateWording, type WordingValues } from './wordingTags';
 
 const SIDE_PADDING = 32;
 const RULE_COLOR = '#e5e5e5';
@@ -54,9 +55,17 @@ export interface TransactionalOptions {
 }
 
 /** The owner's intro and footer wording for this email and recipient, from the options. */
-export function copyFor(options: TransactionalOptions | undefined, kind: TransactionalKind, locale: string): TransactionalCopy {
+export function copyFor(
+  options: TransactionalOptions | undefined,
+  kind: TransactionalKind,
+  locale: string,
+  values: WordingValues = {}
+): TransactionalCopy {
   const brand = options?.brand ?? DEFAULT_EMAIL_BRAND;
-  return transactionalCopyFor(brand, kind, locale, options?.defaultLocale ?? 'en');
+  const copy = transactionalCopyFor(brand, kind, locale, options?.defaultLocale ?? 'en');
+  // Tags filled in; a text that comes out empty counts as not written.
+  const fill = (text: string | null) => (text === null ? null : interpolateWording(text, values).trim() || null);
+  return { intro: fill(copy.intro), footer: fill(copy.footer) };
 }
 
 /** A paragraph of the owner's wording; line breaks kept. */

@@ -651,19 +651,82 @@ mkdir -p src/messages
 cat > src/messages/en.json <<'EOF'
 {
   "Auth": {
-    "SignIn": "Sign in",
-    "SignUp": "Sign up",
-    "Email": "Email",
-    "Password": "Password",
-    "ConfirmPassword": "Confirm password",
-    "ResetPassword": "Reset password"
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "code": "Six-digit code",
+    "checking": "Checking…",
+    "sending": "Sending…",
+    "saving": "Saving…",
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "New here? Create an account",
+      "useCode": "Sign in with an email code instead",
+      "ownerPassword": "Shop owner? Sign in with your password",
+      "confirmationFailed": "That link did not work. It may have expired or been used already: sign in, or ask for a new one."
+    },
+    "signUp": {
+      "title": "Create account",
+      "submit": "Create account",
+      "haveAccount": "Already have an account? Sign in",
+      "checkEmailTitle": "Check your email",
+      "checkEmail": "We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account."
+    },
+    "otp": {
+      "send": "Email me a code",
+      "sent": "We sent a six-digit code to <strong>{email}</strong>. Enter it below.",
+      "restart": "Use a different email or resend the code"
+    },
+    "mfa": {
+      "title": "Two-factor authentication",
+      "preparing": "Preparing…",
+      "enrolHint": "Scan this code with your authenticator app (Google Authenticator, Authy, 1Password…), then enter the six-digit code it shows.",
+      "qrAlt": "QR code for your authenticator app",
+      "manualKey": "Can’t scan? Enter this key by hand:",
+      "verifyHint": "Enter the code from your authenticator app.",
+      "activate": "Activate",
+      "continue": "Continue"
+    },
+    "reset": {
+      "title": "Reset password",
+      "hint": "Enter the email address of your account and we will send you a link to choose a new password.",
+      "submit": "Send reset link",
+      "sent": "If an account exists for that address, a link to choose a new password is on its way.",
+      "backToSignIn": "Back to sign in"
+    },
+    "update": {
+      "title": "Choose a new password",
+      "submit": "Save new password",
+      "done": "Your password has been changed.",
+      "continue": "Continue shopping",
+      "noSession": "This link has expired or has already been used.",
+      "requestNew": "Ask for a new one"
+    },
+    "errors": {
+      "passwordsDiffer": "The passwords do not match.",
+      "invalidCredentials": "That email and password do not match an account.",
+      "emailNotConfirmed": "Confirm your email address first: the link is in the email we sent you.",
+      "rateLimited": "Too many attempts. Wait a minute and try again.",
+      "codeInvalid": "That code is wrong or has expired.",
+      "userExists": "An account with this email already exists. Sign in instead.",
+      "weakPassword": "Choose a longer or less common password.",
+      "samePassword": "The new password must be different from the old one.",
+      "generic": "Something went wrong. Please try again."
+    }
   },
   "Nav": {
     "Shop": "Shop",
     "Cart": "Cart",
     "Checkout": "Checkout",
     "Account": "Account",
-    "Home": "Home"
+    "Home": "Home",
+    "admin": "Admin",
+    "orders": "Orders",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out"
   },
   "Account": {
     "ordersTitle": "Your orders",
@@ -1569,6 +1632,7 @@ cat > src/messages/en.json <<'EOF'
           "sending": "Sending…",
           "sentNotice": "Sent to {to}. Check your inbox (and spam).",
           "notConfigured": "Set up a sender and a key first.",
+          "subjectPrefix": "[Sample] {subject}",
           "errors": {
             "not_authorized": "You are not allowed to do that.",
             "unknown_kind": "That is not an email this shop sends.",
@@ -1624,7 +1688,9 @@ cat > src/messages/en.json <<'EOF'
             },
             "intro": "First paragraph",
             "footer": "Last line",
-            "noIntro": "No first paragraph unless you write one."
+            "noIntro": "No first paragraph unless you write one.",
+            "tagsHint": "Personal details you can use:",
+            "fallbackName": "there"
           },
           "errors": {
             "not_authorized": "You are not allowed to do that.",
@@ -1866,19 +1932,82 @@ EOF
 cat > src/messages/de.json <<'EOF'
 {
   "Auth": {
-    "SignIn": "Anmelden",
-    "SignUp": "Registrieren",
-    "Email": "E-Mail",
-    "Password": "Passwort",
-    "ConfirmPassword": "Passwort bestätigen",
-    "ResetPassword": "Passwort zurücksetzen"
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "code": "Sechsstelliger Code",
+    "checking": "Wird geprüft…",
+    "sending": "Wird gesendet…",
+    "saving": "Wird gespeichert…",
+    "signIn": {
+      "title": "Anmelden",
+      "submit": "Anmelden",
+      "forgot": "Passwort vergessen?",
+      "noAccount": "Neu hier? Konto erstellen",
+      "useCode": "Stattdessen mit einem E-Mail-Code anmelden",
+      "ownerPassword": "Shop-Inhaber? Mit Passwort anmelden",
+      "confirmationFailed": "Dieser Link hat nicht funktioniert. Vielleicht ist er abgelaufen oder wurde schon benutzt: Melden Sie sich an oder fordern Sie einen neuen an."
+    },
+    "signUp": {
+      "title": "Konto erstellen",
+      "submit": "Konto erstellen",
+      "haveAccount": "Sie haben schon ein Konto? Anmelden",
+      "checkEmailTitle": "Prüfen Sie Ihr Postfach",
+      "checkEmail": "Wir haben einen Bestätigungslink an <strong>{email}</strong> gesendet. Klicken Sie darauf, um Ihr Konto zu aktivieren."
+    },
+    "otp": {
+      "send": "Code per E-Mail senden",
+      "sent": "Wir haben einen sechsstelligen Code an <strong>{email}</strong> gesendet. Geben Sie ihn unten ein.",
+      "restart": "Andere E-Mail verwenden oder Code erneut senden"
+    },
+    "mfa": {
+      "title": "Zwei-Faktor-Authentifizierung",
+      "preparing": "Wird vorbereitet…",
+      "enrolHint": "Scannen Sie diesen Code mit Ihrer Authenticator-App (Google Authenticator, Authy, 1Password…) und geben Sie dann den angezeigten sechsstelligen Code ein.",
+      "qrAlt": "QR-Code für Ihre Authenticator-App",
+      "manualKey": "Scannen klappt nicht? Geben Sie diesen Schlüssel von Hand ein:",
+      "verifyHint": "Geben Sie den Code aus Ihrer Authenticator-App ein.",
+      "activate": "Aktivieren",
+      "continue": "Weiter"
+    },
+    "reset": {
+      "title": "Passwort zurücksetzen",
+      "hint": "Geben Sie die E-Mail-Adresse Ihres Kontos ein, und wir senden Ihnen einen Link, um ein neues Passwort zu wählen.",
+      "submit": "Link senden",
+      "sent": "Wenn es zu dieser Adresse ein Konto gibt, ist ein Link für ein neues Passwort unterwegs.",
+      "backToSignIn": "Zurück zur Anmeldung"
+    },
+    "update": {
+      "title": "Neues Passwort wählen",
+      "submit": "Neues Passwort speichern",
+      "done": "Ihr Passwort wurde geändert.",
+      "continue": "Weiter einkaufen",
+      "noSession": "Dieser Link ist abgelaufen oder wurde schon benutzt.",
+      "requestNew": "Neuen Link anfordern"
+    },
+    "errors": {
+      "passwordsDiffer": "Die Passwörter stimmen nicht überein.",
+      "invalidCredentials": "E-Mail und Passwort passen zu keinem Konto.",
+      "emailNotConfirmed": "Bestätigen Sie zuerst Ihre E-Mail-Adresse: Der Link steht in der E-Mail, die wir Ihnen gesendet haben.",
+      "rateLimited": "Zu viele Versuche. Warten Sie eine Minute und versuchen Sie es erneut.",
+      "codeInvalid": "Dieser Code ist falsch oder abgelaufen.",
+      "userExists": "Zu dieser E-Mail gibt es schon ein Konto. Melden Sie sich stattdessen an.",
+      "weakPassword": "Wählen Sie ein längeres oder weniger gängiges Passwort.",
+      "samePassword": "Das neue Passwort muss sich vom alten unterscheiden.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    }
   },
   "Nav": {
     "Shop": "Shop",
     "Cart": "Warenkorb",
     "Checkout": "Kasse",
     "Account": "Konto",
-    "Home": "Startseite"
+    "Home": "Startseite",
+    "admin": "Admin",
+    "orders": "Bestellungen",
+    "signIn": "Anmelden",
+    "signUp": "Registrieren",
+    "signOut": "Abmelden"
   },
   "Account": {
     "ordersTitle": "Ihre Bestellungen",
@@ -2784,6 +2913,7 @@ cat > src/messages/de.json <<'EOF'
           "sending": "Wird gesendet…",
           "sentNotice": "An {to} gesendet. Prüfen Sie Ihren Posteingang (und den Spam-Ordner).",
           "notConfigured": "Richten Sie zuerst Absender und Schlüssel ein.",
+          "subjectPrefix": "[Beispiel] {subject}",
           "errors": {
             "not_authorized": "Das dürfen Sie nicht.",
             "unknown_kind": "Diese E-Mail versendet der Shop nicht.",
@@ -2839,7 +2969,9 @@ cat > src/messages/de.json <<'EOF'
             },
             "intro": "Erster Absatz",
             "footer": "Letzte Zeile",
-            "noIntro": "Kein erster Absatz, sofern Sie keinen schreiben."
+            "noIntro": "Kein erster Absatz, sofern Sie keinen schreiben.",
+            "tagsHint": "Persönliche Angaben, die Sie verwenden können:",
+            "fallbackName": "zusammen"
           },
           "errors": {
             "not_authorized": "Das dürfen Sie nicht.",
@@ -4397,10 +4529,12 @@ cp -R "$MODE_DIR/store-components/." src/components/store
 # 10.5a) Header component (logo + auth state + admin link for shop_owner)
 cat > src/components/Header.tsx <<'EOF'
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import CartBadge from '@/components/cart/CartBadge';
 
 export default async function Header({ locale }: { locale: string }) {
+  const t = await getTranslations({ locale, namespace: 'Nav' });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -4422,7 +4556,7 @@ export default async function Header({ locale }: { locale: string }) {
         </Link>
 
         <nav className="flex items-center gap-5 text-sm">
-          <Link href={`/${locale}/shop`} className="text-gray-600 hover:text-gray-900">Shop</Link>
+          <Link href={`/${locale}/shop`} className="text-gray-600 hover:text-gray-900">{t('Shop')}</Link>
           <CartBadge locale={locale} />
 
           {isShopOwner && (
@@ -4430,27 +4564,27 @@ export default async function Header({ locale }: { locale: string }) {
               href={`/${locale}/admin`}
               className="rounded bg-gray-900 px-3 py-1 text-white hover:bg-gray-700"
             >
-              Admin
+              {t('admin')}
             </Link>
           )}
 
           {user ? (
             <div className="flex items-center gap-3">
               <Link href={`/${locale}/account/orders`} className="text-gray-600 hover:text-gray-900">
-                Orders
+                {t('orders')}
               </Link>
               <span className="text-gray-500 hidden sm:block">{user.email}</span>
               <form action="/api/auth/sign-out" method="POST">
                 <button type="submit" className="text-gray-600 hover:text-gray-900 underline">
-                  Sign out
+                  {t('signOut')}
                 </button>
               </form>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Link href={`/${locale}/auth/sign-in`} className="text-gray-600 hover:text-gray-900">Sign in</Link>
+              <Link href={`/${locale}/auth/sign-in`} className="text-gray-600 hover:text-gray-900">{t('signIn')}</Link>
               <Link href={`/${locale}/auth/sign-up`} className="rounded bg-black px-3 py-1 text-white hover:bg-gray-800">
-                Sign up
+                {t('signUp')}
               </Link>
             </div>
           )}
@@ -4496,10 +4630,12 @@ cat > src/app/[locale]/auth/sign-in/page.tsx <<'EOF'
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { supabase } from '@/lib/supabase/client';
 import { mergeGuestCartAction } from '@/lib/cart/actions';
 import { AUTH_CONFIG } from '@/lib/auth/config';
+import { authErrorKey } from '@/lib/auth/messages';
 import OtpSignIn from '@/components/auth/OtpSignIn';
 
 // useSearchParams needs a Suspense boundary so the page can be prerendered.
@@ -4514,6 +4650,7 @@ export default function SignInPage() {
 function SignIn() {
   const { locale } = useParams() as { locale: string };
   const searchParams = useSearchParams();
+  const t = useTranslations('Auth.signIn');
   // The shop owner always has a password, so even an email-code shop keeps
   // the password form reachable at ?method=password.
   const usePassword =
@@ -4521,37 +4658,61 @@ function SignIn() {
 
   return (
     <main className="mx-auto max-w-sm p-6">
-      <h1 className="text-2xl font-bold mb-4">Sign in</h1>
-      {usePassword ? <PasswordSignIn locale={locale} /> : <OtpSignIn locale={locale} />}
-      {AUTH_CONFIG.customerSignIn === 'otp' && (
-        <p className="mt-4 text-center text-sm text-gray-500">
-          {usePassword ? (
-            <Link href={`/${locale}/auth/sign-in`} className="underline">
-              Sign in with an email code instead
-            </Link>
-          ) : (
-            <Link href={`/${locale}/auth/sign-in?method=password`} className="underline">
-              Shop owner? Sign in with your password
-            </Link>
-          )}
-        </p>
+      <h1 className="text-2xl font-bold mb-4">{t('title')}</h1>
+      {searchParams.get('error') === 'confirmation_failed' && (
+        <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">{t('confirmationFailed')}</p>
       )}
+      {usePassword ? <PasswordSignIn locale={locale} /> : <OtpSignIn locale={locale} />}
+      <div className="mt-4 space-y-2 text-center text-sm text-gray-500">
+        {usePassword && (
+          <p>
+            <Link href={`/${locale}/auth/reset-password`} className="underline">
+              {t('forgot')}
+            </Link>
+          </p>
+        )}
+        {AUTH_CONFIG.customerSignIn === 'password' && (
+          <p>
+            <Link href={`/${locale}/auth/sign-up`} className="underline">
+              {t('noAccount')}
+            </Link>
+          </p>
+        )}
+        {AUTH_CONFIG.customerSignIn === 'otp' && (
+          <p>
+            {usePassword ? (
+              <Link href={`/${locale}/auth/sign-in`} className="underline">
+                {t('useCode')}
+              </Link>
+            ) : (
+              <Link href={`/${locale}/auth/sign-in?method=password`} className="underline">
+                {t('ownerPassword')}
+              </Link>
+            )}
+          </p>
+        )}
+      </div>
     </main>
   );
 }
 
 function PasswordSignIn({ locale }: { locale: string }) {
   const router = useRouter();
+  const t = useTranslations('Auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setErr(error.message);
+      console.error('Sign-in failed:', error.code, error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
+      setBusy(false);
       return;
     }
 
@@ -4564,10 +4725,16 @@ function PasswordSignIn({ locale }: { locale: string }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <input className="w-full border p-2 rounded" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-      <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
-      {err && <p className="text-red-600 text-sm">{err}</p>}
-      <button className="w-full rounded bg-black text-white p-2">Sign in</button>
+      <label className="block text-sm">
+        <span className="sr-only">{t('email')}</span>
+        <input className="w-full border p-2 rounded" placeholder={t('email')} type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
+      </label>
+      <label className="block text-sm">
+        <span className="sr-only">{t('password')}</span>
+        <input className="w-full border p-2 rounded" placeholder={t('password')} type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+      </label>
+      {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
+      <button className="w-full rounded bg-black text-white p-2" disabled={busy}>{busy ? t('checking') : t('signIn.submit')}</button>
     </form>
   );
 }
@@ -4577,9 +4744,13 @@ cat > src/app/[locale]/auth/sign-up/page.tsx <<'EOF'
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+
 import { supabase } from '@/lib/supabase/client';
 import { AUTH_CONFIG } from '@/lib/auth/config';
+import { authErrorKey, safeNextPath } from '@/lib/auth/messages';
 import OtpSignIn from '@/components/auth/OtpSignIn';
 
 // useSearchParams needs a Suspense boundary so the page can still be
@@ -4595,20 +4766,19 @@ export default function SignUpPage() {
 function SignUpForm() {
   const { locale } = useParams() as { locale: string };
   const searchParams = useSearchParams();
+  const t = useTranslations('Auth');
   // Where to land after the confirmation link. The success page sends
   // guests here with their checkout email and itself as `next`, so that
   // confirming the account brings them straight back to their order.
-  // Same-origin paths only: never redirect through a link to somewhere else.
+  // Same-site paths only: never redirect through a link to somewhere else.
   const requestedNext = searchParams.get('next');
-  const next =
-    requestedNext && requestedNext.startsWith('/') && !requestedNext.startsWith('//')
-      ? requestedNext
-      : null;
+  const next = requestedNext ? safeNextPath(requestedNext, '') || null : null;
 
   const [email, setEmail] = useState(searchParams.get('email') ?? '');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
   // With email codes there is no separate sign-up: the first code creates
@@ -4616,7 +4786,7 @@ function SignUpForm() {
   if (AUTH_CONFIG.customerSignIn === 'otp') {
     return (
       <main className="mx-auto max-w-sm p-6">
-        <h1 className="text-2xl font-bold mb-4">Create account</h1>
+        <h1 className="text-2xl font-bold mb-4">{t('signUp.title')}</h1>
         <OtpSignIn locale={locale} initialEmail={email} next={next} />
       </main>
     );
@@ -4626,41 +4796,60 @@ function SignUpForm() {
     e.preventDefault();
     setErr(null);
     if (password !== confirm) {
-      setErr('Passwords do not match');
+      setErr(t('errors.passwordsDiffer'));
       return;
     }
+    setBusy(true);
+    const landing = next ?? `/${locale}`;
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: next
-          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
-          : `${window.location.origin}/auth/callback`
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(landing)}`
       },
     });
-    if (error) setErr(error.message);
-    else setDone(true);
+    setBusy(false);
+    if (error) {
+      console.error('Sign-up failed:', error.code, error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
+    } else setDone(true);
   }
 
   if (done) {
     return (
       <main className="mx-auto max-w-sm p-6">
-        <h1 className="text-2xl font-bold mb-2">Check your email</h1>
-        <p className="text-gray-600">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
+        <h1 className="text-2xl font-bold mb-2">{t('signUp.checkEmailTitle')}</h1>
+        <p className="text-gray-600">
+          {t.rich('signUp.checkEmail', { email, strong: (chunks) => <strong>{chunks}</strong> })}
+        </p>
       </main>
     );
   }
 
   return (
     <main className="mx-auto max-w-sm p-6">
-      <h1 className="text-2xl font-bold mb-4">Sign up</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('signUp.title')}</h1>
       <form onSubmit={onSubmit} className="space-y-3">
-        <input className="w-full border p-2 rounded" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-        <input className="w-full border p-2 rounded" placeholder="Password" type="password" value={password} onChange={e=>setPassword(e.target.value)} required/>
-        <input className="w-full border p-2 rounded" placeholder="Confirm password" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} required/>
-        {err && <p className="text-red-600 text-sm">{err}</p>}
-        <button className="w-full rounded bg-black text-white p-2">Create account</button>
+        <label className="block text-sm">
+          <span className="sr-only">{t('email')}</span>
+          <input className="w-full border p-2 rounded" placeholder={t('email')} type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
+        </label>
+        <label className="block text-sm">
+          <span className="sr-only">{t('password')}</span>
+          <input className="w-full border p-2 rounded" placeholder={t('password')} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+        </label>
+        <label className="block text-sm">
+          <span className="sr-only">{t('confirmPassword')}</span>
+          <input className="w-full border p-2 rounded" placeholder={t('confirmPassword')} type="password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)} required/>
+        </label>
+        {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
+        <button className="w-full rounded bg-black text-white p-2" disabled={busy}>{busy ? t('checking') : t('signUp.submit')}</button>
       </form>
+      <p className="mt-4 text-center text-sm text-gray-500">
+        <Link href={`/${locale}/auth/sign-in`} className="underline">
+          {t('signUp.haveAccount')}
+        </Link>
+      </p>
     </main>
   );
 }
@@ -4673,10 +4862,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+import { DEFAULT_LOCALE } from '@/i18n/config';
+import { safeNextPath } from '@/lib/auth/messages';
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/en';
+  // Same-site paths only. `${origin}${next}` with next="@evil.com" would
+  // otherwise read as https://shop@evil.com, a link to another site.
+  const next = safeNextPath(searchParams.get('next'), `/${DEFAULT_LOCALE}`);
 
   if (code) {
     const cookieStore = await cookies();
@@ -4702,7 +4896,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/en/auth/sign-in?error=confirmation_failed`);
+  // Back to sign-in in the language the link was for, if it says.
+  const locale = /^\/([a-z]{2,3}(?:-[a-z]{2})?)(?:\/|$)/.exec(next)?.[1] ?? DEFAULT_LOCALE;
+  return NextResponse.redirect(`${origin}/${locale}/auth/sign-in?error=confirmation_failed`);
 }
 EOF
 
@@ -4712,8 +4908,10 @@ cat > src/app/[locale]/auth/mfa/page.tsx <<'EOF'
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import { supabase } from '@/lib/supabase/client';
+import { authErrorKey, type AuthErrorKey } from '@/lib/auth/messages';
 
 /**
  * Second factor for the shop owner: a six-digit code from an authenticator
@@ -4724,18 +4922,23 @@ type Stage =
   | { kind: 'loading' }
   | { kind: 'enrol'; factorId: string; qrCode: string; secret: string }
   | { kind: 'verify'; factorId: string }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; error: AuthErrorKey };
 
 export default function MfaPage() {
   const { locale } = useParams() as { locale: string };
   const router = useRouter();
+  const t = useTranslations('Auth');
   const [stage, setStage] = useState<Stage>({ kind: 'loading' });
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<AuthErrorKey | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const fail = (error: { code?: string; message?: string } | null) => {
+      console.error('Two-factor setup failed:', error?.code, error?.message);
+      if (!cancelled) setStage({ kind: 'error', error: authErrorKey(error ?? {}) ?? 'generic' });
+    };
 
     async function prepare() {
       const {
@@ -4747,10 +4950,7 @@ export default function MfaPage() {
       }
 
       const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
-      if (listError) {
-        if (!cancelled) setStage({ kind: 'error', message: listError.message });
-        return;
-      }
+      if (listError) return fail(listError);
 
       const verified = factors.totp.find((factor) => factor.status === 'verified');
       if (verified) {
@@ -4768,12 +4968,7 @@ export default function MfaPage() {
         factorType: 'totp',
         friendlyName: 'Shop admin'
       });
-      if (enrolError || !enrolment) {
-        if (!cancelled) {
-          setStage({ kind: 'error', message: enrolError?.message ?? 'Could not start enrolment' });
-        }
-        return;
-      }
+      if (enrolError || !enrolment) return fail(enrolError);
       if (!cancelled) {
         setStage({
           kind: 'enrol',
@@ -4800,8 +4995,9 @@ export default function MfaPage() {
       factorId: stage.factorId
     });
     if (challengeError || !challenge) {
+      console.error('Two-factor challenge failed:', challengeError?.code, challengeError?.message);
       setBusy(false);
-      setErr(challengeError?.message ?? 'Could not start verification');
+      setErr(authErrorKey(challengeError ?? {}) ?? 'generic');
       return;
     }
 
@@ -4811,8 +5007,9 @@ export default function MfaPage() {
       code: code.trim()
     });
     if (verifyError) {
+      console.error('Two-factor code refused:', verifyError.code, verifyError.message);
       setBusy(false);
-      setErr(verifyError.message);
+      setErr(authErrorKey(verifyError) ?? 'generic');
       return;
     }
 
@@ -4822,47 +5019,47 @@ export default function MfaPage() {
 
   return (
     <main className="mx-auto max-w-sm p-6">
-      <h1 className="text-2xl font-bold mb-4">Two-factor authentication</h1>
+      <h1 className="text-2xl font-bold mb-4">{t('mfa.title')}</h1>
 
-      {stage.kind === 'loading' && <p className="text-gray-600">Preparing…</p>}
+      {stage.kind === 'loading' && <p className="text-gray-600">{t('mfa.preparing')}</p>}
 
-      {stage.kind === 'error' && <p className="text-red-600 text-sm">{stage.message}</p>}
+      {stage.kind === 'error' && <p className="text-red-600 text-sm" role="alert">{t(`errors.${stage.error}`)}</p>}
 
       {stage.kind === 'enrol' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">
-            Scan this code with your authenticator app (Google Authenticator, Authy,
-            1Password…), then enter the six-digit code it shows.
-          </p>
+          <p className="text-sm text-gray-600">{t('mfa.enrolHint')}</p>
           {/* Supabase returns the QR code as an inline SVG data URL, which
               next/image cannot optimise, so a plain img is the right tag. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={stage.qrCode} alt="Authenticator QR code" className="mx-auto h-48 w-48" />
+          <img src={stage.qrCode} alt={t('mfa.qrAlt')} className="mx-auto h-48 w-48" />
           <p className="text-xs text-gray-500 break-all">
-            Can&apos;t scan? Enter this key by hand: <code>{stage.secret}</code>
+            {t('mfa.manualKey')} <code dir="ltr">{stage.secret}</code>
           </p>
         </div>
       )}
 
       {stage.kind === 'verify' && (
-        <p className="text-sm text-gray-600">Enter the code from your authenticator app.</p>
+        <p className="text-sm text-gray-600">{t('mfa.verifyHint')}</p>
       )}
 
       {(stage.kind === 'enrol' || stage.kind === 'verify') && (
         <form onSubmit={submit} className="mt-4 space-y-3">
-          <input
-            className="w-full border p-2 rounded tracking-widest"
-            placeholder="123456"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            required
-          />
-          {err && <p className="text-red-600 text-sm">{err}</p>}
+          <label className="block text-sm">
+            <span className="sr-only">{t('code')}</span>
+            <input
+              className="w-full border p-2 rounded tracking-widest"
+              placeholder="123456"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              required
+            />
+          </label>
+          {err && <p className="text-red-600 text-sm" role="alert">{t(`errors.${err}`)}</p>}
           <button className="w-full rounded bg-black text-white p-2" disabled={busy}>
-            {busy ? 'Checking…' : stage.kind === 'enrol' ? 'Activate' : 'Continue'}
+            {busy ? t('checking') : stage.kind === 'enrol' ? t('mfa.activate') : t('mfa.continue')}
           </button>
         </form>
       )}
@@ -4875,32 +5072,148 @@ cat > src/app/[locale]/auth/reset-password/page.tsx <<'EOF'
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
+import { supabase } from '@/lib/supabase/client';
+import { authErrorKey } from '@/lib/auth/messages';
+
+/**
+ * "Forgot your password?": Supabase emails a link that goes through
+ * /auth/callback, which signs the person in, and lands on the page that
+ * asks for the new password, in the language they asked in.
+ */
 export default function ResetPasswordPage() {
+  const { locale } = useParams() as { locale: string };
+  const t = useTranslations('Auth');
   const [email, setEmail] = useState('');
-  const [info, setInfo] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null); setInfo(null);
+    setErr(null);
+    setBusy(true);
+    const next = `/${locale}/auth/update-password`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`
+      redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
     });
-    if (error) setErr(error.message);
-    else setInfo('If your email exists, you will receive instructions shortly.');
+    setBusy(false);
+    if (error) {
+      console.error('Password reset failed:', error.code, error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
+    } else setSent(true);
   }
 
   return (
     <main className="mx-auto max-w-sm p-6">
-      <h1 className="text-2xl font-bold mb-4">Reset password</h1>
-      <form onSubmit={onSubmit} className="space-y-3">
-        <input className="w-full border p-2 rounded" placeholder="Email" type="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-        {err && <p className="text-red-600 text-sm">{err}</p>}
-        {info && <p className="text-green-700 text-sm">{info}</p>}
-        <button className="w-full rounded bg-black text-white p-2">Send reset link</button>
-      </form>
+      <h1 className="text-2xl font-bold mb-4">{t('reset.title')}</h1>
+      {sent ? (
+        <p className="text-green-700 text-sm" role="status">{t('reset.sent')}</p>
+      ) : (
+        <form onSubmit={onSubmit} className="space-y-3">
+          <p className="text-sm text-gray-600">{t('reset.hint')}</p>
+          <label className="block text-sm">
+            <span className="sr-only">{t('email')}</span>
+            <input className="w-full border p-2 rounded" placeholder={t('email')} type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} required/>
+          </label>
+          {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
+          <button className="w-full rounded bg-black text-white p-2" disabled={busy}>{busy ? t('sending') : t('reset.submit')}</button>
+        </form>
+      )}
+      <p className="mt-4 text-center text-sm text-gray-500">
+        <Link href={`/${locale}/auth/sign-in?method=password`} className="underline">
+          {t('reset.backToSignIn')}
+        </Link>
+      </p>
+    </main>
+  );
+}
+EOF
+
+mkdir -p src/app/[locale]/auth/update-password
+cat > src/app/[locale]/auth/update-password/page.tsx <<'EOF'
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+
+import { supabase } from '@/lib/supabase/client';
+import { authErrorKey } from '@/lib/auth/messages';
+
+/**
+ * The end of "forgot your password?". The reset link went through
+ * /auth/callback, so the person arrives signed in; this page only sets the
+ * new password. Without a session (an old or reused link) it says so and
+ * offers a new link instead of a form that cannot work.
+ */
+export default function UpdatePasswordPage() {
+  const { locale } = useParams() as { locale: string };
+  const t = useTranslations('Auth');
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setHasSession(Boolean(data.user)));
+  }, []);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    if (password !== confirm) {
+      setErr(t('errors.passwordsDiffer'));
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setBusy(false);
+    if (error) {
+      console.error('Password update failed:', error.code, error.message);
+      setErr(t(`errors.${authErrorKey(error) ?? 'generic'}`));
+    } else setDone(true);
+  }
+
+  return (
+    <main className="mx-auto max-w-sm p-6">
+      <h1 className="text-2xl font-bold mb-4">{t('update.title')}</h1>
+      {hasSession === false && (
+        <p className="text-sm text-gray-600">
+          {t('update.noSession')}{' '}
+          <Link href={`/${locale}/auth/reset-password`} className="underline">
+            {t('update.requestNew')}
+          </Link>
+        </p>
+      )}
+      {hasSession && done && (
+        <p className="text-green-700 text-sm" role="status">
+          {t('update.done')}{' '}
+          <Link href={`/${locale}`} className="underline">
+            {t('update.continue')}
+          </Link>
+        </p>
+      )}
+      {hasSession && !done && (
+        <form onSubmit={onSubmit} className="space-y-3">
+          <label className="block text-sm">
+            <span className="sr-only">{t('password')}</span>
+            <input className="w-full border p-2 rounded" placeholder={t('password')} type="password" autoComplete="new-password" value={password} onChange={e=>setPassword(e.target.value)} required/>
+          </label>
+          <label className="block text-sm">
+            <span className="sr-only">{t('confirmPassword')}</span>
+            <input className="w-full border p-2 rounded" placeholder={t('confirmPassword')} type="password" autoComplete="new-password" value={confirm} onChange={e=>setConfirm(e.target.value)} required/>
+          </label>
+          {err && <p className="text-red-600 text-sm" role="alert">{err}</p>}
+          <button className="w-full rounded bg-black text-white p-2" disabled={busy}>{busy ? t('saving') : t('update.submit')}</button>
+        </form>
+      )}
     </main>
   );
 }

@@ -180,7 +180,8 @@ export async function refundOrder(
         amountCents: item.amountCents
       })),
       reason,
-      orderUrl: siteUrl ? `${siteUrl}/${customerLocale}/account/orders` : null
+      orderUrl: siteUrl ? `${siteUrl}/${customerLocale}/account/orders` : null,
+      customerName: order.shipping?.name ?? null
     },
     {
       subject: t('subject', { shop: shopName, amount: money(plan.amountCents), reference }),

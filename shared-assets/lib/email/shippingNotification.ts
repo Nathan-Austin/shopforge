@@ -9,6 +9,7 @@
  */
 
 import { escapeHtml } from './escape';
+import { firstNameOf } from './wordingTags';
 import {
   copyFor,
   emailButton,
@@ -74,7 +75,11 @@ export function renderShippingNotification(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
-  const copy = copyFor(options, 'shipping', locale);
+  const copy = copyFor(options, 'shipping', locale, {
+    'customer.first_name': firstNameOf(order.shipping?.name),
+    'order.reference': order.reference,
+    'shop.name': order.shopName
+  });
   const intro = copy.intro ?? strings.intro;
   const footer = copy.footer ?? strings.footer;
   // Only http(s) links are rendered, whatever the row says.

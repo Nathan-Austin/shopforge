@@ -1,5 +1,7 @@
 'use server';
 
+import { getTranslations } from 'next-intl/server';
+
 import { TRANSACTIONAL_KINDS, type TransactionalKind } from '@/lib/email/brand';
 import { loadEmailBrand } from '@/lib/email/brandStore';
 import { renderSampleEmail } from '@/lib/email/samples';
@@ -9,7 +11,8 @@ import { ensureShopOwner } from '../lib/auth';
 /**
  * "Send me a sample": the receipt, shipping or refund email for an
  * imaginary order, in the admin's language and the saved brand, to the
- * signed-in owner's own address. The transactional path, like a real one;
+ * signed-in owner's own address, the subject marked as a sample in that
+ * language. The transactional path, like a real one;
  * nothing is recorded against any order.
  */
 
@@ -40,7 +43,8 @@ export async function sendSampleEmail(
 
   const { brand } = await loadEmailBrand(supabase);
   const email = await renderSampleEmail(kind, context.locale, brand);
-  const result = await sendEmail({ to, subject: `[sample] ${email.subject}`, html: email.html, text: email.text });
+  const t = await getTranslations({ locale: context.locale, namespace: 'Admin.email.settings.samples' });
+  const result = await sendEmail({ to, subject: t('subjectPrefix', { subject: email.subject }), html: email.html, text: email.text });
   if (result.sent) return { ok: true, kind, to };
   return { ok: false, error: result.reason === 'not-configured' ? 'not_configured' : 'failed', message: result.error };
 }

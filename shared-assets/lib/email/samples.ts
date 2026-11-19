@@ -104,7 +104,8 @@ export async function renderSampleEmail(kind: TransactionalKind, locale: string,
           refundedCents: amount,
           items: [{ productName: ts('sampleProductOne'), quantity: 1, amountCents: amount }],
           reason: ts('sampleRefundReason'),
-          orderUrl: ordersUrl
+          orderUrl: ordersUrl,
+          customerName: ts('sampleCustomer')
         },
         {
           subject: t('subject', { shop: shopName, amount: money(amount), reference: REFERENCE }),
