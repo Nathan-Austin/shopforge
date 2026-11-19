@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { alternatesOn, localizedUrlOn, sitemapEntriesOn } from './alternates';
 
 const base = 'https://shop.example';
-const locales = ['en', 'de', 'de-at', 'ar'];
+const locales = ['en', 'de', 'de-at', 'fr'];
 
 describe('localizedUrlOn', () => {
   it('builds absolute, prefixed URLs whatever the slashes', () => {
@@ -26,7 +26,7 @@ describe('alternatesOn', () => {
       en: 'https://shop.example/en/shop/sauce',
       de: 'https://shop.example/de/shop/sauce',
       'de-AT': 'https://shop.example/de-at/shop/sauce',
-      ar: 'https://shop.example/ar/shop/sauce',
+      fr: 'https://shop.example/fr/shop/sauce',
       'x-default': 'https://shop.example/en/shop/sauce'
     });
     expect(Object.values(set.languages)).toContain(set.canonical);
@@ -41,7 +41,7 @@ describe('alternatesOn', () => {
   });
 
   it('points x-default at the default locale, whatever page it is on', () => {
-    expect(alternatesOn(base, locales, 'de', 'ar', '').languages['x-default']).toBe(
+    expect(alternatesOn(base, locales, 'de', 'fr', '').languages['x-default']).toBe(
       'https://shop.example/de'
     );
   });
@@ -60,7 +60,7 @@ describe('sitemapEntriesOn', () => {
       'https://shop.example/en/shop',
       'https://shop.example/de/shop',
       'https://shop.example/de-at/shop',
-      'https://shop.example/ar/shop'
+      'https://shop.example/fr/shop'
     ]);
     for (const entry of entries) {
       expect(entry.alternates?.languages).toEqual(

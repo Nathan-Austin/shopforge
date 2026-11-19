@@ -267,7 +267,8 @@ loose in `/tmp`.
 - [x] **A. Template model and renderer** — done 2026-11-05 in
       `src/lib/email/campaigns/` (`schema.ts`, `render.ts`, `richText.ts`,
       `mergeTags.ts`, `localize.ts`) and `src/lib/email/tmpDir.ts`, with
-      `Email.campaign` strings in en, de, tr and ar. Not used by any page
+      `Email.campaign` strings in en and de (tr and ar were
+      dropped 2026-11-19). Not used by any page
       yet; B and C wire it in. A Zod 4 schema for a campaign
       document: heading, rich text (a Tiptap JSON subset: bold, italic,
       underline, strike, links, font sizes, colour, lists, alignment),
@@ -298,7 +299,7 @@ loose in `/tmp`.
       browser-side preview, undo/redo, Ctrl+S), document operations in
       `src/lib/email/campaigns/editor.ts`, Tiptap output folded into the
       schema by `richTextSanitize.ts`. Checked by hand in Chrome
-      (English, German, Arabic admin, phone width). Block palette, reorder,
+      (English, German, a right-to-left admin, phone width). Block palette, reorder,
       settings panel per block, Tiptap toolbar, product and discount-code
       pickers, column sections, a merge-tag menu, a locale switcher that
       flags missing translations, desktop/phone preview, starter templates
@@ -469,7 +470,14 @@ Order of work, one session each:
 
 ## 3. Languages
 
-- [ ] Full `de`, `tr` and `ar` translations
+- [ ] Full `de` translations
+- [ ] Message files for the other EU languages shops will use (`fr`, `nl`,
+      `it`, `es`, …); until then a language without a file starts as a
+      copy of English
+- Decided 2026-11-19: Turkish and Arabic are no longer shipped. Their
+  message files, campaign-starter text and CSV header aliases are gone;
+  the right-to-left machinery stays, language-neutral, for any later
+  right-to-left locale
 
 ## 4. Generator
 

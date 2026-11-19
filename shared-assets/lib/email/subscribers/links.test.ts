@@ -6,7 +6,7 @@ import { confirmUrl, listUnsubscribeHeaders, oneClickUnsubscribeUrl, unsubscribe
 describe('subscriber links', () => {
   it('point at the pages in the subscriber\'s language', () => {
     expect(confirmUrl('https://shop.example/', 'de-at', 'v1.a.b')).toBe('https://shop.example/de-at/newsletter/confirm?t=v1.a.b');
-    expect(unsubscribeUrl('https://shop.example', 'ar', 'v1.a.b')).toBe('https://shop.example/ar/newsletter/unsubscribe?t=v1.a.b');
+    expect(unsubscribeUrl('https://shop.example', 'fr', 'v1.a.b')).toBe('https://shop.example/fr/newsletter/unsubscribe?t=v1.a.b');
     expect(unsubscribePreviewUrl('https://shop.example', 'en')).toBe('https://shop.example/en/newsletter/unsubscribe?preview=1');
   });
 

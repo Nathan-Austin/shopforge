@@ -17,7 +17,7 @@ export function sampleDocument(): CampaignDocumentInput {
   return {
     version: 1,
     defaultLocale: 'en',
-    subject: { en: 'New in at {{shop.name}}', de: 'Neu bei {{shop.name}}', ar: 'جديد في {{shop.name}}' },
+    subject: { en: 'New in at {{shop.name}}', de: 'Neu bei {{shop.name}}' },
     preheader: { en: 'Fresh stock and 15% off', de: 'Frische Ware und 15 % Rabatt' },
     theme: { brandColor: '#b91c1c', logoUrl: 'https://cdn.example/logo.png' },
     footer: { en: 'Your Shop GmbH\nMusterstraße 1, 10115 Berlin' },

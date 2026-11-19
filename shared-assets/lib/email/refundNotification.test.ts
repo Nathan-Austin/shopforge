@@ -116,6 +116,6 @@ describe('renderRefundNotification', () => {
     const email = renderRefundNotification(partial, strings, 'de');
     // Intl puts a non-breaking space before the euro sign in German.
     expect(email.text).toMatch(/1 x Ghost Pepper Sauce  10,00\s€/);
-    expect(renderRefundNotification(partial, strings, 'ar').html).toContain('dir="rtl"');
+    expect(renderRefundNotification(partial, strings, 'he').html).toContain('dir="rtl"');
   });
 });

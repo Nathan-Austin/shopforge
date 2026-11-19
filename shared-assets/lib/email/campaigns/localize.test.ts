@@ -49,7 +49,7 @@ describe('pickLocalized', () => {
   });
 
   it('reports falling back to another language', () => {
-    expect(pickLocalized(text, 'tr', 'en', isBlankString)).toEqual({ value: 'Hello', locale: 'en', fellBack: true });
+    expect(pickLocalized(text, 'fr', 'en', isBlankString)).toEqual({ value: 'Hello', locale: 'en', fellBack: true });
   });
 
   it('is null when nothing in the chain has text', () => {
@@ -96,14 +96,16 @@ describe('rendering per locale', () => {
     expect(email.warnings).not.toContainEqual({ code: 'missing-translation', detail: 'subject:de' });
   });
 
-  it('lays Arabic out right to left', () => {
-    const email = rendered(renderCampaign(sampleDocument(), sampleContext({ locale: 'ar' })));
-    expect(email.subject).toBe('جديد في Your Shop');
+  // The shop ships no right-to-left language, but the renderer still lays one
+  // out correctly; `he` stands in for any of them, with no translations.
+  it('lays a right-to-left locale out right to left', () => {
+    const email = rendered(renderCampaign(sampleDocument(), sampleContext({ locale: 'he' })));
+    expect(email.subject).toBe('New in at Your Shop');
     expect(email.dir).toBe('rtl');
-    expect(email.html).toContain('<html lang="ar" dir="rtl">');
+    expect(email.html).toContain('<html lang="he" dir="rtl">');
     // "start" alignment is the right-hand side in a right-to-left email.
     expect(email.html).toMatch(/<h3 [^>]*text-align:right;[^>]*>Left column<\/h3>/);
-    expect(email.html).toContain(formatPrice(899, 'EUR', 'ar'));
+    expect(email.html).toContain(formatPrice(899, 'EUR', 'he'));
   });
 });
 
@@ -149,7 +151,7 @@ describe('Email.campaign messages through next-intl', () => {
 
   // The shop's own files: every language that ships must interpolate.
   const messagesDir = path.join(process.cwd(), 'src/messages');
-  const languages = ['en', 'de', 'tr', 'ar'].filter((language) => existsSync(path.join(messagesDir, `${language}.json`)));
+  const languages = ['en', 'de'].filter((language) => existsSync(path.join(messagesDir, `${language}.json`)));
 
   it.each(languages)('%s.json has every campaign string, with {shop} filled', (language) => {
     const messages = JSON.parse(readFileSync(path.join(messagesDir, `${language}.json`), 'utf8'));

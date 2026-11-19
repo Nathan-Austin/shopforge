@@ -63,9 +63,9 @@ describe('renderTransactionalEmail', () => {
     expect(text).toBe('Hello');
   });
 
-  it('is right-to-left for Arabic', () => {
-    const { html } = renderTransactionalEmail({ locale: 'ar', subject: 'مرحبا', shopName: 'Shop', body });
-    expect(html).toContain('<html lang="ar" dir="rtl">');
+  it('is right-to-left for a right-to-left locale', () => {
+    const { html } = renderTransactionalEmail({ locale: 'he', subject: 'Hi', shopName: 'Shop', body });
+    expect(html).toContain('<html lang="he" dir="rtl">');
   });
 });
 

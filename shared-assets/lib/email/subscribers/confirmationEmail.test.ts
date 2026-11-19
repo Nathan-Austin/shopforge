@@ -23,8 +23,8 @@ describe('renderSubscriptionConfirmation', () => {
     expect(email.html).toContain('lang="de"');
   });
 
-  it('escapes the shop name and lays Arabic out right to left', () => {
-    const email = renderSubscriptionConfirmation(URL, 'A & <B>', strings, 'ar');
+  it('escapes the shop name and lays a right-to-left locale out right to left', () => {
+    const email = renderSubscriptionConfirmation(URL, 'A & <B>', strings, 'he');
     expect(email.html).toContain('A &amp; &lt;B&gt;');
     expect(email.html).toContain('dir="rtl"');
   });

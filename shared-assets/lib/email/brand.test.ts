@@ -62,15 +62,15 @@ describe('campaignThemeFromBrand', () => {
 });
 
 describe('brandFooterFor', () => {
-  const brand = { ...DEFAULT_EMAIL_BRAND, footer: { en: 'Test Shop Ltd, London', de: 'Test Shop GmbH, Berlin', tr: '   ' } };
+  const brand = { ...DEFAULT_EMAIL_BRAND, footer: { en: 'Test Shop Ltd, London', de: 'Test Shop GmbH, Berlin', fr: '   ' } };
 
   it('picks the locale, then the language, then the default', () => {
     expect(brandFooterFor(brand, 'de-at', 'en')).toBe('Test Shop GmbH, Berlin');
-    expect(brandFooterFor(brand, 'ar', 'en')).toBe('Test Shop Ltd, London');
+    expect(brandFooterFor(brand, 'nl', 'en')).toBe('Test Shop Ltd, London');
   });
 
   it('treats a blank entry as missing', () => {
-    expect(brandFooterFor(brand, 'tr', 'en')).toBe('Test Shop Ltd, London');
+    expect(brandFooterFor(brand, 'fr', 'en')).toBe('Test Shop Ltd, London');
     expect(brandFooterFor(DEFAULT_EMAIL_BRAND, 'en', 'en')).toBeNull();
   });
 });
@@ -95,7 +95,7 @@ describe('transactionalCopyFor', () => {
       intro: 'Dein Paket ist unterwegs!',
       footer: 'Reply to this email with questions.'
     });
-    expect(transactionalCopyFor(brand.brand, 'shipping', 'ar', 'en').intro).toBe('Your parcel is off!');
+    expect(transactionalCopyFor(brand.brand, 'shipping', 'fr', 'en').intro).toBe('Your parcel is off!');
     // A blank entry is no entry; the other emails are untouched.
     expect(transactionalCopyFor(brand.brand, 'refund', 'en', 'en')).toEqual({ intro: null, footer: null });
     expect(transactionalCopyFor(brand.brand, 'confirmation', 'en', 'en')).toEqual({ intro: null, footer: null });

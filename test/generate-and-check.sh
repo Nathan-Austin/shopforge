@@ -2,7 +2,7 @@
 # Generates a store without touching Supabase, then runs the checks a first
 # deploy on Vercel would: install, type-check, lint and build.
 #
-#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--admin-mfa=required|off] [--locales=en,de,ar] [--suffix=name] [--tmp-dir=/tmp/sf-<name>-email-builder] [--keep]
+#   test/generate-and-check.sh [--mode=generic|chilli] [--shipping=form|stripe] [--auth=password|otp] [--admin-mfa=required|off] [--locales=en,de,fr] [--suffix=name] [--tmp-dir=/tmp/sf-<name>-email-builder] [--keep]
 #
 # The store is written to test-<mode><suffix>/ in the repository root
 # (gitignored) and removed afterwards unless --keep is given. --locales
@@ -20,7 +20,7 @@ MODE="generic"
 SHIPPING="form"
 AUTH="password"
 ADMIN_MFA="required"
-LOCALES="en,de,ar"
+LOCALES="en,de,fr"
 SUFFIX=""
 TMP_DIR=""
 KEEP="false"

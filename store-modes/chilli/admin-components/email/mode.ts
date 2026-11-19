@@ -22,7 +22,7 @@ export const CAMPAIGN_MODE: CampaignModeHooks = {
 
 export const STARTERS = {
   blank: {
-    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}', tr: '{{shop.name}} haberleri', ar: 'أخبار {{shop.name}}' },
+    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}' },
     brandColor: '#b91c1c',
     blocks: [
       {
@@ -30,9 +30,7 @@ export const STARTERS = {
         paragraphs: [
           {
             en: 'Write your message here.',
-            de: 'Schreiben Sie hier Ihre Nachricht.',
-            tr: 'Mesajınızı buraya yazın.',
-            ar: 'اكتب رسالتك هنا.'
+            de: 'Schreiben Sie hier Ihre Nachricht.'
           }
         ]
       }
@@ -41,42 +39,34 @@ export const STARTERS = {
   newsletter: {
     subject: {
       en: 'This month’s heat at {{shop.name}}',
-      de: 'Die Schärfe des Monats bei {{shop.name}}',
-      tr: '{{shop.name}}’da bu ayın acısı',
-      ar: 'حرارة هذا الشهر في {{shop.name}}'
+      de: 'Die Schärfe des Monats bei {{shop.name}}'
     },
     preheader: {
       en: 'New sauces, old favourites and what to try next',
-      de: 'Neue Saucen, alte Favoriten und was Sie als Nächstes probieren sollten',
-      tr: 'Yeni soslar, eski favoriler ve sırada ne var',
-      ar: 'صلصات جديدة ومفضلات قديمة وما يستحق التجربة'
+      de: 'Neue Saucen, alte Favoriten und was Sie als Nächstes probieren sollten'
     },
     brandColor: '#b91c1c',
     blocks: [
       {
         type: 'heading',
-        text: { en: 'This month’s heat', de: 'Die Schärfe des Monats', tr: 'Bu ayın acısı', ar: 'حرارة هذا الشهر' }
+        text: { en: 'This month’s heat', de: 'Die Schärfe des Monats' }
       },
       {
         type: 'text',
         paragraphs: [
           {
             en: 'Hi {{subscriber.first_name|chilli lover}},',
-            de: 'Hallo {{subscriber.first_name|Chili-Fan}},',
-            tr: 'Merhaba {{subscriber.first_name|acı sever}},',
-            ar: 'مرحبًا {{subscriber.first_name|محب الفلفل}}،'
+            de: 'Hallo {{subscriber.first_name|Chili-Fan}},'
           },
           {
             en: 'Fresh batches are in. Tell your subscribers what is new, from mild to wild, and replace this text with your own.',
-            de: 'Frische Chargen sind da. Erzählen Sie, was neu ist, von mild bis feurig, und ersetzen Sie diesen Text durch Ihren eigenen.',
-            tr: 'Taze partiler geldi. Hafiften çok acıya neler yeni anlatın ve bu metni kendinizinkiyle değiştirin.',
-            ar: 'وصلت دفعات جديدة. أخبر مشتركيك بالجديد من الخفيف إلى الحار جدًا، واستبدل هذا النص بنصك.'
+            de: 'Frische Chargen sind da. Erzählen Sie, was neu ist, von mild bis feurig, und ersetzen Sie diesen Text durch Ihren eigenen.'
           }
         ]
       },
       {
         type: 'button',
-        label: { en: 'Shop the sauces', de: 'Zu den Saucen', tr: 'Soslara göz atın', ar: 'تسوق الصلصات' },
+        label: { en: 'Shop the sauces', de: 'Zu den Saucen' },
         href: '{{shop.locale_url}}/shop'
       },
       { type: 'divider' },
@@ -85,9 +75,7 @@ export const STARTERS = {
         paragraphs: [
           {
             en: 'Stay hot. Thank you for shopping with us.',
-            de: 'Bleiben Sie scharf. Vielen Dank für Ihren Einkauf.',
-            tr: 'Acıyla kalın. Bizden alışveriş yaptığınız için teşekkürler.',
-            ar: 'ابقَ حارًا. شكرًا لتسوقك معنا.'
+            de: 'Bleiben Sie scharf. Vielen Dank für Ihren Einkauf.'
           }
         ]
       }

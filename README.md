@@ -7,8 +7,8 @@ Tailwind CSS 4 and Stripe**, ready to deploy on Vercel.
 
 One command scaffolds the foundation of a store: customer accounts, an admin
 panel for managing products, the database schema with row-level security, a
-server-side Stripe checkout API, and multilingual routing with right-to-left
-support for languages such as Arabic.
+server-side Stripe checkout API, and multilingual routing. Message files
+ship for English and German; other languages start from English.
 
 ## What you get
 
@@ -26,7 +26,7 @@ support for languages such as Arabic.
   items and orders, with row-level security and seed data
 - **Languages and markets:** any set of locales via `next-intl`, as
   languages (`de`) or language-country markets (`de-at`, `en-de`) under
-  lowercase URL prefixes, with RTL layout for Arabic. A market inherits its
+  lowercase URL prefixes. A market inherits its
   language's text and overrides only what differs
 - **International SEO built in:** self-referencing canonical, the full
   hreflang set with `x-default` on every indexable page, `noindex` on the
@@ -134,7 +134,7 @@ support for languages such as Arabic.
 ```bash
 git clone https://github.com/Nathan-Austin/shopforge.git
 cd ~/projects          # wherever you want your shop to live, outside shopforge
-~/path/to/shopforge/create-next-commerce-template-ssr.sh my-shop en "en,de,ar" --mode=generic
+~/path/to/shopforge/create-next-commerce-template-ssr.sh my-shop en "en,de" --mode=generic
 cd my-shop
 ~/path/to/shopforge/extend-commerce-template.sh --mode=generic
 pnpm dev
@@ -178,7 +178,7 @@ create-next-commerce-template-ssr.sh <name> [default-locale] [locales] [--mode=g
 | --- | --- | --- |
 | `name` | `next-commerce-template` | Folder and package name for the new shop |
 | `default-locale` | `en` | Language used at `/` |
-| `locales` | `en,de,tr,ar` | Comma-separated supported languages |
+| `locales` | `en,de` | Comma-separated supported languages |
 | `--mode` | `chilli` | Store mode from `store-modes/` |
 | `--skip-supabase` | off | Don't run the Supabase CLI or ask for keys; write placeholder values to `.env.local` and leave the migrations in `supabase/migrations/` for a later `supabase db push`. For tests and CI |
 

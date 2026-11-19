@@ -9,8 +9,8 @@ import { STARTER_KEYS, STARTERS } from './mode';
  * the starters have text for, and one whose default language they don't.
  */
 const SHOPS = [
-  { locales: ['en', 'de', 'ar'], defaultLocale: 'en' },
-  { locales: ['de', 'de-at', 'tr'], defaultLocale: 'de' },
+  { locales: ['en', 'de', 'fr'], defaultLocale: 'en' },
+  { locales: ['de', 'de-at', 'fr'], defaultLocale: 'de' },
   { locales: ['fr', 'nl'], defaultLocale: 'fr' }
 ];
 

@@ -125,7 +125,7 @@ describe('renderShippingNotification', () => {
   });
 
   it('sets the document direction for right-to-left locales', () => {
-    expect(renderShippingNotification(order, strings, 'ar').html).toContain('<html lang="ar" dir="rtl">');
+    expect(renderShippingNotification(order, strings, 'he').html).toContain('<html lang="he" dir="rtl">');
     expect(renderShippingNotification(order, strings, 'de').html).toContain('<html lang="de" dir="ltr">');
   });
 });

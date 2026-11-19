@@ -172,6 +172,6 @@ describe('renderOrderConfirmation', () => {
     const de = renderOrderConfirmation(baseOrder, strings, 'de');
     expect(de.text).toMatch(/Total: 30,00\s€/);
     expect(de.html).toContain('<html lang="de" dir="ltr">');
-    expect(renderOrderConfirmation(baseOrder, strings, 'ar').html).toContain('dir="rtl"');
+    expect(renderOrderConfirmation(baseOrder, strings, 'he').html).toContain('dir="rtl"');
   });
 });

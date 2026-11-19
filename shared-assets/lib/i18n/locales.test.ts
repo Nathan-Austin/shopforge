@@ -48,9 +48,9 @@ describe('parseLocale', () => {
   });
 
   it('knows right-to-left languages, markets included', () => {
-    expect(directionOf('ar')).toBe('rtl');
-    expect(directionOf('ar-ae')).toBe('rtl');
-    expect(directionOf('tr')).toBe('ltr');
+    expect(directionOf('he')).toBe('rtl');
+    expect(directionOf('he-il')).toBe('rtl');
+    expect(directionOf('fr')).toBe('ltr');
   });
 });
 

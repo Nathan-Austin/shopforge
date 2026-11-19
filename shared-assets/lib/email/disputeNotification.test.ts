@@ -80,8 +80,8 @@ describe('renderDisputeNotification', () => {
     expect(email.html).toContain('A &amp; B &quot;Shop&quot;');
   });
 
-  it('marks the document right-to-left for Arabic', () => {
-    expect(renderDisputeNotification(opened, strings, 'ar').html).toContain('dir="rtl"');
+  it('marks the document right-to-left for a right-to-left locale', () => {
+    expect(renderDisputeNotification(opened, strings, 'he').html).toContain('dir="rtl"');
     expect(renderDisputeNotification(opened, strings, 'de').html).toContain('dir="ltr"');
   });
 });

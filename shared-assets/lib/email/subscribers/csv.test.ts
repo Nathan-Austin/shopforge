@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { csvCell, matchLocale, MAX_IMPORT_ROWS, parseSubscriberCsv, toSubscriberCsv } from './csv';
 
-const LOCALES = ['en', 'de', 'de-at', 'ar'];
+const LOCALES = ['en', 'de', 'de-at', 'nl'];
 
 describe('parseSubscriberCsv', () => {
   it('reads a Mailchimp export', () => {
@@ -97,8 +97,8 @@ describe('export', () => {
 
   it('round-trips through the importer', () => {
     const csv = toSubscriberCsv([
-      { email: 'a@example.com', firstName: 'Ana, Maria', locale: 'ar', status: 'subscribed', source: 'import', consentedAt: null, confirmedAt: null, unsubscribedAt: null }
+      { email: 'a@example.com', firstName: 'Ana, Maria', locale: 'nl', status: 'subscribed', source: 'import', consentedAt: null, confirmedAt: null, unsubscribedAt: null }
     ]);
-    expect(parseSubscriberCsv(csv, LOCALES, 'en').rows).toEqual([{ email: 'a@example.com', firstName: 'Ana, Maria', locale: 'ar' }]);
+    expect(parseSubscriberCsv(csv, LOCALES, 'en').rows).toEqual([{ email: 'a@example.com', firstName: 'Ana, Maria', locale: 'nl' }]);
   });
 });

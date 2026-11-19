@@ -14,51 +14,43 @@ export const CAMPAIGN_MODE: CampaignModeHooks = {
 
 export const STARTERS = {
   blank: {
-    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}', tr: '{{shop.name}} haberleri', ar: 'أخبار {{shop.name}}' },
+    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}' },
     blocks: [
       {
         type: 'text',
         paragraphs: [
           {
             en: 'Write your message here.',
-            de: 'Schreiben Sie hier Ihre Nachricht.',
-            tr: 'Mesajınızı buraya yazın.',
-            ar: 'اكتب رسالتك هنا.'
+            de: 'Schreiben Sie hier Ihre Nachricht.'
           }
         ]
       }
     ]
   },
   newsletter: {
-    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}', tr: '{{shop.name}} haberleri', ar: 'أخبار {{shop.name}}' },
+    subject: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}' },
     preheader: {
       en: 'What is new this month',
-      de: 'Das ist neu in diesem Monat',
-      tr: 'Bu ay neler yeni',
-      ar: 'ما الجديد هذا الشهر'
+      de: 'Das ist neu in diesem Monat'
     },
     blocks: [
-      { type: 'heading', text: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}', tr: '{{shop.name}} haberleri', ar: 'أخبار {{shop.name}}' } },
+      { type: 'heading', text: { en: 'News from {{shop.name}}', de: 'Neues von {{shop.name}}' } },
       {
         type: 'text',
         paragraphs: [
           {
             en: 'Hi {{subscriber.first_name|there}},',
-            de: 'Hallo {{subscriber.first_name|zusammen}},',
-            tr: 'Merhaba {{subscriber.first_name|değerli müşterimiz}},',
-            ar: 'مرحبًا {{subscriber.first_name|عزيزي العميل}}،'
+            de: 'Hallo {{subscriber.first_name|zusammen}},'
           },
           {
             en: 'Here is what is new in the shop this month. Replace this text with your own news.',
-            de: 'Das ist neu im Shop in diesem Monat. Ersetzen Sie diesen Text durch Ihre eigenen Neuigkeiten.',
-            tr: 'Bu ay mağazada neler yeni. Bu metni kendi haberlerinizle değiştirin.',
-            ar: 'إليك الجديد في المتجر هذا الشهر. استبدل هذا النص بأخبارك.'
+            de: 'Das ist neu im Shop in diesem Monat. Ersetzen Sie diesen Text durch Ihre eigenen Neuigkeiten.'
           }
         ]
       },
       {
         type: 'button',
-        label: { en: 'Visit the shop', de: 'Zum Shop', tr: 'Mağazayı ziyaret edin', ar: 'زيارة المتجر' },
+        label: { en: 'Visit the shop', de: 'Zum Shop' },
         href: '{{shop.locale_url}}/shop'
       },
       { type: 'divider' },
@@ -67,9 +59,7 @@ export const STARTERS = {
         paragraphs: [
           {
             en: 'Thank you for shopping with us.',
-            de: 'Vielen Dank für Ihren Einkauf bei uns.',
-            tr: 'Bizden alışveriş yaptığınız için teşekkürler.',
-            ar: 'شكرًا لتسوقك معنا.'
+            de: 'Vielen Dank für Ihren Einkauf bei uns.'
           }
         ]
       }

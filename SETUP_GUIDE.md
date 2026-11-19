@@ -58,12 +58,14 @@ with someone else's address and read their orders. Leave it on.
 From `~/projects`:
 
 ```bash
-~/shopforge/create-next-commerce-template-ssr.sh my-shop en "en,de,ar" --mode=generic
+~/shopforge/create-next-commerce-template-ssr.sh my-shop en "en,de" --mode=generic
 ```
 
 - `my-shop`: folder and package name
 - `en`: default language
-- `"en,de,ar"`: supported languages (Arabic gets a right-to-left layout)
+- `"en,de"`: supported languages. English and German have their own
+  wording; any other language (`fr`, `nl`, …) starts as a copy of English
+  for you to translate
 - `--mode`: `generic`, or `chilli` for hot-sauce shops (adds heat levels and
   chilli types); `chilli` is the default if you leave it out
 
@@ -545,8 +547,7 @@ git push -u origin main
       success page shows it within a few seconds
 - [ ] If email is configured, the receipt arrives and the order's
       `confirmation_sent_at` is set
-- [ ] Every configured language loads (e.g. `/en`, `/de`, `/ar`), and `/ar` is
-      right-to-left
+- [ ] Every configured language loads (e.g. `/en`, `/de`)
 - [ ] The Vercel build log shows no errors
 
 ## Troubleshooting

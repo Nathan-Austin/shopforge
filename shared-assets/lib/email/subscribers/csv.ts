@@ -16,9 +16,9 @@ export const MAX_IMPORT_ROWS = 10_000;
 export const MAX_IMPORT_BYTES = 2_000_000;
 
 const HEADERS = {
-  email: ['email', 'e-mail', 'email address', 'e-mail address', 'e-mail-adresse', 'emailadresse', 'mail', 'e-posta', 'البريد الإلكتروني'],
-  firstName: ['first_name', 'firstname', 'first name', 'fname', 'name', 'vorname', 'ad', 'الاسم'],
-  locale: ['locale', 'language', 'lang', 'sprache', 'dil', 'اللغة']
+  email: ['email', 'e-mail', 'email address', 'e-mail address', 'e-mail-adresse', 'emailadresse', 'mail'],
+  firstName: ['first_name', 'firstname', 'first name', 'fname', 'name', 'vorname'],
+  locale: ['locale', 'language', 'lang', 'sprache']
 } as const;
 
 /** RFC 4180 fields: quotes, doubled quotes, separators and line breaks inside quotes. */
@@ -169,6 +169,6 @@ export function toSubscriberCsv(rows: ExportRow[]): string {
         .join(',')
     )
   ];
-  // A byte-order mark so Excel reads the file as UTF-8 (umlauts, Arabic).
+  // A byte-order mark so Excel reads the file as UTF-8 (umlauts, accents).
   return `﻿${lines.join('\r\n')}\r\n`;
 }

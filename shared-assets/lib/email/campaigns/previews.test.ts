@@ -15,7 +15,7 @@ import { EMAIL_WIDTH, renderCampaign } from './render';
  * to the renderer. Nothing is written outside that directory.
  */
 
-const LOCALES = ['en', 'de', 'ar'];
+const LOCALES = ['en', 'de', 'fr'];
 const PHONE_WIDTH = 375;
 
 describe('campaign previews', () => {
@@ -51,6 +51,6 @@ ${frames.join('\n')}
 </body></html>`;
     const indexPath = await writeEmailTmpFile('previews', 'index.html', index);
     if (resolved.ok) expect(indexPath).toBe(`${resolved.dir}/previews/index.html`);
-    expect(await readFile(indexPath, 'utf8')).toContain('<iframe title="ar phone"');
+    expect(await readFile(indexPath, 'utf8')).toContain('<iframe title="fr phone"');
   });
 });
