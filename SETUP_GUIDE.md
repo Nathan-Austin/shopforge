@@ -222,9 +222,6 @@ built-in text (shown in grey) is used; the order details in between are
 always generated. "Email me this sample" sends the picked email for an
 imaginary order to your own address, so you can check it in a real inbox.
 
-Shops created before 2026-11-19 need the `0012_store_settings.sql`
-migration once (see `lib/migrations/README.md` on upgrading).
-
 #### Sending campaigns with Mailchimp instead
 
 Newsletters can go through **Mailchimp** rather than Resend Broadcasts. Pick

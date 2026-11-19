@@ -10,6 +10,14 @@ files, copying a store mode's directory or filling in placeholders. The
 direction in section 0 is one codebase that every shop runs, with those
 decisions held as settings and changed in the admin.
 
+**No existing shops to carry along.** No shop generated so far uses this
+package or receives updates from it (confirmed 2026-11-19). Backward
+compatibility with already-generated shops is therefore not a constraint
+on any step below, and there is no upgrade path to build. The fallback to
+generated files in step 2 stays, but for a different reason: a freshly
+generated shop has no settings rows until the owner saves one, and it
+must work before then.
+
 This document lists every such decision, where it lands in a generated shop,
 who reads it at runtime, and what it would take to make it a runtime
 setting. The last sections propose an order and list the questions that
@@ -91,15 +99,15 @@ plan; no behaviour change).
 
 ## 6. Proposed order
 
-Each step leaves every existing shop working and both modes generating, so
-the generator keeps passing CI until it is retired.
+Each step keeps both modes generating and passing CI until the generator
+is retired.
 
 1. **Move the identical admin files to `shared-assets`** (S). Pure
    deduplication; nothing changes for any shop. Shrinks the next steps.
 2. **A `getStoreSettings()` reader with caching** (M). One typed reader over
    `store_settings`, falling back to today's generated files and environment
-   variables when a key is absent, so a shop generated last month behaves
-   exactly as before. Revalidated on save.
+   variables when a key is absent, so a shop works before its owner has
+   saved anything. Revalidated on save (cache tag per key, Q3).
 3. **Small settings first** (S each): shop name (#12), checkout address and
    countries (#3), single/multi brand (#6), sign-in and MFA (#7, #8). Each
    one: a key, a section in a new `/admin/settings`, readers switched to
@@ -111,26 +119,30 @@ the generator keeps passing CI until it is retired.
 6. **Chilli as a toggle** (L, two or three sessions). The chilli-tables
    migration, then the admin pages, then the storefront, then the starters.
    Only after this does `--mode` stop meaning "copy a different directory".
-7. **Languages at runtime** (M). Needs the edge-cache answer (Q3).
+7. **Languages at runtime** (M). `src/proxy.ts` reads the locales through
+   the same cached reader (Q3).
 8. **Then** section 0's later items: the deploy button, the first-run wizard
-   (which is mostly a guided walk through the settings above), and the
-   upgrade path for generated shops (run the migrations, delete the
-   generated config files, which the fallback in step 2 makes safe).
+   (which is mostly a guided walk through the settings above). No upgrade
+   path for previously generated shops: there are none to upgrade.
 
-## 7. Questions to answer before coding
+## 7. Questions
 
-- **Q1. Where do existing shops' choices go?** Proposal: on first run of the
-  new code, nothing is migrated automatically; the fallback reads the
-  generated files until the owner saves a setting in the admin. Alternative:
-  a one-off script that reads the generated config files and writes the rows.
+Answered 2026-11-19: Q1, Q3, Q6. Still open: Q2, Q4, Q5 (none blocks the
+first steps).
+
+- **Q1. Where do a shop's generated choices go?** *Answered:* nothing is
+  copied into the database; the settings reader falls back to the
+  generated files and environment variables until the owner saves a
+  setting in the admin. No one-off migration script. (There are no
+  previously generated shops in use, see the top of this document.)
 - **Q2. Admin layout.** One `/admin/settings` page with sections, or a page
   per area (shop, checkout, products, languages)? The email settings already
   live under `/admin/email/settings`.
-- **Q3. Locales at the edge.** `src/proxy.ts` decides the locale before any
-  page runs. Reading `store_settings` there means a Supabase call per request
-  unless cached. Options: Next's data cache with a tag revalidated on save,
-  or keep locales in an environment variable that the wizard writes through
-  the Vercel API. The second is simpler but needs a Vercel token.
+- **Q3. Locales at the edge.** *Answered:* a cached database read. The
+  proxy reads `store_settings:languages` through Next's data cache, tagged
+  and revalidated when the owner saves, so there is no Supabase call per
+  request and no Vercel token. (Rejected: an environment variable written
+  through the Vercel API.)
 - **Q4. Heat storage.** Heat is stored on the shop's chosen scale today
   (seeds rescaled at generation). A runtime scale change would then need a
   data migration. Proposal: store 0–10 always, scale at display.
@@ -138,9 +150,9 @@ the generator keeps passing CI until it is retired.
   (`lib/seo/store.ts`) reads `NEXT_PUBLIC_SHOP_LOGO_URL`; the site header
   shows only the name. Merge into one shop setting that the email brand,
   the structured data and the header all use?
-- **Q6. Chilli tables in generic shops.** Acceptable to ship empty
-  `chilli_types` tables to every shop, in exchange for one schema? (This
-  document assumes yes.)
+- **Q6. Chilli tables in generic shops.** *Answered: yes.* Every shop gets
+  the chilli tables, empty and unused in a generic shop, in exchange for
+  one schema.
 
 ## 8. Not in scope here
 

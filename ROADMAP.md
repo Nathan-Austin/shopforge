@@ -44,7 +44,9 @@ No code changes in that session.
       as a developer tool, if at all
 - [ ] Deploy to Vercel button with the Supabase integration
 - [ ] First-run setup wizard in the admin
-- [ ] Upgrade path for shops created by the old generator
+- ~~Upgrade path for shops created by the old generator~~ — dropped
+  2026-11-19: no generated shop uses this package or receives updates from
+  it, so there is nothing to upgrade
 
 ## Next up
 
@@ -521,8 +523,8 @@ Order of work, one session each:
 - [ ] Node CLI replacing the heredocs in the shell scripts
 - [ ] Docker self-hosting path alongside Vercel
 - [ ] Payment adapters: Stripe, Mollie, PayPal
-- [ ] Until the single codebase lands: a documented way to bring template
-      improvements into an existing generated store
+- ~~A documented way to bring template improvements into an existing
+  generated store~~ — dropped 2026-11-19 for the same reason
 - [ ] Demo store, screenshots and a short feature list in the README
 - [ ] `AGENTS.md` in every shop: structure, conventions, where things live,
       what not to touch (migrations, RLS), how to run the checks
