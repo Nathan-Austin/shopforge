@@ -1561,6 +1561,48 @@ cat > src/messages/en.json <<'EOF'
         "removeHint": "Deletes the stored key. If it was the one sending campaigns, the other stored key takes over.",
         "removedNotice": "The stored key has been removed.",
         "mailchimpListNote": "Mailchimp sends to the audience your account already has, tagging each subscriber with their language (lang-en, lang-de, and so on). If your account has more than one audience, set MAILCHIMP_LIST_ID to the one you want.",
+        "brand": {
+          "heading": "Brand",
+          "hint": "The logo, colours, font and footer that the receipt, shipping and refund emails wear. New campaign templates start from them too.",
+          "colours": {
+            "brandColor": "Accent colour",
+            "textColor": "Text colour",
+            "backgroundColor": "Page background",
+            "contentColor": "Card background"
+          },
+          "colourHints": {
+            "brandColor": "Buttons and links. The button text is black or white, whichever reads better.",
+            "textColor": "Headings and body text.",
+            "backgroundColor": "Behind the email.",
+            "contentColor": "Behind the text."
+          },
+          "font": "Font",
+          "fonts": {
+            "system": "System (the reader’s own)",
+            "sans": "Helvetica / Arial",
+            "serif": "Georgia / Times"
+          },
+          "logo": "Logo",
+          "logoHint": "Shown at the top of every email, linked to your shop. Leave empty for no logo.",
+          "logoWidth": "Logo width",
+          "logoWidthHint": "Pixels, 40 to 300.",
+          "footer": "Footer, per language",
+          "footerHint": "Your business name and postal address, or a legal line. Shown in small print under every email, in the customer’s language where you have given one.",
+          "save": "Save brand",
+          "saving": "Saving…",
+          "savedNotice": "Saved. Every receipt, shipping and refund email from now on uses this brand.",
+          "previewHeading": "Preview",
+          "previewHint": "A receipt for an imaginary order, in your language and the saved brand. Save to refresh it.",
+          "sampleProductOne": "Sample product",
+          "sampleProductTwo": "Another sample product",
+          "sampleCustomer": "Jo Example",
+          "sampleStreet": "1 Sample Street",
+          "errors": {
+            "not_authorized": "You are not allowed to do that.",
+            "invalid": "Something here is not right. Colours are written #rrggbb and the logo must be an https:// address.",
+            "failed": "The brand could not be saved."
+          }
+        },
         "errors": {
           "not_authorized": "You are not allowed to do that.",
           "unknown_provider": "That is not a provider this shop supports.",
@@ -2705,6 +2747,48 @@ cat > src/messages/de.json <<'EOF'
         "removeHint": "Löscht den gespeicherten Schlüssel. War es der sendende, übernimmt der andere gespeicherte Schlüssel.",
         "removedNotice": "Der gespeicherte Schlüssel wurde entfernt.",
         "mailchimpListNote": "Mailchimp sendet an die Zielgruppe, die Ihr Konto bereits hat, und versieht jede Person mit einem Sprach-Tag (lang-en, lang-de und so weiter). Hat Ihr Konto mehrere Zielgruppen, setzen Sie MAILCHIMP_LIST_ID auf die gewünschte.",
+        "brand": {
+          "heading": "Marke",
+          "hint": "Logo, Farben, Schrift und Fußzeile, in denen Bestellbestätigung, Versand- und Erstattungs-E-Mails erscheinen. Neue Kampagnenvorlagen beginnen ebenfalls damit.",
+          "colours": {
+            "brandColor": "Akzentfarbe",
+            "textColor": "Textfarbe",
+            "backgroundColor": "Seitenhintergrund",
+            "contentColor": "Kartenhintergrund"
+          },
+          "colourHints": {
+            "brandColor": "Schaltflächen und Links. Der Schaltflächentext ist schwarz oder weiß, je nachdem, was besser lesbar ist.",
+            "textColor": "Überschriften und Fließtext.",
+            "backgroundColor": "Hinter der E-Mail.",
+            "contentColor": "Hinter dem Text."
+          },
+          "font": "Schrift",
+          "fonts": {
+            "system": "System (die des Lesers)",
+            "sans": "Helvetica / Arial",
+            "serif": "Georgia / Times"
+          },
+          "logo": "Logo",
+          "logoHint": "Oben in jeder E-Mail, verlinkt auf Ihren Shop. Leer lassen für kein Logo.",
+          "logoWidth": "Logobreite",
+          "logoWidthHint": "Pixel, 40 bis 300.",
+          "footer": "Fußzeile, je Sprache",
+          "footerHint": "Ihr Firmenname und Ihre Postanschrift oder ein rechtlicher Hinweis. Erscheint klein unter jeder E-Mail, in der Sprache des Kunden, wo Sie eine angegeben haben.",
+          "save": "Marke speichern",
+          "saving": "Wird gespeichert…",
+          "savedNotice": "Gespeichert. Jede Bestellbestätigung, Versand- und Erstattungs-E-Mail verwendet ab jetzt diese Marke.",
+          "previewHeading": "Vorschau",
+          "previewHint": "Eine Bestellbestätigung für eine erfundene Bestellung, in Ihrer Sprache und der gespeicherten Marke. Speichern aktualisiert sie.",
+          "sampleProductOne": "Beispielprodukt",
+          "sampleProductTwo": "Noch ein Beispielprodukt",
+          "sampleCustomer": "Jo Beispiel",
+          "sampleStreet": "Beispielstraße 1",
+          "errors": {
+            "not_authorized": "Das dürfen Sie nicht.",
+            "invalid": "Hier stimmt etwas nicht. Farben werden als #rrggbb geschrieben, und das Logo muss eine https://-Adresse sein.",
+            "failed": "Die Marke konnte nicht gespeichert werden."
+          }
+        },
         "errors": {
           "not_authorized": "Das dürfen Sie nicht.",
           "unknown_provider": "Diesen Anbieter unterstützt dieser Shop nicht.",
@@ -3849,6 +3933,48 @@ cat > src/messages/tr.json <<'EOF'
         "removeHint": "Saklanan anahtarı siler. Kampanyaları gönderen oysa, saklanan diğer anahtar devralır.",
         "removedNotice": "Saklanan anahtar kaldırıldı.",
         "mailchimpListNote": "Mailchimp, hesabınızda zaten bulunan kitleye gönderir ve her aboneyi diliyle etiketler (lang-en, lang-de ve benzeri). Hesabınızda birden fazla kitle varsa MAILCHIMP_LIST_ID değerini istediğinize ayarlayın.",
+        "brand": {
+          "heading": "Marka",
+          "hint": "Sipariş onayı, kargo ve iade e-postalarının taşıdığı logo, renkler, yazı tipi ve alt bilgi. Yeni kampanya şablonları da bunlarla başlar.",
+          "colours": {
+            "brandColor": "Vurgu rengi",
+            "textColor": "Metin rengi",
+            "backgroundColor": "Sayfa arka planı",
+            "contentColor": "Kart arka planı"
+          },
+          "colourHints": {
+            "brandColor": "Düğmeler ve bağlantılar. Düğme metni, hangisi daha iyi okunuyorsa siyah ya da beyaz olur.",
+            "textColor": "Başlıklar ve gövde metni.",
+            "backgroundColor": "E-postanın arkasında.",
+            "contentColor": "Metnin arkasında."
+          },
+          "font": "Yazı tipi",
+          "fonts": {
+            "system": "Sistem (okuyucunun kendi yazı tipi)",
+            "sans": "Helvetica / Arial",
+            "serif": "Georgia / Times"
+          },
+          "logo": "Logo",
+          "logoHint": "Her e-postanın üstünde, mağazanıza bağlantılı olarak gösterilir. Logo istemiyorsanız boş bırakın.",
+          "logoWidth": "Logo genişliği",
+          "logoWidthHint": "Piksel, 40 ile 300 arası.",
+          "footer": "Alt bilgi, dil başına",
+          "footerHint": "İşletme adınız ve posta adresiniz ya da yasal bir satır. Her e-postanın altında küçük puntoyla, verdiğiniz yerde müşterinin dilinde gösterilir.",
+          "save": "Markayı kaydet",
+          "saving": "Kaydediliyor…",
+          "savedNotice": "Kaydedildi. Bundan sonra her sipariş onayı, kargo ve iade e-postası bu markayı kullanır.",
+          "previewHeading": "Önizleme",
+          "previewHint": "Hayali bir sipariş için, sizin dilinizde ve kayıtlı markayla bir sipariş onayı. Yenilemek için kaydedin.",
+          "sampleProductOne": "Örnek ürün",
+          "sampleProductTwo": "Bir başka örnek ürün",
+          "sampleCustomer": "Jo Örnek",
+          "sampleStreet": "Örnek Sokak 1",
+          "errors": {
+            "not_authorized": "Bunu yapma izniniz yok.",
+            "invalid": "Burada bir şey yanlış. Renkler #rrggbb biçiminde yazılır ve logo bir https:// adresi olmalıdır.",
+            "failed": "Marka kaydedilemedi."
+          }
+        },
         "errors": {
           "not_authorized": "Buna izniniz yok.",
           "unknown_provider": "Bu mağaza böyle bir sağlayıcıyı desteklemiyor.",
@@ -4993,6 +5119,48 @@ cat > src/messages/ar.json <<'EOF'
         "removeHint": "يحذف المفتاح المحفوظ. إن كان هو الذي يرسل الحملات، يتولّى المفتاح المحفوظ الآخر.",
         "removedNotice": "تمت إزالة المفتاح المحفوظ.",
         "mailchimpListNote": "ترسل Mailchimp إلى الجمهور الموجود في حسابك بالفعل، وتضع على كل مشترك وسم لغته (lang-en وlang-de وهكذا). إن كان في حسابك أكثر من جمهور، اضبط MAILCHIMP_LIST_ID على الجمهور الذي تريده.",
+        "brand": {
+          "heading": "الهوية",
+          "hint": "الشعار والألوان والخط والتذييل التي تظهر بها رسائل تأكيد الطلب والشحن والاسترداد. وتبدأ قوالب الحملات الجديدة بها أيضًا.",
+          "colours": {
+            "brandColor": "لون التمييز",
+            "textColor": "لون النص",
+            "backgroundColor": "خلفية الصفحة",
+            "contentColor": "خلفية البطاقة"
+          },
+          "colourHints": {
+            "brandColor": "الأزرار والروابط. يكون نص الزر أسود أو أبيض، أيهما أوضح للقراءة.",
+            "textColor": "العناوين ونص المتن.",
+            "backgroundColor": "خلف الرسالة.",
+            "contentColor": "خلف النص."
+          },
+          "font": "الخط",
+          "fonts": {
+            "system": "خط النظام (خط القارئ)",
+            "sans": "Helvetica / Arial",
+            "serif": "Georgia / Times"
+          },
+          "logo": "الشعار",
+          "logoHint": "يظهر أعلى كل رسالة مع رابط إلى متجرك. اتركه فارغًا إن لم ترد شعارًا.",
+          "logoWidth": "عرض الشعار",
+          "logoWidthHint": "بالبكسل، من 40 إلى 300.",
+          "footer": "التذييل، لكل لغة",
+          "footerHint": "اسم عملك وعنوانك البريدي، أو سطر قانوني. يظهر بخط صغير أسفل كل رسالة، بلغة العميل حيثما وفّرته.",
+          "save": "حفظ الهوية",
+          "saving": "جارٍ الحفظ…",
+          "savedNotice": "تم الحفظ. من الآن تستخدم كل رسالة تأكيد طلب وشحن واسترداد هذه الهوية.",
+          "previewHeading": "معاينة",
+          "previewHint": "تأكيد طلب لطلب وهمي، بلغتك وبالهوية المحفوظة. احفظ لتحديثها.",
+          "sampleProductOne": "منتج تجريبي",
+          "sampleProductTwo": "منتج تجريبي آخر",
+          "sampleCustomer": "جو مثال",
+          "sampleStreet": "شارع المثال 1",
+          "errors": {
+            "not_authorized": "غير مسموح لك بذلك.",
+            "invalid": "هناك خطأ ما هنا. تُكتب الألوان بصيغة #rrggbb ويجب أن يكون الشعار عنوان https://.",
+            "failed": "تعذّر حفظ الهوية."
+          }
+        },
         "errors": {
           "not_authorized": "لا يُسمح لك بذلك.",
           "unknown_provider": "هذا ليس مزوّدًا يدعمه هذا المتجر.",

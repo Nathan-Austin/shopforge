@@ -204,6 +204,19 @@ Vault is enabled by default on Supabase. On a project without it, saving a
 key fails with a message saying so, and `RESEND_API_KEY` remains the way to
 configure email.
 
+#### The brand on receipts
+
+Receipts, shipping and refund emails wear the shop's **email brand**: a logo,
+four colours, a font and a footer line per language. Set them under
+**Admin → Email → Settings**; the page shows a sample receipt in the saved
+brand so you can see the result before anyone orders. The footer is where
+your business name and postal address go. Until you save a brand, emails use
+a plain default, and a new campaign template in the designer starts from the
+brand too.
+
+Shops created before 2026-11-19 need the `0012_store_settings.sql`
+migration once (see `lib/migrations/README.md` on upgrading).
+
 #### Sending campaigns with Mailchimp instead
 
 Newsletters can go through **Mailchimp** rather than Resend Broadcasts. Pick

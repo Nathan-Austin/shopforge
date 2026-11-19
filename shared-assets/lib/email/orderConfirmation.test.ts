@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_EMAIL_BRAND } from './brand';
+
 import {
   escapeHtml,
   renderOrderConfirmation,
@@ -133,10 +135,30 @@ describe('renderOrderConfirmation', () => {
     expect(email.text).toContain('<img src=x onerror=alert(1)>');
   });
 
+  it('wears the shop brand: colours, logo and footer address for the locale', () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      brandColor: '#aa0000',
+      backgroundColor: '#fff7f0',
+      logoUrl: 'https://cdn.test/logo.png',
+      footer: { en: 'Test Shop Ltd, 1 High Street, London', de: 'Test Shop GmbH, Berlin' }
+    };
+    const options = { brand, shopUrl: 'https://shop.test', defaultLocale: 'en' };
+    const en = renderOrderConfirmation({ ...baseOrder, orderUrl: 'https://shop.test/en/account/orders' }, strings, 'en', options);
+    expect(en.html).toContain('background:#aa0000');
+    expect(en.html).toContain('background:#fff7f0');
+    expect(en.html).toContain('<a href="https://shop.test"><img src="https://cdn.test/logo.png"');
+    expect(en.html).toContain('Test Shop Ltd, 1 High Street, London');
+    expect(en.text.endsWith('Test Shop Ltd, 1 High Street, London')).toBe(true);
+    const de = renderOrderConfirmation(baseOrder, strings, 'de-at', options);
+    expect(de.html).toContain('Test Shop GmbH, Berlin');
+    expect(de.html).not.toContain('Test Shop Ltd');
+  });
+
   it('formats money in the locale and sets the document direction', () => {
     const de = renderOrderConfirmation(baseOrder, strings, 'de');
     expect(de.text).toMatch(/Total: 30,00\s€/);
-    expect(de.html).toContain('<html dir="ltr" lang="de">');
+    expect(de.html).toContain('<html lang="de" dir="ltr">');
     expect(renderOrderConfirmation(baseOrder, strings, 'ar').html).toContain('dir="rtl"');
   });
 });

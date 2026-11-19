@@ -6,6 +6,8 @@ import { getTranslations } from 'next-intl/server';
 import { z } from 'zod';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
+import { campaignThemeFromBrand } from '@/lib/email/brand';
+import { loadEmailBrand } from '@/lib/email/brandStore';
 import type { CampaignIssue } from '@/lib/email/campaigns/schema';
 import { searchCatalog, sendCampaignTest } from '@/lib/email/campaigns/server';
 import type { CatalogProduct } from '@/lib/email/campaigns/context';
@@ -52,9 +54,13 @@ export async function createEmailTemplate(
   const starter = formData.get('starter')?.toString() as StarterKey;
   if (!STARTER_KEYS.includes(starter)) return { ok: false, error: 'starter' };
 
+  // A shop that has set its email brand gets new templates in it; one that
+  // has not keeps the starter's own accent colour.
+  const starterDocument = buildStarterDocument(STARTERS[starter], LOCALES, DEFAULT_LOCALE);
+  const { brand, stored } = await loadEmailBrand(supabase);
   const plan = planTemplateSave({
     name: formData.get('name'),
-    document: buildStarterDocument(STARTERS[starter], LOCALES, DEFAULT_LOCALE)
+    document: stored ? { ...starterDocument, theme: campaignThemeFromBrand(brand) } : starterDocument
   });
   if (!plan.ok) return { ok: false, error: plan.error, issues: plan.issues };
 

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_EMAIL_BRAND } from './brand';
+
 import {
   renderShippingNotification,
   type ShippingEmailStrings,
@@ -101,8 +103,16 @@ describe('renderShippingNotification', () => {
     expect(email.html).toContain('Shop &amp; &lt;Co&gt;');
   });
 
+  it('wears the shop brand and its footer address', () => {
+    const brand = { ...DEFAULT_EMAIL_BRAND, brandColor: '#006644', footer: { en: 'Test Shop Ltd' } };
+    const email = renderShippingNotification(order, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('background:#006644');
+    expect(email.html).toContain('Test Shop Ltd');
+    expect(email.text.endsWith('Test Shop Ltd')).toBe(true);
+  });
+
   it('sets the document direction for right-to-left locales', () => {
-    expect(renderShippingNotification(order, strings, 'ar').html).toContain('<html dir="rtl" lang="ar">');
-    expect(renderShippingNotification(order, strings, 'de').html).toContain('<html dir="ltr" lang="de">');
+    expect(renderShippingNotification(order, strings, 'ar').html).toContain('<html lang="ar" dir="rtl">');
+    expect(renderShippingNotification(order, strings, 'de').html).toContain('<html lang="de" dir="ltr">');
   });
 });

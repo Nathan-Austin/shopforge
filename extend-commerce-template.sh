@@ -398,6 +398,7 @@ import { sendEmail } from '@/lib/email/send';
 import { getEmailConfig } from '@/lib/email/config';
 import { getTranslations } from 'next-intl/server';
 
+import { transactionalOptions } from '@/lib/email/brandStore';
 import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
 import { renderDisputeNotification } from '@/lib/email/disputeNotification';
 import { requestSubscription } from '@/lib/email/subscribers/service';
@@ -816,7 +817,9 @@ export async function POST(request: Request) {
           viewOrder: t('viewOrder'),
           footer: t('footer')
         },
-        locale
+        locale,
+        // The shop's logo, colours and footer address, from the admin.
+        await transactionalOptions(supabase)
       );
 
       const result = await sendEmail({

@@ -1,13 +1,19 @@
 import { getTranslations } from 'next-intl/server';
 
+import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
+import { loadEmailBrand } from '@/lib/email/brandStore';
 import { getEmailConfig, resolveEmailConfig } from '@/lib/email/config';
+import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
 import { activeCampaignProviderName, isCampaignProviderName } from '@/lib/email/providers/registry';
 import type { CampaignProviderName } from '@/lib/email/providers/types';
+import { saveEmailBrand } from '../../actions/emailBrand';
 import {
   chooseEmailProvider,
   clearEmailProviderKey,
   saveEmailProviderKey
 } from '../../actions/emailProviderKey';
+import EmailBrandForm from '../../components/EmailBrandForm';
+import EmailPreview from '../../components/EmailPreview';
 import EmailTabs from '../../components/EmailTabs';
 import ProviderChoiceForm from '../../components/ProviderChoiceForm';
 import ProviderKeyForm, { type StoredProviderKey } from '../../components/ProviderKeyForm';
@@ -26,7 +32,7 @@ interface ProviderKeyRow {
 const PROVIDERS = ['resend', 'mailchimp'] as const;
 
 /**
- * Which provider sends what, and the keys.
+ * Which provider sends what, the keys, and the brand every email wears.
  *
  * No key is ever read here. All this page knows is what email_provider_keys
  * holds — that one is set, when, and its last four characters — because
@@ -75,6 +81,9 @@ export default async function AdminEmailSettingsPage({
     };
   };
 
+  const { brand } = await loadEmailBrand(supabase);
+  const samplePreview = await sampleReceipt(locale, brand);
+
   return (
     <div className="space-y-6">
       <div>
@@ -111,6 +120,15 @@ export default async function AdminEmailSettingsPage({
         </p>
       )}
 
+      <div className="grid gap-4 xl:grid-cols-2">
+        <EmailBrandForm save={saveEmailBrand.bind(null, { locale })} brand={brand} locales={LOCALES} />
+        <div className="space-y-2">
+          <h3 className="font-semibold">{t('brand.previewHeading')}</h3>
+          <p className="text-sm text-stone-600">{t('brand.previewHint')}</p>
+          <EmailPreview html={samplePreview} />
+        </div>
+      </div>
+
       <ProviderChoiceForm
         choose={chooseEmailProvider.bind(null, { locale })}
         active={activeProvider}
@@ -139,4 +157,47 @@ export default async function AdminEmailSettingsPage({
       )}
     </div>
   );
+}
+
+/**
+ * A receipt for an imaginary order, in the admin's language and the saved
+ * brand, so the owner sees what a customer will get before anyone buys.
+ */
+async function sampleReceipt(locale: string, brand: Awaited<ReturnType<typeof loadEmailBrand>>['brand']): Promise<string> {
+  const t = await getTranslations({ locale, namespace: 'Email.confirmation' });
+  const ts = await getTranslations({ locale, namespace: 'Admin.email.settings.brand' });
+  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || null;
+  const reference = 'A1B2C3D4';
+  const email = renderOrderConfirmation(
+    {
+      reference,
+      currency: 'EUR',
+      subtotalCents: 3400,
+      shippingCents: 490,
+      totalCents: 3890,
+      shopName,
+      items: [
+        { productName: ts('sampleProductOne'), unitPriceCents: 1200, quantity: 2 },
+        { productName: ts('sampleProductTwo'), unitPriceCents: 1000, quantity: 1 }
+      ],
+      shipping: { name: ts('sampleCustomer'), line1: ts('sampleStreet'), postalCode: '10115', city: 'Berlin', country: 'DE' },
+      orderUrl: siteUrl ? `${siteUrl}/${locale}/account/orders` : 'https://example.com/account/orders'
+    },
+    {
+      subject: t('subject', { shop: shopName, reference }),
+      headline: t('headline'),
+      orderLabel: t('order', { reference }),
+      subtotal: t('subtotal'),
+      shipping: t('shipping'),
+      discount: t('discount'),
+      total: t('total'),
+      addressHeading: t('address'),
+      viewOrder: t('viewOrder'),
+      footer: t('footer')
+    },
+    locale,
+    { brand, shopUrl: siteUrl, defaultLocale: DEFAULT_LOCALE }
+  );
+  return email.html;
 }

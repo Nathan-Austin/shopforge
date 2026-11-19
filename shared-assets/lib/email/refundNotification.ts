@@ -4,11 +4,14 @@
  * Sent to the customer when the shop owner refunds some or all of an order,
  * with the owner in copy. Pure like the order confirmation: order and the
  * translated wording in, subject/HTML/text out, every customer- or
- * owner-supplied string escaped.
+ * owner-supplied string escaped. The frame comes from the shop's email
+ * brand (./brand, ./layout).
  */
 
 import { formatPrice } from '../format';
-import { escapeHtml, type RenderedEmail } from './orderConfirmation';
+import { escapeHtml } from './escape';
+import { emailButton, emailStyles, footerAddressFor, renderTransactionalEmail, type TransactionalOptions } from './layout';
+import type { RenderedEmail } from './orderConfirmation';
 
 export interface RefundNotificationItem {
   productName: string;
@@ -52,17 +55,16 @@ export interface RefundEmailStrings {
   footer: string;
 }
 
-const RTL = new Set(['ar', 'fa', 'he', 'ur']);
-
 export function renderRefundNotification(
   refund: RefundNotification,
   strings: RefundEmailStrings,
-  locale = 'en'
+  locale = 'en',
+  options?: TransactionalOptions
 ): RenderedEmail {
+  const styles = emailStyles(options?.brand);
   const money = (cents: number) => formatPrice(cents, refund.currency, locale);
   const isFull = refund.refundedCents >= refund.totalCents;
   const items = refund.items ?? [];
-  const dir = RTL.has(locale.split('-')[0]) ? 'rtl' : 'ltr';
 
   const headline = isFull ? strings.headlineFull : strings.headlinePartial;
   const summary = isFull ? strings.summaryFull : strings.summaryPartial;
@@ -71,48 +73,33 @@ export function renderRefundNotification(
     .map(
       (item) => `
         <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #eee;">${item.quantity} × ${escapeHtml(item.productName)}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #eee;text-align:right;white-space:nowrap;">${escapeHtml(money(item.amountCents))}</td>
+          <td style="padding:8px 0;${styles.rule}">${item.quantity} × ${escapeHtml(item.productName)}</td>
+          <td style="padding:8px 0;text-align:end;white-space:nowrap;${styles.rule}">${escapeHtml(money(item.amountCents))}</td>
         </tr>`
     )
     .join('');
   const itemsHtml = items.length
-    ? `<table style="width:100%;border-collapse:collapse;font-size:15px;margin-top:16px;"><tbody>${itemRows}
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;font-size:15px;margin-top:16px;"><tbody>${itemRows}
       </tbody></table>`
     : '';
 
   const reason = refund.reason?.trim();
   const reasonHtml = reason
-    ? `<p style="margin:16px 0 0;padding:12px;background:#f6f6f6;border-radius:6px;color:#444;white-space:pre-line;">${escapeHtml(reason)}</p>`
+    ? `<p style="margin:16px 0 0;padding:12px;border-radius:6px;white-space:pre-line;border:1px solid ${styles.ruleColor};${styles.muted}">${escapeHtml(reason)}</p>`
     : '';
 
-  const remainingHtml = isFull
-    ? ''
-    : `<p style="margin:16px 0 0;color:#666;">${escapeHtml(strings.refundedSoFar)}</p>`;
+  const remainingHtml = isFull ? '' : `<p style="margin:16px 0 0;${styles.muted}">${escapeHtml(strings.refundedSoFar)}</p>`;
 
-  const buttonHtml = refund.orderUrl
-    ? `<p style="margin:24px 0;">
-         <a href="${escapeHtml(refund.orderUrl)}" style="background:#111;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(strings.viewOrders)}</a>
-       </p>`
-    : '';
+  const buttonHtml = refund.orderUrl ? emailButton(strings.viewOrders, refund.orderUrl, styles) : '';
 
-  const html = `<!doctype html>
-<html dir="${dir}" lang="${escapeHtml(locale)}">
-  <body style="margin:0;padding:24px;background:#f6f6f6;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#111;">
-    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;padding:24px;">
-      <h1 style="font-size:20px;margin:0 0 8px;">${escapeHtml(headline)}</h1>
-      <p style="margin:0 0 4px;color:#444;">${escapeHtml(refund.shopName)}</p>
+  const bodyHtml = `<h1 style="font-size:20px;line-height:1.3;margin:0 0 8px;">${escapeHtml(headline)}</h1>
+      <p style="margin:0 0 4px;${styles.muted}">${escapeHtml(refund.shopName)}</p>
 
       <p style="margin:0;font-size:15px;">${escapeHtml(summary)}</p>
       ${itemsHtml}
       ${remainingHtml}
       ${reasonHtml}
-      ${buttonHtml}
-
-      <p style="margin:24px 0 0;color:#888;font-size:13px;">${escapeHtml(strings.footer)}</p>
-    </div>
-  </body>
-</html>`;
+      ${buttonHtml}`;
 
   const textLines = [headline, refund.shopName, '', summary];
   if (items.length) {
@@ -121,7 +108,17 @@ export function renderRefundNotification(
   if (!isFull) textLines.push('', strings.refundedSoFar);
   if (reason) textLines.push('', reason);
   if (refund.orderUrl) textLines.push('', `${strings.viewOrders}: ${refund.orderUrl}`);
-  textLines.push('', strings.footer);
 
-  return { subject: strings.subject, html, text: textLines.join('\n') };
+  const framed = renderTransactionalEmail({
+    brand: options?.brand,
+    locale,
+    subject: strings.subject,
+    shopName: refund.shopName,
+    shopUrl: options?.shopUrl,
+    body: { html: bodyHtml, text: textLines.join('\n') },
+    footerNote: strings.footer,
+    footerAddress: footerAddressFor(options, locale)
+  });
+
+  return { subject: strings.subject, html: framed.html, text: framed.text };
 }

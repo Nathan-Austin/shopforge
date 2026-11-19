@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_EMAIL_BRAND } from './brand';
+
 import {
   renderRefundNotification,
   type RefundEmailStrings,
@@ -65,7 +67,9 @@ describe('renderRefundNotification', () => {
       { ...partial, items: [], reason: '  ', orderUrl: null },
       strings
     );
-    expect(email.html).not.toContain('<table');
+    // No item rows, no note box, no button: the only tables left are the frame's.
+    expect(email.html).not.toContain('Ghost Pepper Sauce');
+    expect(email.html).not.toContain('Bottle arrived cracked');
     expect(email.html).not.toContain('href=');
     expect(email.text).not.toContain('View your orders');
   });
@@ -86,6 +90,14 @@ describe('renderRefundNotification', () => {
     expect(email.html).toContain('&quot;Hot&quot; &lt;Sauce&gt;');
     // Plain text is not HTML, so it keeps the original characters.
     expect(email.text).toContain('<img src=x onerror=alert(1)>');
+  });
+
+  it('wears the shop brand and its footer address', () => {
+    const brand = { ...DEFAULT_EMAIL_BRAND, brandColor: '#006644', footer: { en: 'Test Shop Ltd' } };
+    const email = renderRefundNotification(partial, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('background:#006644');
+    expect(email.html).toContain('Test Shop Ltd');
+    expect(email.text.endsWith('Test Shop Ltd')).toBe(true);
   });
 
   it('formats item amounts in the locale and sets the direction', () => {

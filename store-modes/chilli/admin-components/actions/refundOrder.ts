@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getTranslations } from 'next-intl/server';
 
+import { transactionalOptions } from '@/lib/email/brandStore';
 import { getEmailConfig } from '@/lib/email/config';
 import { formatPrice } from '@/lib/format';
 import { renderRefundNotification } from '@/lib/email/refundNotification';
@@ -194,7 +195,8 @@ export async function refundOrder(
       viewOrders: t('viewOrders'),
       footer: t('footer')
     },
-    customerLocale
+    customerLocale,
+    await transactionalOptions(supabase)
   );
   const sent = await sendEmail({
     to: order.email,

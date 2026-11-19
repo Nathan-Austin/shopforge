@@ -50,10 +50,11 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A to F and E2 (model, saved templates and
-   test sends, the designer, subscribers, sending through Resend, provider
-   keys in the dashboard, Mailchimp) are done; G (transactional templates)
-   is next, then H (more providers, now that the adapter exists).
+   listed there, one at a time. A to F, E2 and G1 (model, saved templates
+   and test sends, the designer, subscribers, sending through Resend,
+   provider keys in the dashboard, Mailchimp, the brand on receipts) are
+   done; G2 (editable intro and footer copy per locale) is next, then H
+   (more providers, now that the adapter exists).
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -173,7 +174,9 @@ details for each item are in the numbered sections below.
 
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
-      hardcoded `src/lib/shipping/config.ts`
+      hardcoded `src/lib/shipping/config.ts`. The table exists since
+      2026-11-19 (`store_settings`, one JSON document per key, see 2d G1);
+      what is left is the keys, the admin forms and the readers
 - [ ] Shop currency as a generator choice: ask for it in the CLI (default
       EUR), seed products and the admin form with it, and use it as the
       default for amount discount codes and minimums. One currency per shop
@@ -376,10 +379,28 @@ loose in `/tmp`.
       CI uses. Other follow-ups: a scoped "sending only" key check, since
       today any valid key passes the test; and reading the key once per
       request rather than on a one-minute cache
-- [ ] **G. Transactional templates.** The builder's brand theme (logo,
-      colours, footer) and editable intro/footer copy per locale applied to
-      the receipt, shipping and refund emails, with the order details
-      still generated in code (scope confirmed 2026-11-05)
+- [x] **G1. The brand on transactional emails** — done 2026-11-19. One
+      shop-wide email brand (the campaign theme plus a footer per locale)
+      in `store_settings` under `email_brand` (`0012_store_settings.sql`:
+      a key/JSON table, readable by everyone, written by the owner, meant to
+      hold the other store settings as they land). `lib/email/brand.ts` is
+      the schema, with a lenient reader so a broken row can never stop a
+      receipt; `lib/email/layout.ts` is the frame the receipt, shipping and
+      refund renderers now share (the campaign renderer's tables, logo,
+      colours and font stacks, button text black or white by contrast).
+      The webhook, the shipping action and the refund action load the
+      brand through `brandStore.ts`. `/admin/email/settings` has the form
+      (colour pickers, font, logo upload or address, width, footer per
+      language) and a sample receipt rendered in the saved brand. A new
+      campaign template starts from the brand once one is saved; before
+      that the starter's own accent colour stays. The owner-facing dispute
+      alert keeps its plain look. Follow-ups: the hairline between rows is
+      an 8-digit hex colour, which Outlook for Windows drops (no line, not
+      a wrong one); "send me a sample" for the three emails
+- [ ] **G2. Editable intro and footer copy per locale** for the receipt,
+      shipping and refund emails, falling back to the `Email.*` strings,
+      with a test send of each type to the owner; the order details stay
+      generated in code (scope confirmed 2026-11-05)
 - [ ] **H. More providers** behind the same adapter, the popular ones for
       small shops: Brevo, MailerLite, Kit, Klaviyo (e-commerce focused) and
       Mailjet. The adapter is `src/lib/email/providers/types.ts` since E2;

@@ -131,7 +131,7 @@ const SIDE_PADDING = 32;
 const CONTENT_WIDTH = EMAIL_WIDTH - SIDE_PADDING * 2;
 const COLUMN_GUTTER = 16;
 
-const FONT_STACKS: Record<CampaignTheme['fontFamily'], string> = {
+export const FONT_STACKS: Record<CampaignTheme['fontFamily'], string> = {
   system: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
   sans: 'Helvetica,Arial,sans-serif',
   serif: "Georgia,'Times New Roman',Times,serif"

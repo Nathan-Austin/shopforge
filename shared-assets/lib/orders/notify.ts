@@ -3,6 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
 
+import { transactionalOptions } from '@/lib/email/brandStore';
 import { renderShippingNotification } from '@/lib/email/shippingNotification';
 import { sendEmail } from '@/lib/email/send';
 import { normalizeTracking } from './notifications';
@@ -57,7 +58,8 @@ export async function sendShippingNotification(
       viewOrders: t('viewOrders'),
       footer: t('footer')
     },
-    locale
+    locale,
+    await transactionalOptions(supabase)
   );
 
   const result = await sendEmail({

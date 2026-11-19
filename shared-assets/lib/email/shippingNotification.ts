@@ -4,10 +4,20 @@
  * Pure like the others, with one difference: the wording comes in as
  * `strings`, already translated into the customer's language by the caller
  * (next-intl's `Email.shipping` namespace), so the same template serves
- * every locale and can be tested with a plain fixture.
+ * every locale and can be tested with a plain fixture. The frame comes from
+ * the shop's email brand (./brand, ./layout).
  */
 
-import { escapeHtml, type RenderedEmail } from './orderConfirmation';
+import { escapeHtml } from './escape';
+import {
+  emailButton,
+  emailHeading,
+  emailStyles,
+  footerAddressFor,
+  renderTransactionalEmail,
+  type TransactionalOptions
+} from './layout';
+import { addressLines, type RenderedEmail } from './orderConfirmation';
 
 export interface ShippingItem {
   productName: string;
@@ -56,82 +66,58 @@ function variantLabel(item: ShippingItem): string {
   return [item.selectedSize, item.selectedColor].filter(Boolean).join(' / ');
 }
 
-function addressLines(address: ShippingAddress): string[] {
-  return [
-    address.name,
-    address.line1,
-    address.line2,
-    [address.postalCode, address.city, address.region].filter(Boolean).join(' ') || null,
-    address.country
-  ].filter((line): line is string => Boolean(line && line.trim()));
-}
-
 export function renderShippingNotification(
   order: ShippingNotification,
   strings: ShippingEmailStrings,
-  locale = 'en'
+  locale = 'en',
+  options?: TransactionalOptions
 ): RenderedEmail {
+  const styles = emailStyles(options?.brand);
   // Only http(s) links are rendered, whatever the row says.
   const trackingUrl = /^https?:\/\//i.test(order.tracking?.url ?? '') ? order.tracking?.url ?? null : null;
   const carrier = order.tracking?.carrier?.trim() || null;
   const number = order.tracking?.number?.trim() || null;
   const hasTracking = Boolean(trackingUrl || carrier || number);
-  const dir = ['ar', 'fa', 'he', 'ur'].includes(locale.split('-')[0]) ? 'rtl' : 'ltr';
 
   const trackingHtml = hasTracking
-    ? `<h2 style="font-size:14px;text-transform:uppercase;color:#666;margin:24px 0 8px;">${escapeHtml(strings.trackingHeading)}</h2>
+    ? `${emailHeading(strings.trackingHeading, styles)}
        <p style="margin:0;line-height:1.6;">
          ${carrier ? `${escapeHtml(strings.carrierLabel)}: ${escapeHtml(carrier)}<br>` : ''}
          ${number ? `${escapeHtml(strings.numberLabel)}: <strong>${escapeHtml(number)}</strong>` : ''}
        </p>
-       ${
-         trackingUrl
-           ? `<p style="margin:16px 0 0;">
-         <a href="${escapeHtml(trackingUrl)}" style="background:#111;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;display:inline-block;">${escapeHtml(strings.trackButton)}</a>
-       </p>`
-           : ''
-       }`
+       ${trackingUrl ? emailButton(strings.trackButton, trackingUrl, styles) : ''}`
     : '';
 
   const itemRows = order.items
     .map((item) => {
       const variant = variantLabel(item);
       return `<li style="padding:4px 0;">${item.quantity} × ${escapeHtml(item.productName)}${
-        variant ? ` <span style="color:#666;">(${escapeHtml(variant)})</span>` : ''
+        variant ? ` <span style="${styles.muted}">(${escapeHtml(variant)})</span>` : ''
       }</li>`;
     })
     .join('');
 
   const address = order.shipping ? addressLines(order.shipping) : [];
   const addressHtml = address.length
-    ? `<h2 style="font-size:14px;text-transform:uppercase;color:#666;margin:24px 0 8px;">${escapeHtml(strings.addressHeading)}</h2>
+    ? `${emailHeading(strings.addressHeading, styles)}
        <p style="margin:0;line-height:1.5;">${address.map(escapeHtml).join('<br>')}</p>`
     : '';
 
   const ordersHtml = order.orderUrl
-    ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(order.orderUrl)}" style="color:#111;">${escapeHtml(strings.viewOrders)}</a></p>`
+    ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(order.orderUrl)}" style="${styles.link}">${escapeHtml(strings.viewOrders)}</a></p>`
     : '';
 
-  const html = `<!doctype html>
-<html dir="${dir}" lang="${escapeHtml(locale)}">
-  <body style="margin:0;padding:24px;background:#f6f6f6;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#111;">
-    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;padding:24px;">
-      <h1 style="font-size:20px;margin:0 0 8px;">${escapeHtml(strings.headline)}</h1>
-      <p style="margin:0 0 4px;color:#444;">${escapeHtml(order.shopName)}</p>
+  const bodyHtml = `<h1 style="font-size:20px;line-height:1.3;margin:0 0 8px;">${escapeHtml(strings.headline)}</h1>
+      <p style="margin:0 0 4px;${styles.muted}">${escapeHtml(order.shopName)}</p>
       <p style="margin:0 0 16px;font-size:15px;">${escapeHtml(strings.intro)}</p>
 
       ${trackingHtml}
 
-      <h2 style="font-size:14px;text-transform:uppercase;color:#666;margin:24px 0 8px;">${escapeHtml(strings.itemsHeading)}</h2>
+      ${emailHeading(strings.itemsHeading, styles)}
       <ul style="margin:0;padding-inline-start:20px;font-size:15px;">${itemRows}</ul>
 
       ${addressHtml}
-      ${ordersHtml}
-
-      <p style="margin:24px 0 0;color:#888;font-size:13px;">${escapeHtml(strings.footer)}</p>
-    </div>
-  </body>
-</html>`;
+      ${ordersHtml}`;
 
   const textLines = [strings.headline, order.shopName, '', strings.intro];
   if (hasTracking) {
@@ -150,7 +136,17 @@ export function renderShippingNotification(
   );
   if (address.length) textLines.push('', strings.addressHeading, ...address);
   if (order.orderUrl) textLines.push('', `${strings.viewOrders}: ${order.orderUrl}`);
-  textLines.push('', strings.footer);
 
-  return { subject: strings.subject, html, text: textLines.join('\n') };
+  const framed = renderTransactionalEmail({
+    brand: options?.brand,
+    locale,
+    subject: strings.subject,
+    shopName: order.shopName,
+    shopUrl: options?.shopUrl,
+    body: { html: bodyHtml, text: textLines.join('\n') },
+    footerNote: strings.footer,
+    footerAddress: footerAddressFor(options, locale)
+  });
+
+  return { subject: strings.subject, html: framed.html, text: framed.text };
 }
