@@ -75,7 +75,8 @@ details for each item are in the numbered sections below.
       `category`, `heat`, `type`, `sort`, slugs as values), parsed on the
       server so filtered links render filtered; `recent` and `popular` were
       no-ops and now mean newest-first and featured-first (no sales counts
-      yet); cards keep their add-to-cart button; a mode-specific
+      yet; "popular" has since moved to units sold, see the known gaps
+      below); cards keep their add-to-cart button; a mode-specific
       `ShopArchive` server component does the fetching
 - [x] Orders tables, so paid checkouts are recorded — done 2026-11-03:
       `orders` and `order_items` with RLS (own rows for customers, all for
@@ -557,8 +558,13 @@ Decided on 2026-11-02:
   nothing renders it yet.
 - The buying loop is closed end to end: pay, order recorded, receipt
   emailed, customer sees it at `/account/orders`, owner manages it at
-  `/admin/orders`. What is missing around it is money movement (refunds)
-  and later-stage notifications (shipping emails).
+  `/admin/orders`. Refunds (from the admin and from Stripe), disputes and
+  the shipping email are in place around it (2026-11-04 to 2026-11-06).
+  What is missing is mostly the later-stage pieces: other status emails,
+  restock on refund, and stock reservation during checkout.
+- Email marketing (section 2d) is in place through phase F and E2:
+  templates, the designer, subscribers, and campaigns through Resend or
+  Mailchimp.
 
 **Known gaps in the generated store (not build failures):**
 
@@ -578,10 +584,10 @@ Decided on 2026-11-02:
   but one of them gets an apology. Reserving at session creation with a
   timeout is the fix.
 - The cart is not merged on sign-*up*, only on sign-in.
-- Refunds made in the Stripe dashboard (or disputes/chargebacks) are not
-  seen by the shop: the webhook only handles `checkout.session.completed`.
-  Handling `charge.refunded` and `charge.dispute.*` would keep
-  `refunded_cents` honest either way.
+- A refund row can stay `pending` if the app dies between reserving it and
+  Stripe answering. The amounts stay right (`charge.refunded` reconciles
+  `refunded_cents` from Stripe), but the stale row stays in the history;
+  see "Reconcile with Stripe" in section 1.
 - A refund does not put stock back. Restocking is a judgement call (was the
   item returned?), so it is left to the owner in the product form for now.
 - Amounts are sent to Stripe as the stored cents. Zero-decimal currencies
