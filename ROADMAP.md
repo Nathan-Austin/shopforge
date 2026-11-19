@@ -60,9 +60,9 @@ details for each item are in the numbered sections below.
    provider keys in the dashboard, Mailchimp, the brand and wording on
    receipts) are done; H (more providers, now that the adapter exists) is
    what is left.
-2. **Section 0**, following `docs/single-codebase-plan.md`: first move the
-   admin files that are identical in both modes into `shared-assets`, once
-   the open questions there are answered.
+2. **Section 0**, following `docs/single-codebase-plan.md`. The shared
+   admin files moved to `shared-assets/app/[locale]/admin/` on 2026-11-19;
+   next is the cached `getStoreSettings()` reader (plan step 2).
 
 ## 1. Storefront and orders
 

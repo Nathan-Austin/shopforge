@@ -95,15 +95,17 @@ but generic wording). Renaming those keys is cosmetic and can ride along.
 Everything else in `store-modes/*/admin-components` (orders, discounts,
 email designer, settings and the rest) is byte-identical in both modes
 today and can move to `shared-assets` as-is (roadmap step 6 in the agreed
-plan; no behaviour change).
+plan; no behaviour change). Done 2026-11-19: the 50 identical files now
+live in `shared-assets/app/[locale]/admin/`; `store-modes/<mode>/admin-components/`
+holds only the 9 that differ.
 
 ## 6. Proposed order
 
 Each step keeps both modes generating and passing CI until the generator
 is retired.
 
-1. **Move the identical admin files to `shared-assets`** (S). Pure
-   deduplication; nothing changes for any shop. Shrinks the next steps.
+1. ~~**Move the identical admin files to `shared-assets`**~~ — done
+   2026-11-19 (50 files; 9 per mode remain).
 2. **A `getStoreSettings()` reader with caching** (M). One typed reader over
    `store_settings`, falling back to today's generated files and environment
    variables when a key is absent, so a shop works before its owner has

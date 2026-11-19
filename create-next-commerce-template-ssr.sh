@@ -466,7 +466,10 @@ cp -R "$SHARED_DIR/lib/." src/lib/
 mkdir -p src/components
 cp -R "$SHARED_DIR/components/." src/components/
 # Pages and routes that are plain files rather than generated here (the
-# newsletter confirm and unsubscribe pages, the one-click endpoint).
+# newsletter confirm and unsubscribe pages, the one-click endpoint, and
+# every admin page that is the same in all store modes, under
+# [locale]/admin). The mode's own admin files are copied on top later
+# (10.6), so a mode can still replace any of them.
 mkdir -p src/app
 cp -R "$SHARED_DIR/app/." src/app/
 
@@ -4618,6 +4621,8 @@ EOF
 
 # 10.6) Admin panel
 echo "🛡️ Adding admin panel (${STORE_MODE})..."
+# Only what differs per mode (products, the product form, email starters);
+# the shared admin pages are already in place from shared-assets/app.
 mkdir -p src/app/[locale]/admin
 cp -R "$MODE_DIR/admin-components/." src/app/[locale]/admin
 

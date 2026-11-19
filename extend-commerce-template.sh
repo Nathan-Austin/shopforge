@@ -95,6 +95,7 @@ mkdir -p src/components/store
 cp -R "$MODE_DIR/store-components/." src/components/store/
 
 echo "🛡️ Syncing admin panel components (${STORE_MODE})..."
+# On top of the shared admin pages copied from shared-assets/app above.
 mkdir -p src/app/[locale]/admin
 cp -R "$MODE_DIR/admin-components/." src/app/[locale]/admin/
 

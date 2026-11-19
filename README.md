@@ -258,10 +258,13 @@ written to `src/lib/checkout/config.ts`, which you can edit later.
 create-next-commerce-template-ssr.sh   scaffolds a new shop
 extend-commerce-template.sh            adds checkout, webhook + profile API to a shop
 store-modes/<mode>/migrations/         0001_init.sql, the mode's base schema
-store-modes/<mode>/                    seeds, storefront and admin components
+store-modes/<mode>/                    seeds, storefront components, and the admin
+                                       files that differ per mode (products, email starters)
 lib/migrations/                        0002+ feature migrations, shared by every mode
 shared-assets/lib/                     helpers copied into every shop
 shared-assets/components/              components copied into every shop
+shared-assets/app/                     pages and routes copied into every shop,
+                                       including the admin pages shared by all modes
 lib/product-fields.py                  reads the catalogue for the field picker
 test/generate-and-check.sh             generates a store and runs install, tsc, lint, build
 test/check-schema.sh                   applies each migration series to a scratch Postgres and runs test/sql/
