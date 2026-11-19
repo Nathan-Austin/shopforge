@@ -183,7 +183,8 @@ details for each item are in the numbered sections below.
 - [ ] Admin UI for the heat scale: rename or drop the word bands and switch
       how heat appears in the shop (word and number, word only, number only,
       chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
-- [ ] Theme tokens instead of hardcoded colours
+- [ ] Theme tokens instead of hardcoded colours (the first step of the theme
+      system, see section 2e)
 - [x] Discount codes — done 2026-11-04: `/admin/discounts` creates percent,
       amount and free-shipping codes with minimum, date window and usage
       cap; percent/amount codes are mirrored as a Stripe coupon plus
@@ -383,6 +384,54 @@ loose in `/tmp`.
       Mailjet. The adapter is `src/lib/email/providers/types.ts` since E2;
       each new one is a file there, a name in `CAMPAIGN_PROVIDERS`, and the
       three provider checks widened in a migration
+
+## 2e. Themes
+
+Shop owners pick a theme in the admin, the way they would in Shopify or
+WordPress. A theme is a small preset file, not a fork of the components, so
+the token system and the layout variants come first and the themes after.
+
+What a theme is:
+
+- **Tokens:** colours (light and dark), fonts, type scale, border radius,
+  spacing, shadows and button style, applied as CSS variables that Tailwind 4
+  reads. No hardcoded colours or fonts left in the components.
+- **Layout variants**, chosen per theme: product card (minimal, image-led,
+  bordered, overlay), product page (gallery left, full-width hero, stacked),
+  shop page (column count, filters at the side or on top), header and footer
+  styles.
+- **Stored as a setting.** The chosen theme and any overrides live in the
+  store settings, in line with section 0. Chilli mode can ship its own set of
+  heat-themed presets.
+
+Rules for creating themes, including when an agent researches them on the
+web:
+
+- Research is for inspiration and conventions only: trends, palettes, font
+  pairings, common page patterns. Every theme is original; do not reproduce
+  a specific existing theme (Shopify, ThemeForest, WordPress premium themes
+  are copyrighted or licensed). Describe a theme by its style ("minimal",
+  "editorial", "bold streetwear", "artisan food"), not by another product.
+- Fonts must be openly licensed (for example Google Fonts under the OFL),
+  self-hosted with `next/font`, with the licence recorded in the theme.
+- No images taken from the web. Demo data uses placeholder or generated
+  imagery.
+- Every theme passes WCAG AA contrast for text, links and buttons, checked
+  automatically.
+
+Order of work, one session each:
+
+- [ ] Tokens: move every colour, font, radius and shadow into CSS variables
+      driven by a theme preset; the current look becomes the default theme
+- [ ] Layout variants for the product card, product page, shop page, header
+      and footer, selected by the theme
+- [ ] Theme picker in the admin with a live preview, saved to store settings;
+      owners can override colours and fonts on top of a theme
+- [ ] Theme gallery page that renders the shop, a product page and the cart
+      in every theme, with Playwright screenshots in CI
+- [ ] Contrast check in CI for every theme
+- [ ] Ten starter themes, a few per turn, each with a name, a one-line style
+      description, its tokens, its layout choices and its font licences
 
 ## 3. Languages
 
