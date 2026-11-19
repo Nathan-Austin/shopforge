@@ -10,6 +10,7 @@
 
 import { escapeHtml } from './escape';
 import {
+  copyFor,
   emailButton,
   emailHeading,
   emailStyles,
@@ -73,6 +74,9 @@ export function renderShippingNotification(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
+  const copy = copyFor(options, 'shipping', locale);
+  const intro = copy.intro ?? strings.intro;
+  const footer = copy.footer ?? strings.footer;
   // Only http(s) links are rendered, whatever the row says.
   const trackingUrl = /^https?:\/\//i.test(order.tracking?.url ?? '') ? order.tracking?.url ?? null : null;
   const carrier = order.tracking?.carrier?.trim() || null;
@@ -109,7 +113,7 @@ export function renderShippingNotification(
 
   const bodyHtml = `<h1 style="font-size:20px;line-height:1.3;margin:0 0 8px;">${escapeHtml(strings.headline)}</h1>
       <p style="margin:0 0 4px;${styles.muted}">${escapeHtml(order.shopName)}</p>
-      <p style="margin:0 0 16px;font-size:15px;">${escapeHtml(strings.intro)}</p>
+      <p style="margin:0 0 16px;font-size:15px;white-space:pre-line;">${escapeHtml(intro)}</p>
 
       ${trackingHtml}
 
@@ -119,7 +123,7 @@ export function renderShippingNotification(
       ${addressHtml}
       ${ordersHtml}`;
 
-  const textLines = [strings.headline, order.shopName, '', strings.intro];
+  const textLines = [strings.headline, order.shopName, '', intro];
   if (hasTracking) {
     textLines.push('', strings.trackingHeading);
     if (carrier) textLines.push(`${strings.carrierLabel}: ${carrier}`);
@@ -144,7 +148,7 @@ export function renderShippingNotification(
     shopName: order.shopName,
     shopUrl: options?.shopUrl,
     body: { html: bodyHtml, text: textLines.join('\n') },
-    footerNote: strings.footer,
+    footerNote: footer,
     footerAddress: footerAddressFor(options, locale)
   });
 

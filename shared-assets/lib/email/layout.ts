@@ -11,11 +11,12 @@
  */
 
 import { directionOf, hreflangOf } from '../i18n/locales';
-import { DEFAULT_EMAIL_BRAND, brandFooterFor, type EmailBrand } from './brand';
+import { DEFAULT_EMAIL_BRAND, brandFooterFor, transactionalCopyFor, type EmailBrand, type TransactionalCopy, type TransactionalKind } from './brand';
 import { EMAIL_WIDTH, FONT_STACKS, contrastingText } from './campaigns/render';
 import { escapeHtml } from './escape';
 
 const SIDE_PADDING = 32;
+const RULE_COLOR = '#e5e5e5';
 
 export interface TransactionalFrameInput {
   /** The brand; a shop that has set none sends with the defaults. */
@@ -52,6 +53,17 @@ export interface TransactionalOptions {
   defaultLocale?: string;
 }
 
+/** The owner's intro and footer wording for this email and recipient, from the options. */
+export function copyFor(options: TransactionalOptions | undefined, kind: TransactionalKind, locale: string): TransactionalCopy {
+  const brand = options?.brand ?? DEFAULT_EMAIL_BRAND;
+  return transactionalCopyFor(brand, kind, locale, options?.defaultLocale ?? 'en');
+}
+
+/** A paragraph of the owner's wording; line breaks kept. */
+export function emailParagraph(text: string): string {
+  return `<p style="margin:0 0 16px;font-size:15px;white-space:pre-line;">${escapeHtml(text)}</p>`;
+}
+
 /** The brand footer for this recipient, from the options. */
 export function footerAddressFor(options: TransactionalOptions | undefined, locale: string): string | null {
   const brand = options?.brand ?? DEFAULT_EMAIL_BRAND;
@@ -65,7 +77,7 @@ export interface EmailStyles {
   muted: string;
   /** Section heading: small caps-style label above a block. */
   heading: string;
-  /** A hairline between rows, from the text colour. */
+  /** A hairline between rows. A fixed light grey: Outlook for Windows drops colours with alpha. */
   rule: string;
   /** The hairline's colour on its own, for a border on a box. */
   ruleColor: string;
@@ -81,8 +93,8 @@ export function emailStyles(brand: EmailBrand = DEFAULT_EMAIL_BRAND): EmailStyle
     text: `font-family:${font};color:${brand.textColor};`,
     muted: `color:${brand.textColor};opacity:0.7;`,
     heading: `font-family:${font};font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:${brand.textColor};opacity:0.7;margin:24px 0 8px;`,
-    rule: `border-bottom:1px solid ${brand.textColor}22;`,
-    ruleColor: `${brand.textColor}22`,
+    rule: `border-bottom:1px solid ${RULE_COLOR};`,
+    ruleColor: RULE_COLOR,
     button: `display:inline-block;background:${brand.brandColor};color:${contrastingText(brand.brandColor)};font-family:${font};font-size:15px;font-weight:600;padding:12px 20px;border-radius:6px;text-decoration:none;`,
     link: `color:${brand.brandColor};text-decoration:underline;`
   };

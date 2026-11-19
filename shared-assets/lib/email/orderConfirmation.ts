@@ -12,8 +12,10 @@
 import { formatPrice } from '../format';
 import { escapeHtml } from './escape';
 import {
+  copyFor,
   emailButton,
   emailHeading,
+  emailParagraph,
   emailStyles,
   footerAddressFor,
   renderTransactionalEmail,
@@ -91,6 +93,7 @@ export interface ConfirmationEmailStrings {
   total: string;
   addressHeading: string;
   viewOrder: string;
+  /** The built-in last line; the owner's wording in the brand replaces it. */
   footer: string;
 }
 
@@ -101,6 +104,8 @@ export function renderOrderConfirmation(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
+  const copy = copyFor(options, 'confirmation', locale);
+  const footer = copy.footer ?? strings.footer;
   const money = (cents: number) => formatPrice(cents, order.currency, locale);
   const discount = order.discountCents ?? 0;
   const discountLabel = order.discountCode
@@ -141,7 +146,7 @@ export function renderOrderConfirmation(
   const bodyHtml = `<h1 style="font-size:20px;line-height:1.3;margin:0 0 8px;">${escapeHtml(strings.headline)}</h1>
       <p style="margin:0 0 4px;${styles.muted}">${escapeHtml(order.shopName)}</p>
       <p style="margin:0 0 24px;${styles.muted}">${escapeHtml(strings.orderLabel)}</p>
-
+      ${copy.intro ? emailParagraph(copy.intro) : ''}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;font-size:15px;">
         <tbody>${itemRows}
         </tbody>
@@ -162,6 +167,7 @@ export function renderOrderConfirmation(
     strings.headline,
     order.shopName,
     strings.orderLabel,
+    ...(copy.intro ? ['', copy.intro] : []),
     '',
     ...order.items.map((item) => {
       const variant = variantLabel(item);
@@ -189,7 +195,7 @@ export function renderOrderConfirmation(
     shopName: order.shopName,
     shopUrl: options?.shopUrl,
     body: { html: bodyHtml, text: textLines.join('\n') },
-    footerNote: strings.footer,
+    footerNote: footer,
     footerAddress: footerAddressFor(options, locale)
   });
 

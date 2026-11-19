@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { FONT_FAMILIES } from '@/lib/email/campaigns/schema';
-import type { EmailBrand } from '@/lib/email/brand';
+import { TRANSACTIONAL_KINDS, type EmailBrand, type TransactionalKind } from '@/lib/email/brand';
 import type { EmailBrandActionResult } from '../actions/emailBrand';
 import ImageField from './email-designer/ImageField';
 import { Field, inputClass } from './email-designer/fields';
@@ -14,6 +14,8 @@ interface EmailBrandFormProps {
   brand: EmailBrand;
   /** The shop's locales, one footer each. */
   locales: readonly string[];
+  /** The built-in wording in the admin's language, shown where the owner has written nothing. */
+  builtIn: Record<TransactionalKind, { intro: string | null; footer: string }>;
 }
 
 const COLOURS = ['brandColor', 'textColor', 'backgroundColor', 'contentColor'] as const;
@@ -29,7 +31,7 @@ const FIELD_NAMES: Record<(typeof COLOURS)[number], string> = {
  * form: colours are a picker beside a typed value, the logo is an upload or
  * an https address, and the footer is one text box per language.
  */
-export default function EmailBrandForm({ save, brand, locales }: EmailBrandFormProps) {
+export default function EmailBrandForm({ save, brand, locales, builtIn }: EmailBrandFormProps) {
   const t = useTranslations('Admin.email.settings.brand');
   const [result, action, pending] = useActionState(save, null);
   const [colours, setColours] = useState<Record<(typeof COLOURS)[number], string>>({
@@ -109,6 +111,45 @@ export default function EmailBrandForm({ save, brand, locales }: EmailBrandFormP
               className={inputClass}
             />
           </Field>
+        ))}
+      </fieldset>
+
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium">{t('copy.heading')}</legend>
+        <p className="text-xs text-stone-500">{t('copy.hint')}</p>
+        {TRANSACTIONAL_KINDS.map((kind) => (
+          <details key={kind} className="rounded-md border border-border p-3" open={kind === 'confirmation'}>
+            <summary className="cursor-pointer text-sm font-medium">{t(`copy.kinds.${kind}`)}</summary>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {locales.map((locale) => (
+                <div key={locale} className="space-y-2 rounded-md bg-stone-50 p-3">
+                  <p className="text-xs font-semibold text-stone-600">{locale.toUpperCase()}</p>
+                  <Field label={t('copy.intro')}>
+                    <textarea
+                      name={`copy_${kind}_intro_${locale}`}
+                      rows={2}
+                      maxLength={1000}
+                      defaultValue={brand.copy[kind].intro[locale] ?? ''}
+                      placeholder={builtIn[kind].intro ?? t('copy.noIntro')}
+                      dir="auto"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <Field label={t('copy.footer')}>
+                    <textarea
+                      name={`copy_${kind}_footer_${locale}`}
+                      rows={2}
+                      maxLength={1000}
+                      defaultValue={brand.copy[kind].footer[locale] ?? ''}
+                      placeholder={builtIn[kind].footer}
+                      dir="auto"
+                      className={inputClass}
+                    />
+                  </Field>
+                </div>
+              ))}
+            </div>
+          </details>
         ))}
       </fieldset>
 

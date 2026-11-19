@@ -20,9 +20,31 @@ export const EMAIL_BRAND_KEY = 'email_brand';
 /** A footer entry per locale: the postal address, a legal line, or nothing. */
 export const EMAIL_BRAND_FOOTER_MAX = 600;
 
+/** The customer emails whose wording the owner can edit. */
+export const TRANSACTIONAL_KINDS = ['confirmation', 'shipping', 'refund'] as const;
+export type TransactionalKind = (typeof TRANSACTIONAL_KINDS)[number];
+
+/** An intro or a footer line: a short paragraph, per locale. */
+export const EMAIL_COPY_MAX = 1000;
+
+const copyEntrySchema = z.object({
+  /** Replaces the first paragraph; empty means the shop's built-in wording. */
+  intro: localized(z.string().max(EMAIL_COPY_MAX)).default({}),
+  /** Replaces the last line; empty means the shop's built-in wording. */
+  footer: localized(z.string().max(EMAIL_COPY_MAX)).default({})
+});
+
 export const emailBrandSchema = themeSchema.extend({
   /** Shown under every transactional email; empty is allowed. */
-  footer: localized(z.string().max(EMAIL_BRAND_FOOTER_MAX)).default({})
+  footer: localized(z.string().max(EMAIL_BRAND_FOOTER_MAX)).default({}),
+  /** Editable intro and footer wording per email, per locale (G2). */
+  copy: z
+    .object({
+      confirmation: copyEntrySchema.prefault({}),
+      shipping: copyEntrySchema.prefault({}),
+      refund: copyEntrySchema.prefault({})
+    })
+    .prefault({})
 });
 
 export type EmailBrand = z.infer<typeof emailBrandSchema>;
@@ -80,8 +102,25 @@ export function campaignThemeFromBrand(brand: EmailBrand): CampaignTheme {
   };
 }
 
+function pickText(value: Localized<string>, locale: string, defaultLocale: string): string | null {
+  return pickLocalized(value, locale, defaultLocale, isBlankString)?.value.trim() ?? null;
+}
+
 /** The footer text for a recipient's locale, with the shop's fallback chain. */
 export function brandFooterFor(brand: EmailBrand, locale: string, defaultLocale: string): string | null {
-  const footer: Localized<string> = brand.footer;
-  return pickLocalized(footer, locale, defaultLocale, isBlankString)?.value.trim() ?? null;
+  return pickText(brand.footer, locale, defaultLocale);
+}
+
+export interface TransactionalCopy {
+  intro: string | null;
+  footer: string | null;
+}
+
+/** The owner's wording for one email and locale; null where the built-in text stays. */
+export function transactionalCopyFor(brand: EmailBrand, kind: TransactionalKind, locale: string, defaultLocale: string): TransactionalCopy {
+  const entry = brand.copy[kind];
+  return {
+    intro: pickText(entry.intro, locale, defaultLocale),
+    footer: pickText(entry.footer, locale, defaultLocale)
+  };
 }

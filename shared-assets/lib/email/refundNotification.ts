@@ -10,7 +10,7 @@
 
 import { formatPrice } from '../format';
 import { escapeHtml } from './escape';
-import { emailButton, emailStyles, footerAddressFor, renderTransactionalEmail, type TransactionalOptions } from './layout';
+import { copyFor, emailButton, emailParagraph, emailStyles, footerAddressFor, renderTransactionalEmail, type TransactionalOptions } from './layout';
 import type { RenderedEmail } from './orderConfirmation';
 
 export interface RefundNotificationItem {
@@ -62,6 +62,8 @@ export function renderRefundNotification(
   options?: TransactionalOptions
 ): RenderedEmail {
   const styles = emailStyles(options?.brand);
+  const copy = copyFor(options, 'refund', locale);
+  const footer = copy.footer ?? strings.footer;
   const money = (cents: number) => formatPrice(cents, refund.currency, locale);
   const isFull = refund.refundedCents >= refund.totalCents;
   const items = refund.items ?? [];
@@ -94,14 +96,14 @@ export function renderRefundNotification(
 
   const bodyHtml = `<h1 style="font-size:20px;line-height:1.3;margin:0 0 8px;">${escapeHtml(headline)}</h1>
       <p style="margin:0 0 4px;${styles.muted}">${escapeHtml(refund.shopName)}</p>
-
+      ${copy.intro ? emailParagraph(copy.intro) : ''}
       <p style="margin:0;font-size:15px;">${escapeHtml(summary)}</p>
       ${itemsHtml}
       ${remainingHtml}
       ${reasonHtml}
       ${buttonHtml}`;
 
-  const textLines = [headline, refund.shopName, '', summary];
+  const textLines = [headline, refund.shopName, ...(copy.intro ? ['', copy.intro] : []), '', summary];
   if (items.length) {
     textLines.push('', ...items.map((item) => `${item.quantity} x ${item.productName}  ${money(item.amountCents)}`));
   }
@@ -116,7 +118,7 @@ export function renderRefundNotification(
     shopName: refund.shopName,
     shopUrl: options?.shopUrl,
     body: { html: bodyHtml, text: textLines.join('\n') },
-    footerNote: strings.footer,
+    footerNote: footer,
     footerAddress: footerAddressFor(options, locale)
   });
 

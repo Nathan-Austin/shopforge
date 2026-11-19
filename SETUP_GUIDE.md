@@ -214,6 +214,12 @@ your business name and postal address go. Until you save a brand, emails use
 a plain default, and a new campaign template in the designer starts from the
 brand too.
 
+The same page holds the **wording**: for each of the three emails, your own
+first paragraph and last line per language. Leave a box empty and the
+built-in text (shown in grey) is used; the order details in between are
+always generated. "Email me this sample" sends the picked email for an
+imaginary order to your own address, so you can check it in a real inbox.
+
 Shops created before 2026-11-19 need the `0012_store_settings.sql`
 migration once (see `lib/migrations/README.md` on upgrading).
 

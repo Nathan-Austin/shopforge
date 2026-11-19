@@ -111,6 +111,19 @@ describe('renderShippingNotification', () => {
     expect(email.text.endsWith('Test Shop Ltd')).toBe(true);
   });
 
+  it("replaces the intro and the last line with the owner's wording", () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      copy: { ...DEFAULT_EMAIL_BRAND.copy, shipping: { intro: { en: 'It is on the van.' }, footer: { en: 'Call us any time.' } } }
+    };
+    const email = renderShippingNotification(order, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('It is on the van.');
+    expect(email.html).not.toContain(strings.intro);
+    expect(email.html).toContain('Call us any time.');
+    expect(email.html).not.toContain(strings.footer);
+    expect(email.text).toContain('It is on the van.');
+  });
+
   it('sets the document direction for right-to-left locales', () => {
     expect(renderShippingNotification(order, strings, 'ar').html).toContain('<html lang="ar" dir="rtl">');
     expect(renderShippingNotification(order, strings, 'de').html).toContain('<html lang="de" dir="ltr">');

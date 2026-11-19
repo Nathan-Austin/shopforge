@@ -155,6 +155,19 @@ describe('renderOrderConfirmation', () => {
     expect(de.html).not.toContain('Test Shop Ltd');
   });
 
+  it("uses the owner's intro and footer wording when the brand has them", () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      copy: { ...DEFAULT_EMAIL_BRAND.copy, confirmation: { intro: { en: 'Thanks, Jo!\nWe are packing it now.' }, footer: { en: 'Written by the owner.' } } }
+    };
+    const email = renderOrderConfirmation(baseOrder, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('Thanks, Jo!\nWe are packing it now.');
+    expect(email.html).toContain('Written by the owner.');
+    expect(email.html).not.toContain('We will email you again when your order ships.');
+    expect(email.text).toContain('Thanks, Jo!');
+    expect(email.text.endsWith('Written by the owner.')).toBe(true);
+  });
+
   it('formats money in the locale and sets the document direction', () => {
     const de = renderOrderConfirmation(baseOrder, strings, 'de');
     expect(de.text).toMatch(/Total: 30,00\s€/);

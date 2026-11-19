@@ -52,9 +52,9 @@ details for each item are in the numbered sections below.
 1. **Email marketing and template builder** (section 2d), in the phases
    listed there, one at a time. A to F, E2 and G1 (model, saved templates
    and test sends, the designer, subscribers, sending through Resend,
-   provider keys in the dashboard, Mailchimp, the brand on receipts) are
-   done; G2 (editable intro and footer copy per locale) is next, then H
-   (more providers, now that the adapter exists).
+   provider keys in the dashboard, Mailchimp, the brand and wording on
+   receipts) are done; H (more providers, now that the adapter exists) is
+   what is left.
 2. **Translate the auth pages** (section 2b). Move the hardcoded English on
    `/auth/sign-in`, `/auth/sign-up` and `/auth/mfa` into the locale message
    files.
@@ -394,13 +394,25 @@ loose in `/tmp`.
       language) and a sample receipt rendered in the saved brand. A new
       campaign template starts from the brand once one is saved; before
       that the starter's own accent colour stays. The owner-facing dispute
-      alert keeps its plain look. Follow-ups: the hairline between rows is
-      an 8-digit hex colour, which Outlook for Windows drops (no line, not
-      a wrong one); "send me a sample" for the three emails
-- [ ] **G2. Editable intro and footer copy per locale** for the receipt,
-      shipping and refund emails, falling back to the `Email.*` strings,
-      with a test send of each type to the owner; the order details stay
-      generated in code (scope confirmed 2026-11-05)
+      alert keeps its plain look
+- [x] **G2. Editable intro and footer copy per locale** — done 2026-11-19.
+      The brand document grows a `copy` branch: for each of the receipt,
+      shipping and refund emails an intro and a footer line per locale,
+      picked with the same fallback chain as everything else. A renderer
+      asks `copyFor()` and uses the owner's text where there is one, the
+      `Email.*` string where there is not, so a shop that writes nothing
+      sends exactly what it sent before; the order details in between stay
+      generated. The brand form shows one pair of boxes per email and
+      language with the built-in wording as the placeholder.
+      `lib/email/samples.ts` renders the three emails for an imaginary
+      order; the settings page previews whichever is picked and "email me
+      this sample" sends it to the signed-in owner through the
+      transactional path (subject prefixed `[sample]`, nothing recorded).
+      The hairline between rows is now a fixed light grey (Outlook for
+      Windows drops colours with alpha). No migration: it is the same
+      `email_brand` row. Follow-ups: a merge tag or two in the wording
+      (customer first name, order reference); the sample subject prefix is
+      English in every language
 - [ ] **H. More providers** behind the same adapter, the popular ones for
       small shops: Brevo, MailerLite, Kit, Klaviyo (e-commerce focused) and
       Mailjet. The adapter is `src/lib/email/providers/types.ts` since E2;

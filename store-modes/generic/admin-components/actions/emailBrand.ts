@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { LOCALES } from '@/i18n/config';
-import { parseEmailBrand, type EmailBrandInput, type EmailBrandIssue } from '@/lib/email/brand';
+import { parseEmailBrand, TRANSACTIONAL_KINDS, type EmailBrandInput, type EmailBrandIssue } from '@/lib/email/brand';
 import { saveEmailBrand as storeEmailBrand } from '@/lib/email/brandStore';
 import { ensureShopOwner } from '../lib/auth';
 
@@ -34,6 +34,18 @@ function brandFromForm(formData: FormData): EmailBrandInput {
     const value = text(formData, `footer_${locale}`);
     if (value) footer[locale] = value;
   }
+  const copy = {} as NonNullable<EmailBrandInput['copy']>;
+  for (const kind of TRANSACTIONAL_KINDS) {
+    const intro: Record<string, string> = {};
+    const kindFooter: Record<string, string> = {};
+    for (const locale of LOCALES) {
+      const introText = text(formData, `copy_${kind}_intro_${locale}`);
+      const footerText = text(formData, `copy_${kind}_footer_${locale}`);
+      if (introText) intro[locale] = introText;
+      if (footerText) kindFooter[locale] = footerText;
+    }
+    copy[kind] = { intro, footer: kindFooter };
+  }
   const logoUrl = text(formData, 'logo_url');
   const logoWidth = Number.parseInt(text(formData, 'logo_width'), 10);
   return {
@@ -44,7 +56,8 @@ function brandFromForm(formData: FormData): EmailBrandInput {
     fontFamily: text(formData, 'font_family') as EmailBrandInput['fontFamily'],
     logoUrl: logoUrl || null,
     ...(Number.isFinite(logoWidth) ? { logoWidth } : {}),
-    footer
+    footer,
+    copy
   };
 }
 

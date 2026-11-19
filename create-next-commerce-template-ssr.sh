@@ -1561,6 +1561,22 @@ cat > src/messages/en.json <<'EOF'
         "removeHint": "Deletes the stored key. If it was the one sending campaigns, the other stored key takes over.",
         "removedNotice": "The stored key has been removed.",
         "mailchimpListNote": "Mailchimp sends to the audience your account already has, tagging each subscriber with their language (lang-en, lang-de, and so on). If your account has more than one audience, set MAILCHIMP_LIST_ID to the one you want.",
+        "samples": {
+          "heading": "Samples",
+          "hint": "Each email for an imaginary order, in your language and the saved brand. Save first, then preview or send one to yourself.",
+          "preview": "Preview",
+          "send": "Email me this sample",
+          "sending": "Sending…",
+          "sentNotice": "Sent to {to}. Check your inbox (and spam).",
+          "notConfigured": "Set up a sender and a key first.",
+          "errors": {
+            "not_authorized": "You are not allowed to do that.",
+            "unknown_kind": "That is not an email this shop sends.",
+            "no_address": "Your account has no email address to send to.",
+            "not_configured": "This shop cannot send email yet: set EMAIL_FROM and a Resend key.",
+            "failed": "The sample could not be sent."
+          }
+        },
         "brand": {
           "heading": "Brand",
           "hint": "The logo, colours, font and footer that the receipt, shipping and refund emails wear. New campaign templates start from them too.",
@@ -1597,6 +1613,19 @@ cat > src/messages/en.json <<'EOF'
           "sampleProductTwo": "Another sample product",
           "sampleCustomer": "Jo Example",
           "sampleStreet": "1 Sample Street",
+          "sampleRefundReason": "Bottle arrived cracked; sorry about that.",
+          "copy": {
+            "heading": "Wording",
+            "hint": "Your own first paragraph and last line for each email, per language. Leave a box empty to keep the built-in wording shown in grey. The order details in between are always generated.",
+            "kinds": {
+              "confirmation": "Order confirmation",
+              "shipping": "Shipping notification",
+              "refund": "Refund notification"
+            },
+            "intro": "First paragraph",
+            "footer": "Last line",
+            "noIntro": "No first paragraph unless you write one."
+          },
           "errors": {
             "not_authorized": "You are not allowed to do that.",
             "invalid": "Something here is not right. Colours are written #rrggbb and the logo must be an https:// address.",
@@ -2747,6 +2776,22 @@ cat > src/messages/de.json <<'EOF'
         "removeHint": "Löscht den gespeicherten Schlüssel. War es der sendende, übernimmt der andere gespeicherte Schlüssel.",
         "removedNotice": "Der gespeicherte Schlüssel wurde entfernt.",
         "mailchimpListNote": "Mailchimp sendet an die Zielgruppe, die Ihr Konto bereits hat, und versieht jede Person mit einem Sprach-Tag (lang-en, lang-de und so weiter). Hat Ihr Konto mehrere Zielgruppen, setzen Sie MAILCHIMP_LIST_ID auf die gewünschte.",
+        "samples": {
+          "heading": "Beispiele",
+          "hint": "Jede E-Mail für eine erfundene Bestellung, in Ihrer Sprache und der gespeicherten Marke. Erst speichern, dann ansehen oder sich selbst eine schicken.",
+          "preview": "Vorschau",
+          "send": "Dieses Beispiel an mich senden",
+          "sending": "Wird gesendet…",
+          "sentNotice": "An {to} gesendet. Prüfen Sie Ihren Posteingang (und den Spam-Ordner).",
+          "notConfigured": "Richten Sie zuerst Absender und Schlüssel ein.",
+          "errors": {
+            "not_authorized": "Das dürfen Sie nicht.",
+            "unknown_kind": "Diese E-Mail versendet der Shop nicht.",
+            "no_address": "Ihr Konto hat keine E-Mail-Adresse, an die gesendet werden kann.",
+            "not_configured": "Dieser Shop kann noch keine E-Mails senden: Setzen Sie EMAIL_FROM und einen Resend-Schlüssel.",
+            "failed": "Das Beispiel konnte nicht gesendet werden."
+          }
+        },
         "brand": {
           "heading": "Marke",
           "hint": "Logo, Farben, Schrift und Fußzeile, in denen Bestellbestätigung, Versand- und Erstattungs-E-Mails erscheinen. Neue Kampagnenvorlagen beginnen ebenfalls damit.",
@@ -2783,6 +2828,19 @@ cat > src/messages/de.json <<'EOF'
           "sampleProductTwo": "Noch ein Beispielprodukt",
           "sampleCustomer": "Jo Beispiel",
           "sampleStreet": "Beispielstraße 1",
+          "sampleRefundReason": "Die Flasche kam gesprungen an; das tut uns leid.",
+          "copy": {
+            "heading": "Wortlaut",
+            "hint": "Ihr eigener erster Absatz und Ihre letzte Zeile für jede E-Mail, je Sprache. Lassen Sie ein Feld leer, um den grau gezeigten Standardtext zu behalten. Die Bestelldetails dazwischen werden immer erzeugt.",
+            "kinds": {
+              "confirmation": "Bestellbestätigung",
+              "shipping": "Versandbenachrichtigung",
+              "refund": "Erstattungsbenachrichtigung"
+            },
+            "intro": "Erster Absatz",
+            "footer": "Letzte Zeile",
+            "noIntro": "Kein erster Absatz, sofern Sie keinen schreiben."
+          },
           "errors": {
             "not_authorized": "Das dürfen Sie nicht.",
             "invalid": "Hier stimmt etwas nicht. Farben werden als #rrggbb geschrieben, und das Logo muss eine https://-Adresse sein.",
@@ -3933,6 +3991,22 @@ cat > src/messages/tr.json <<'EOF'
         "removeHint": "Saklanan anahtarı siler. Kampanyaları gönderen oysa, saklanan diğer anahtar devralır.",
         "removedNotice": "Saklanan anahtar kaldırıldı.",
         "mailchimpListNote": "Mailchimp, hesabınızda zaten bulunan kitleye gönderir ve her aboneyi diliyle etiketler (lang-en, lang-de ve benzeri). Hesabınızda birden fazla kitle varsa MAILCHIMP_LIST_ID değerini istediğinize ayarlayın.",
+        "samples": {
+          "heading": "Örnekler",
+          "hint": "Hayali bir sipariş için her e-posta, sizin dilinizde ve kayıtlı markayla. Önce kaydedin, sonra önizleyin ya da kendinize gönderin.",
+          "preview": "Önizleme",
+          "send": "Bu örneği bana gönder",
+          "sending": "Gönderiliyor…",
+          "sentNotice": "{to} adresine gönderildi. Gelen kutunuzu (ve spam klasörünü) kontrol edin.",
+          "notConfigured": "Önce gönderen ve anahtar ayarlayın.",
+          "errors": {
+            "not_authorized": "Bunu yapma izniniz yok.",
+            "unknown_kind": "Bu, mağazanın gönderdiği bir e-posta değil.",
+            "no_address": "Hesabınızda gönderilecek bir e-posta adresi yok.",
+            "not_configured": "Bu mağaza henüz e-posta gönderemiyor: EMAIL_FROM ve bir Resend anahtarı ayarlayın.",
+            "failed": "Örnek gönderilemedi."
+          }
+        },
         "brand": {
           "heading": "Marka",
           "hint": "Sipariş onayı, kargo ve iade e-postalarının taşıdığı logo, renkler, yazı tipi ve alt bilgi. Yeni kampanya şablonları da bunlarla başlar.",
@@ -3969,6 +4043,19 @@ cat > src/messages/tr.json <<'EOF'
           "sampleProductTwo": "Bir başka örnek ürün",
           "sampleCustomer": "Jo Örnek",
           "sampleStreet": "Örnek Sokak 1",
+          "sampleRefundReason": "Şişe çatlak geldi; özür dileriz.",
+          "copy": {
+            "heading": "Metin",
+            "hint": "Her e-posta için, dil başına kendi ilk paragrafınız ve son satırınız. Griyle gösterilen hazır metni korumak için kutuyu boş bırakın. Aradaki sipariş ayrıntıları her zaman otomatik oluşturulur.",
+            "kinds": {
+              "confirmation": "Sipariş onayı",
+              "shipping": "Kargo bildirimi",
+              "refund": "İade bildirimi"
+            },
+            "intro": "İlk paragraf",
+            "footer": "Son satır",
+            "noIntro": "Siz yazmadıkça ilk paragraf yok."
+          },
           "errors": {
             "not_authorized": "Bunu yapma izniniz yok.",
             "invalid": "Burada bir şey yanlış. Renkler #rrggbb biçiminde yazılır ve logo bir https:// adresi olmalıdır.",
@@ -5119,6 +5206,22 @@ cat > src/messages/ar.json <<'EOF'
         "removeHint": "يحذف المفتاح المحفوظ. إن كان هو الذي يرسل الحملات، يتولّى المفتاح المحفوظ الآخر.",
         "removedNotice": "تمت إزالة المفتاح المحفوظ.",
         "mailchimpListNote": "ترسل Mailchimp إلى الجمهور الموجود في حسابك بالفعل، وتضع على كل مشترك وسم لغته (lang-en وlang-de وهكذا). إن كان في حسابك أكثر من جمهور، اضبط MAILCHIMP_LIST_ID على الجمهور الذي تريده.",
+        "samples": {
+          "heading": "نماذج",
+          "hint": "كل رسالة لطلب وهمي، بلغتك وبالهوية المحفوظة. احفظ أولًا، ثم عاين أو أرسل نموذجًا إلى نفسك.",
+          "preview": "معاينة",
+          "send": "أرسل هذا النموذج إليّ",
+          "sending": "جارٍ الإرسال…",
+          "sentNotice": "أُرسل إلى {to}. تحقق من بريدك الوارد (ومجلد الرسائل غير المرغوبة).",
+          "notConfigured": "اضبط المرسِل والمفتاح أولًا.",
+          "errors": {
+            "not_authorized": "غير مسموح لك بذلك.",
+            "unknown_kind": "هذه ليست رسالة يرسلها المتجر.",
+            "no_address": "لا يوجد في حسابك عنوان بريد للإرسال إليه.",
+            "not_configured": "لا يستطيع هذا المتجر إرسال البريد بعد: اضبط EMAIL_FROM ومفتاح Resend.",
+            "failed": "تعذّر إرسال النموذج."
+          }
+        },
         "brand": {
           "heading": "الهوية",
           "hint": "الشعار والألوان والخط والتذييل التي تظهر بها رسائل تأكيد الطلب والشحن والاسترداد. وتبدأ قوالب الحملات الجديدة بها أيضًا.",
@@ -5155,6 +5258,19 @@ cat > src/messages/ar.json <<'EOF'
           "sampleProductTwo": "منتج تجريبي آخر",
           "sampleCustomer": "جو مثال",
           "sampleStreet": "شارع المثال 1",
+          "sampleRefundReason": "وصلت الزجاجة متشققة؛ نعتذر عن ذلك.",
+          "copy": {
+            "heading": "الصياغة",
+            "hint": "فقرتك الأولى وسطرك الأخير لكل رسالة، لكل لغة. اترك الخانة فارغة للإبقاء على النص المضمّن الظاهر بالرمادي. تفاصيل الطلب بينهما تُولَّد دائمًا.",
+            "kinds": {
+              "confirmation": "تأكيد الطلب",
+              "shipping": "إشعار الشحن",
+              "refund": "إشعار الاسترداد"
+            },
+            "intro": "الفقرة الأولى",
+            "footer": "السطر الأخير",
+            "noIntro": "لا فقرة أولى ما لم تكتب واحدة."
+          },
           "errors": {
             "not_authorized": "غير مسموح لك بذلك.",
             "invalid": "هناك خطأ ما هنا. تُكتب الألوان بصيغة #rrggbb ويجب أن يكون الشعار عنوان https://.",

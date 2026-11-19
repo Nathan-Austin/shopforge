@@ -1,12 +1,15 @@
+import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 
-import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
+import { LOCALES } from '@/i18n/config';
+import { TRANSACTIONAL_KINDS, type TransactionalKind } from '@/lib/email/brand';
 import { loadEmailBrand } from '@/lib/email/brandStore';
 import { getEmailConfig, resolveEmailConfig } from '@/lib/email/config';
-import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
+import { builtInCopy, renderSampleEmail } from '@/lib/email/samples';
 import { activeCampaignProviderName, isCampaignProviderName } from '@/lib/email/providers/registry';
 import type { CampaignProviderName } from '@/lib/email/providers/types';
 import { saveEmailBrand } from '../../actions/emailBrand';
+import { sendSampleEmail } from '../../actions/emailSamples';
 import {
   chooseEmailProvider,
   clearEmailProviderKey,
@@ -17,6 +20,7 @@ import EmailPreview from '../../components/EmailPreview';
 import EmailTabs from '../../components/EmailTabs';
 import ProviderChoiceForm from '../../components/ProviderChoiceForm';
 import ProviderKeyForm, { type StoredProviderKey } from '../../components/ProviderKeyForm';
+import SampleSendForm from '../../components/SampleSendForm';
 import { requireShopOwner } from '../../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -39,11 +43,14 @@ const PROVIDERS = ['resend', 'mailchimp'] as const;
  * get_email_provider_key is the server's alone.
  */
 export default async function AdminEmailSettingsPage({
-  params
+  params,
+  searchParams
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ sample?: string }>;
 }) {
   const { locale } = await params;
+  const { sample } = await searchParams;
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin.email.settings' });
 
@@ -82,7 +89,12 @@ export default async function AdminEmailSettingsPage({
   };
 
   const { brand } = await loadEmailBrand(supabase);
-  const samplePreview = await sampleReceipt(locale, brand);
+  const sampleKind: TransactionalKind = (TRANSACTIONAL_KINDS as readonly string[]).includes(sample ?? '')
+    ? (sample as TransactionalKind)
+    : 'confirmation';
+  const samplePreview = (await renderSampleEmail(sampleKind, locale, brand)).html;
+  const builtIn = await builtInCopy(locale);
+  const canSend = transactional.provider !== 'none';
 
   return (
     <div className="space-y-6">
@@ -121,10 +133,25 @@ export default async function AdminEmailSettingsPage({
       )}
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <EmailBrandForm save={saveEmailBrand.bind(null, { locale })} brand={brand} locales={LOCALES} />
-        <div className="space-y-2">
-          <h3 className="font-semibold">{t('brand.previewHeading')}</h3>
-          <p className="text-sm text-stone-600">{t('brand.previewHint')}</p>
+        <EmailBrandForm save={saveEmailBrand.bind(null, { locale })} brand={brand} locales={LOCALES} builtIn={builtIn} />
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-semibold">{t('samples.heading')}</h3>
+            <p className="text-sm text-stone-600">{t('samples.hint')}</p>
+          </div>
+          <nav className="flex flex-wrap gap-2 text-sm" aria-label={t('samples.preview')}>
+            {TRANSACTIONAL_KINDS.map((kind) => (
+              <Link
+                key={kind}
+                href={`/${locale}/admin/email/settings?sample=${kind}`}
+                aria-current={kind === sampleKind ? 'page' : undefined}
+                className={`rounded-full border px-3 py-1 ${kind === sampleKind ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-border bg-white text-stone-700 hover:text-emerald-700'}`}
+              >
+                {t(`brand.copy.kinds.${kind}`)}
+              </Link>
+            ))}
+          </nav>
+          <SampleSendForm send={sendSampleEmail.bind(null, { locale })} kind={sampleKind} configured={canSend} />
           <EmailPreview html={samplePreview} />
         </div>
       </div>
@@ -157,47 +184,4 @@ export default async function AdminEmailSettingsPage({
       )}
     </div>
   );
-}
-
-/**
- * A receipt for an imaginary order, in the admin's language and the saved
- * brand, so the owner sees what a customer will get before anyone buys.
- */
-async function sampleReceipt(locale: string, brand: Awaited<ReturnType<typeof loadEmailBrand>>['brand']): Promise<string> {
-  const t = await getTranslations({ locale, namespace: 'Email.confirmation' });
-  const ts = await getTranslations({ locale, namespace: 'Admin.email.settings.brand' });
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || null;
-  const reference = 'A1B2C3D4';
-  const email = renderOrderConfirmation(
-    {
-      reference,
-      currency: 'EUR',
-      subtotalCents: 3400,
-      shippingCents: 490,
-      totalCents: 3890,
-      shopName,
-      items: [
-        { productName: ts('sampleProductOne'), unitPriceCents: 1200, quantity: 2 },
-        { productName: ts('sampleProductTwo'), unitPriceCents: 1000, quantity: 1 }
-      ],
-      shipping: { name: ts('sampleCustomer'), line1: ts('sampleStreet'), postalCode: '10115', city: 'Berlin', country: 'DE' },
-      orderUrl: siteUrl ? `${siteUrl}/${locale}/account/orders` : 'https://example.com/account/orders'
-    },
-    {
-      subject: t('subject', { shop: shopName, reference }),
-      headline: t('headline'),
-      orderLabel: t('order', { reference }),
-      subtotal: t('subtotal'),
-      shipping: t('shipping'),
-      discount: t('discount'),
-      total: t('total'),
-      addressHeading: t('address'),
-      viewOrder: t('viewOrder'),
-      footer: t('footer')
-    },
-    locale,
-    { brand, shopUrl: siteUrl, defaultLocale: DEFAULT_LOCALE }
-  );
-  return email.html;
 }

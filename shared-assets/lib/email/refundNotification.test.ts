@@ -100,6 +100,18 @@ describe('renderRefundNotification', () => {
     expect(email.text.endsWith('Test Shop Ltd')).toBe(true);
   });
 
+  it("adds the owner's intro and replaces the last line", () => {
+    const brand = {
+      ...DEFAULT_EMAIL_BRAND,
+      copy: { ...DEFAULT_EMAIL_BRAND.copy, refund: { intro: { en: 'Sorry it did not work out.' }, footer: { en: 'Owner footer.' } } }
+    };
+    const email = renderRefundNotification(partial, strings, 'en', { brand, defaultLocale: 'en' });
+    expect(email.html).toContain('Sorry it did not work out.');
+    expect(email.html).toContain('Owner footer.');
+    expect(email.html).not.toContain(strings.footer);
+    expect(email.text).toContain('Sorry it did not work out.');
+  });
+
   it('formats item amounts in the locale and sets the direction', () => {
     const email = renderRefundNotification(partial, strings, 'de');
     // Intl puts a non-breaking space before the euro sign in German.

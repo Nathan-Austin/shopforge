@@ -5,7 +5,8 @@ import {
   brandFooterFor,
   campaignThemeFromBrand,
   emailBrandOrDefault,
-  parseEmailBrand
+  parseEmailBrand,
+  transactionalCopyFor
 } from './brand';
 
 describe('parseEmailBrand', () => {
@@ -71,5 +72,36 @@ describe('brandFooterFor', () => {
   it('treats a blank entry as missing', () => {
     expect(brandFooterFor(brand, 'tr', 'en')).toBe('Test Shop Ltd, London');
     expect(brandFooterFor(DEFAULT_EMAIL_BRAND, 'en', 'en')).toBeNull();
+  });
+});
+
+describe('transactionalCopyFor', () => {
+  const brand = parseEmailBrand({
+    copy: {
+      shipping: { intro: { en: 'Your parcel is off!', de: 'Dein Paket ist unterwegs!' }, footer: { en: 'Reply to this email with questions.' } },
+      refund: { intro: {}, footer: { en: '   ' } }
+    }
+  });
+
+  it('defaults every email to no custom wording', () => {
+    const copy = transactionalCopyFor(DEFAULT_EMAIL_BRAND, 'confirmation', 'en', 'en');
+    expect(copy).toEqual({ intro: null, footer: null });
+  });
+
+  it('picks the locale with the usual fallback, per email', () => {
+    expect(brand.ok).toBe(true);
+    if (!brand.ok) return;
+    expect(transactionalCopyFor(brand.brand, 'shipping', 'de-at', 'en')).toEqual({
+      intro: 'Dein Paket ist unterwegs!',
+      footer: 'Reply to this email with questions.'
+    });
+    expect(transactionalCopyFor(brand.brand, 'shipping', 'ar', 'en').intro).toBe('Your parcel is off!');
+    // A blank entry is no entry; the other emails are untouched.
+    expect(transactionalCopyFor(brand.brand, 'refund', 'en', 'en')).toEqual({ intro: null, footer: null });
+    expect(transactionalCopyFor(brand.brand, 'confirmation', 'en', 'en')).toEqual({ intro: null, footer: null });
+  });
+
+  it('refuses wording that is too long', () => {
+    expect(parseEmailBrand({ copy: { refund: { intro: { en: 'x'.repeat(1001) } } } }).ok).toBe(false);
   });
 });
