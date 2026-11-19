@@ -35,8 +35,11 @@ time today (flags, mode, prompts in the scripts, files that differ between
 modes) and, for each one, what it would take to make it a runtime setting.
 No code changes in that session.
 
-- [ ] Plan: inventory of generation-time choices and the route for each to
-      become a runtime setting
+- [x] Plan: inventory of generation-time choices and the route for each to
+      become a runtime setting — done 2026-11-19 in
+      `docs/single-codebase-plan.md`: 14 choices plus the 20 files that
+      differ between the modes, a route and effort for each, a proposed
+      order and six open questions (Q1–Q6) to answer before coding
 - [ ] Single codebase with the modes as settings; the generator stays only
       as a developer tool, if at all
 - [ ] Deploy to Vercel button with the Supabase integration
@@ -55,8 +58,9 @@ details for each item are in the numbered sections below.
    provider keys in the dashboard, Mailchimp, the brand and wording on
    receipts) are done; H (more providers, now that the adapter exists) is
    what is left.
-2. **Section 0 inventory** (plan only): every choice the generator makes
-   today, and how each would become a runtime setting.
+2. **Section 0**, following `docs/single-codebase-plan.md`: first move the
+   admin files that are identical in both modes into `shared-assets`, once
+   the open questions there are answered.
 
 ## 1. Storefront and orders
 
@@ -114,6 +118,13 @@ details for each item are in the numbered sections below.
       `SHOP_OWNER_EMAIL` in CC. `order_refunds` is the ledger; `refunded`
       can no longer be picked by hand
 - [ ] Guest-cart merge on sign-*up*, not just sign-in
+- [ ] Owner sign-up in email-code shops: the generator's closing message
+      tells the owner to create their account "with a password" at
+      `/auth/sign-up`, but in a shop generated with `--auth=otp` that page
+      only offers the email code, so the owner has no password for the
+      admin (which always signs in by password). Needs a password sign-up
+      path for the owner, or different instructions plus a way to set a
+      password after a code sign-in (found 2026-11-19)
 - [x] Webhook handlers for `charge.refunded` and `charge.dispute.*` — done
       2026-11-06 in `0009_disputes.sql`. `charge.refunded` is reconciled from
       the charge's cumulative `amount_refunded` and its whole refund list, so
