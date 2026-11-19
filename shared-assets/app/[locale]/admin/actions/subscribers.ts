@@ -7,6 +7,7 @@ import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
 import { MAX_IMPORT_BYTES, parseSubscriberCsv, type CsvImportError } from '@/lib/email/subscribers/csv';
 import { importSubscribers, ownerDelete, ownerEdit, ownerResendConfirmation, ownerUnsubscribe } from '@/lib/email/subscribers/service';
 import { ensureShopOwner } from '../lib/auth';
+import { getShopName } from '@/lib/settings/store';
 
 interface Context {
   locale: string;
@@ -104,7 +105,7 @@ export async function importSubscriberCsv(context: Context, _previous: ImportRes
   if (!parsed.rows.length && !parsed.errors.length) return { ok: false, error: 'empty' };
 
   const t = await getTranslations({ locale: context.locale, namespace: 'Admin.email.subscribers' });
-  const shop = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shop = await getShopName();
   try {
     const outcome = await importSubscribers(parsed.rows, t('importConsentRecord', { shop, date: new Date().toISOString().slice(0, 10) }));
     refresh(context.locale);

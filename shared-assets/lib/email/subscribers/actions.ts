@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
 import { confirmSubscription, requestSubscription, unsubscribeByToken } from './service';
+import { getShopName } from '@/lib/settings/store';
 
 export type NewsletterFormState = { ok: true } | { ok: false; error: 'invalid-email' | 'unavailable' | 'failed' } | null;
 
@@ -17,7 +18,7 @@ export async function subscribeToNewsletter(locale: string, _previous: Newslette
   if (formData.get('website')) return { ok: true };
   const language = shopLocale(locale);
   const t = await getTranslations({ locale: language, namespace: 'Newsletter' });
-  const shop = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shop = await getShopName();
   const result = await requestSubscription({
     email: formData.get('email'),
     firstName: formData.get('firstName'),

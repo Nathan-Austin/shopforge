@@ -106,14 +106,19 @@ is retired.
 
 1. ~~**Move the identical admin files to `shared-assets`**~~ — done
    2026-11-19 (50 files; 9 per mode remain).
-2. **A `getStoreSettings()` reader with caching** (M). One typed reader over
-   `store_settings`, falling back to today's generated files and environment
-   variables when a key is absent, so a shop works before its owner has
-   saved anything. Revalidated on save (cache tag per key, Q3).
-3. **Small settings first** (S each): shop name (#12), checkout address and
-   countries (#3), single/multi brand (#6), sign-in and MFA (#7, #8). Each
-   one: a key, a section in a new `/admin/settings`, readers switched to
-   `getStoreSettings()`, the generated file kept as the fallback.
+2. ~~**A cached settings reader**~~ — done 2026-11-19. `lib/settings/schema.ts`
+   (pure: one zod schema and one fallback per key, field-by-field
+   resolution, tests) and `lib/settings/store.ts` (`getStoreSetting(key)`
+   through `unstable_cache` with tag `store-settings:<key>` and a 5-minute
+   safety net, anon key and no cookies; `saveStoreSetting()` validates,
+   upserts and calls `updateTag` so the owner sees the change on the next
+   page). Any read failure falls back to the generated value and logs why.
+3. **Small settings** (S each): ~~shop name (#12)~~ done 2026-11-19 (all 16
+   readers, the header included, which showed "🌶️ Store" in every mode;
+   `/admin/settings` with a "Shop" section). Still to do: checkout address
+   and countries (#3), single/multi brand (#6), sign-in and MFA (#7, #8).
+   Each one: a schema and fallback in `lib/settings/schema.ts`, a section
+   on `/admin/settings`, readers switched to `getStoreSetting()`.
 4. **Product fields and heat scale** (M). Already on the roadmap; no
    migration for fields, one design decision for heat (Q4).
 5. **Shipping and currency** (M). The currency migration is the risky one;
@@ -129,7 +134,7 @@ is retired.
 
 ## 7. Questions
 
-Answered 2026-11-19: Q1, Q3, Q6. Still open: Q2, Q4, Q5 (none blocks the
+Answered 2026-11-19: Q1, Q2, Q3, Q6. Still open: Q4, Q5 (none blocks the
 first steps).
 
 - **Q1. Where do a shop's generated choices go?** *Answered:* nothing is
@@ -137,9 +142,8 @@ first steps).
   generated files and environment variables until the owner saves a
   setting in the admin. No one-off migration script. (There are no
   previously generated shops in use, see the top of this document.)
-- **Q2. Admin layout.** One `/admin/settings` page with sections, or a page
-  per area (shop, checkout, products, languages)? The email settings already
-  live under `/admin/email/settings`.
+- **Q2. Admin layout.** *Answered:* one `/admin/settings` page with a
+  section per area. Email keeps its own settings under `/admin/email/settings`.
 - **Q3. Locales at the edge.** *Answered:* a cached database read. The
   proxy reads `store_settings:languages` through Next's data cache, tagged
   and revalidated when the owner saves, so there is no Supabase call per

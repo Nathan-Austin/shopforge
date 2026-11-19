@@ -6,11 +6,13 @@
 
 import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 import { SHIPPING_CONFIG } from '@/lib/shipping/config';
+import { getShopName } from '@/lib/settings/store';
 import { siteUrl } from './alternates';
 import type { ProductJsonLdInput } from './jsonld';
 
-export function shopName(): string {
-  return process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+/** The shop's name: the saved setting, or the generated one until then. */
+export async function shopName(): Promise<string> {
+  return getShopName();
 }
 
 /** The Search Console HTML-tag verification code, if the owner set one. */

@@ -6,6 +6,7 @@ import { unsubscribeFromLink } from '@/lib/email/subscribers/actions';
 import { readSubscriberLink } from '@/lib/email/subscribers/service';
 import { NOINDEX } from '@/lib/seo/alternates';
 import NewsletterNotice from '../NewsletterNotice';
+import { getShopName } from '@/lib/settings/store';
 
 export const metadata: Metadata = NOINDEX;
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export default async function NewsletterUnsubscribePage({
   const { locale } = await params;
   const { t: token, status, preview } = await searchParams;
   const t = await getTranslations({ locale, namespace: 'Newsletter' });
-  const shop = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shop = await getShopName();
   const back = { backHref: `/${locale}`, backLabel: t('backToShop') };
   const button = 'rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700';
 

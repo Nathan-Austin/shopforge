@@ -61,8 +61,10 @@ details for each item are in the numbered sections below.
    receipts) are done; H (more providers, now that the adapter exists) is
    what is left.
 2. **Section 0**, following `docs/single-codebase-plan.md`. The shared
-   admin files moved to `shared-assets/app/[locale]/admin/` on 2026-11-19;
-   next is the cached `getStoreSettings()` reader (plan step 2).
+   admin files moved to `shared-assets/app/[locale]/admin/` and the cached
+   settings reader landed with the shop name as its first setting
+   (`/admin/settings`), both 2026-11-19; next are the other small settings
+   (plan step 3: checkout address and countries, brands, sign-in and MFA).
 
 ## 1. Storefront and orders
 

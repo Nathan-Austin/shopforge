@@ -10,6 +10,7 @@ import { cleanTemplateName, planTemplateSave } from '@/lib/email/campaigns/templ
 import { syncAudienceStep, type SyncProgress } from '@/lib/email/subscribers/sync';
 import { CAMPAIGN_MODE } from '../email/mode';
 import { ensureShopOwner } from '../lib/auth';
+import { getShopName } from '@/lib/settings/store';
 
 interface Context {
   locale: string;
@@ -70,7 +71,7 @@ export async function syncAudience(locale: string, forcePull: boolean): Promise<
   if (!(LOCALES as readonly string[]).includes(locale)) return refused('not_found');
   const resend = await campaignProvider();
   if (!resend) return refused('not_configured');
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shopName = await getShopName();
   return syncAudienceStep(supabase, resend, locale, shopName, { forcePull });
 }
 
@@ -96,7 +97,7 @@ export async function sendCampaignAction(context: Context & { id: string }, _pre
     locales: Array.from(new Set([...(LOCALES as readonly string[]), DEFAULT_LOCALE])),
     mode: CAMPAIGN_MODE,
     scheduledAt: schedule.at,
-    shopName: process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop'
+    shopName: await getShopName()
   });
   refresh(context.locale, context.id);
   if (!result.ok) return { ok: false, error: SEND_ERRORS[result.error] ?? 'failed', message: result.message };

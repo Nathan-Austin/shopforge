@@ -858,6 +858,25 @@ cat > src/messages/en.json <<'EOF'
     }
   },
   "Admin": {
+    "settings": {
+      "heading": "Settings",
+      "subheading": "How your shop presents itself. Changes show on the next page load.",
+      "shop": {
+        "heading": "Shop",
+        "hint": "The basics customers see on every page and in every email.",
+        "name": "Shop name",
+        "nameHint": "In the header, page titles, search results and emails.",
+        "nameFromDefault": "Not saved yet: this is the name the shop was set up with. Save to make it yours.",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. The new name is live.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "invalid": "Enter a name of up to 80 characters.",
+          "failed": "The settings could not be saved."
+        }
+      }
+    },
     "title": "Store admin",
     "dashboardHeading": "Manage your catalogue",
     "dashboardWelcomeHeading": "You're in control",
@@ -869,7 +888,8 @@ cat > src/messages/en.json <<'EOF'
       "orders": "Orders",
       "discounts": "Discount codes",
       "seo": "Search & Merchant Center",
-      "email": "Email"
+      "email": "Email",
+      "settings": "Settings"
     },
     "stats": {
       "products": "Products",
@@ -2139,6 +2159,25 @@ cat > src/messages/de.json <<'EOF'
     }
   },
   "Admin": {
+    "settings": {
+      "heading": "Einstellungen",
+      "subheading": "Wie sich Ihr Shop zeigt. Änderungen erscheinen beim nächsten Seitenaufruf.",
+      "shop": {
+        "heading": "Shop",
+        "hint": "Das Grundlegende, das Kunden auf jeder Seite und in jeder E-Mail sehen.",
+        "name": "Shop-Name",
+        "nameHint": "Im Kopfbereich, in Seitentiteln, Suchergebnissen und E-Mails.",
+        "nameFromDefault": "Noch nicht gespeichert: Das ist der Name aus der Einrichtung. Speichern Sie ihn, um ihn festzulegen.",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Der neue Name ist aktiv.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "invalid": "Geben Sie einen Namen mit höchstens 80 Zeichen ein.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+        }
+      }
+    },
     "title": "Store admin",
     "dashboardHeading": "Manage your catalogue",
     "dashboardWelcomeHeading": "You're in control",
@@ -2150,7 +2189,8 @@ cat > src/messages/de.json <<'EOF'
       "orders": "Bestellungen",
       "discounts": "Gutscheincodes",
       "seo": "Suche & Merchant Center",
-      "email": "E-Mail"
+      "email": "E-Mail",
+      "settings": "Einstellungen"
     },
     "stats": {
       "products": "Products",
@@ -3719,12 +3759,16 @@ export const dynamic = 'force-dynamic';
  * metadata absolute (Google requires absolute canonical and hreflang
  * URLs); the pages add their own canonical, hreflang set and description.
  */
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
-  title: { default: shopName(), template: `%s | ${shopName()}` },
-  applicationName: shopName(),
-  ...(googleSiteVerification() ? { verification: { google: googleSiteVerification() } } : {})
-};
+export async function generateMetadata(): Promise<Metadata> {
+  // The name the owner set in /admin/settings, cached; see lib/settings.
+  const name = await shopName();
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: { default: name, template: `%s | ${name}` },
+    applicationName: name,
+    ...(googleSiteVerification() ? { verification: { google: googleSiteVerification() } } : {})
+  };
+}
 
 export default async function LocaleLayout({
   children,
@@ -3774,10 +3818,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Home' });
+  const name = await shopName();
   return {
-    description: t('tagline', { shop: shopName() }),
+    description: t('tagline', { shop: name }),
     alternates: pageAlternates(locale, ''),
-    openGraph: { type: 'website', siteName: shopName(), locale: hreflangOf(locale), url: localizedUrl(locale, '') }
+    openGraph: { type: 'website', siteName: name, locale: hreflangOf(locale), url: localizedUrl(locale, '') }
   };
 }
 
@@ -3785,7 +3830,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Home' });
   const tNav = await getTranslations({ locale, namespace: 'Nav' });
-  const name = shopName();
+  const name = await shopName();
   const url = localizedUrl(locale, '');
 
   return (
@@ -3983,7 +4028,7 @@ export async function GET(
     }));
 
   const xml = buildMerchantFeed({
-    shopName: shopName(),
+    shopName: await shopName(),
     shopUrl: localizedUrl(locale, ''),
     products
   });
@@ -4133,7 +4178,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     alternates: pageAlternates(locale, `/shop/${product.slug}`),
     openGraph: {
       type: 'website',
-      siteName: shopName(),
+      siteName: await shopName(),
       locale: hreflangOf(locale),
       url: localizedUrl(locale, `/shop/${product.slug}`),
       title: product.meta_title ?? product.name,
@@ -4184,7 +4229,7 @@ export default async function ProductPage({ params }: { params: Params }) {
       availability: availabilityFor(status.kind),
       shipping: shippingPolicy(product.currency),
       returnPolicy: returnPolicy(CHECKOUT_CONFIG.allowedCountries[0]),
-      sellerName: shopName()
+      sellerName: await shopName()
     })
   ];
   const tags = cleanList(product.tags);
@@ -4534,10 +4579,12 @@ cat > src/components/Header.tsx <<'EOF'
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
+import { getShopName } from '@/lib/settings/store';
 import CartBadge from '@/components/cart/CartBadge';
 
 export default async function Header({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Nav' });
+  const shopName = await getShopName();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -4555,7 +4602,7 @@ export default async function Header({ locale }: { locale: string }) {
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-3">
         <Link href={`/${locale}`} className="font-bold text-lg tracking-tight">
-          🌶️ Store
+          {shopName}
         </Link>
 
         <nav className="flex items-center gap-5 text-sm">

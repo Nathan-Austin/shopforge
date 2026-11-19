@@ -8,6 +8,7 @@ import { renderShippingNotification } from '@/lib/email/shippingNotification';
 import { sendEmail } from '@/lib/email/send';
 import { normalizeTracking } from './notifications';
 import { orderReference, type Order } from './service';
+import { getShopName } from '@/lib/settings/store';
 
 export type ShippingNotifyResult =
   | { sent: true }
@@ -26,7 +27,7 @@ export async function sendShippingNotification(
 ): Promise<ShippingNotifyResult> {
   const locale = order.locale || fallbackLocale;
   const t = await getTranslations({ locale, namespace: 'Email.shipping' });
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+  const shopName = await getShopName();
   const reference = orderReference(order);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
 

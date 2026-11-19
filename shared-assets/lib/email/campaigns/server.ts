@@ -25,6 +25,7 @@ import type { MergeValues } from './mergeTags';
 import { campaignStrings, renderCampaign, type CampaignProduct, type CampaignRenderContext } from './render';
 import { documentReferences, type EmailTemplate } from './templates';
 import { maskEmail, testSendLogEntry, testSendLogFile, type TestSendResult } from './testSendLog';
+import { getShopName } from '../../settings/store';
 
 /**
  * Campaign rendering and test sends against the shop's data.
@@ -44,11 +45,12 @@ export interface CampaignModeHooks {
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function shopSettings() {
-  return {
-    name: process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop',
-    url: process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || null
-  };
+function shopUrl(): string | null {
+  return process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || null;
+}
+
+async function shopSettings() {
+  return { name: await getShopName(), url: shopUrl() };
 }
 
 export interface CampaignContextOptions {
@@ -69,7 +71,7 @@ export async function buildCampaignContext(
   document: unknown,
   options: CampaignContextOptions
 ): Promise<CampaignRenderContext> {
-  const shop = shopSettings();
+  const shop = await shopSettings();
   const { productIds, discountCodes } = documentReferences(document);
   // The document is read unvalidated; never hand PostgREST a malformed id.
   const ids = productIds.filter((id) => ID_PATTERN.test(id));
@@ -143,7 +145,7 @@ export async function loadDesignerData(
   locales: readonly string[],
   mode: CampaignModeHooks
 ): Promise<DesignerData> {
-  const shop = shopSettings();
+  const shop = await shopSettings();
   const ids = documentReferences(document).productIds.filter((id) => ID_PATTERN.test(id));
   const columns = CAMPAIGN_PRODUCT_COLUMNS + mode.productColumns;
   const [used, firstPage, codes] = await Promise.all([
@@ -251,7 +253,7 @@ async function renderAndSend(
     recipient: { email: request.to, firstName: null },
     // The sample first name, so {{subscriber.first_name}} shows working.
     mergeValues: { 'subscriber.first_name': sampleSubscriberValues()['subscriber.first_name'] },
-    unsubscribeUrl: previewUnsubscribeUrl(shopSettings().url, request.locale),
+    unsubscribeUrl: previewUnsubscribeUrl(shopUrl(), request.locale),
     mode: request.mode
   });
   const rendered = renderCampaign(request.template.document, context);

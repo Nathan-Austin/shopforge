@@ -400,6 +400,7 @@ import { getEmailConfig } from '@/lib/email/config';
 import { getTranslations } from 'next-intl/server';
 
 import { transactionalOptions } from '@/lib/email/brandStore';
+import { getShopName } from '@/lib/settings/store';
 import { renderOrderConfirmation } from '@/lib/email/orderConfirmation';
 import { renderDisputeNotification } from '@/lib/email/disputeNotification';
 import { requestSubscription } from '@/lib/email/subscribers/service';
@@ -496,7 +497,7 @@ async function notifyOwnerOfDispute(
 
   try {
     const locale = order.locale || DEFAULT_LOCALE;
-    const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+    const shopName = await getShopName();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
     const reference = order.id.slice(0, 8).toUpperCase();
     const currency = (dispute.currency ?? order.currency ?? 'eur').toUpperCase();
@@ -775,7 +776,7 @@ export async function POST(request: Request) {
       const shipping = shippingSnapshot(session);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
       const locale = session.metadata?.locale || 'en';
-      const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+      const shopName = await getShopName();
       const reference = order.id.slice(0, 8).toUpperCase();
       // In the customer's language: the wording comes from the message
       // files, the template only lays it out.

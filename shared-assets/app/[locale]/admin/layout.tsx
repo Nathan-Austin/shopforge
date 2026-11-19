@@ -20,7 +20,8 @@ const NAV_ITEMS = [
   { key: 'orders', path: '/orders' },
   { key: 'discounts', path: '/discounts' },
   { key: 'email', path: '/email' },
-  { key: 'seo', path: '/seo' }
+  { key: 'seo', path: '/seo' },
+  { key: 'settings', path: '/settings' }
 ];
 
 export default async function AdminLayout({ children, params }: AdminLayoutProps) {

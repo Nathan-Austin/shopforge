@@ -20,6 +20,7 @@ import {
   type SubscriberStatus
 } from './rules';
 import { signSubscriberToken, verifySubscriberToken } from './tokens';
+import { getShopName } from '@/lib/settings/store';
 
 /**
  * The subscriber list against the database.
@@ -63,7 +64,7 @@ async function logEvent(supabase: SupabaseClient, subscriberId: string, event: E
 async function sendConfirmation(supabase: SupabaseClient, subscriber: { id: string; email: string; locale: string }): Promise<boolean> {
   const status = await resolveNewsletterStatus();
   if (!status.enabled) return false;
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shopName = await getShopName();
   const t = await getTranslations({ locale: subscriber.locale, namespace: 'Email.subscribe' });
   const url = confirmUrl(status.siteUrl, subscriber.locale, signSubscriberToken(subscriber.id, 'confirm', status.secret));
   const email = renderSubscriptionConfirmation(

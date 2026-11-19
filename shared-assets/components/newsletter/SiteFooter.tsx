@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { subscribeToNewsletter } from '@/lib/email/subscribers/actions';
 import { resolveNewsletterStatus } from '@/lib/email/subscribers/config';
 import NewsletterSignup from './NewsletterSignup';
+import { getShopName } from '@/lib/settings/store';
 
 /**
  * The bottom of every page: the newsletter sign-up, when the shop can
@@ -10,7 +11,7 @@ import NewsletterSignup from './NewsletterSignup';
  */
 export default async function SiteFooter({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Footer' });
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop';
+  const shopName = await getShopName();
   const newsletter = (await resolveNewsletterStatus()).enabled;
 
   return (

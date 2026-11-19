@@ -9,6 +9,7 @@ import { renderOrderConfirmation, type RenderedEmail } from './orderConfirmation
 import { renderRefundNotification } from './refundNotification';
 import { renderShippingNotification } from './shippingNotification';
 import { formatPrice } from '../format';
+import { getShopName } from '../settings/store';
 
 /**
  * The three customer emails for an imaginary order, in a given language and
@@ -20,15 +21,15 @@ import { formatPrice } from '../format';
 
 const REFERENCE = 'A1B2C3D4';
 
-function shop() {
+async function shop() {
   return {
-    name: process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || 'Our shop',
+    name: await getShopName(),
     url: process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') || null
   };
 }
 
 export async function renderSampleEmail(kind: TransactionalKind, locale: string, brand: EmailBrand): Promise<RenderedEmail> {
-  const { name: shopName, url: siteUrl } = shop();
+  const { name: shopName, url: siteUrl } = await shop();
   const ts = await getTranslations({ locale, namespace: 'Admin.email.settings.brand' });
   const options: TransactionalOptions = { brand, shopUrl: siteUrl, defaultLocale: DEFAULT_LOCALE };
   const ordersUrl = siteUrl ? `${siteUrl}/${locale}/account/orders` : 'https://example.com/account/orders';

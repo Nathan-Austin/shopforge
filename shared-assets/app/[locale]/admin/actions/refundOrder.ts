@@ -26,6 +26,7 @@ import {
 } from '@/lib/orders/service';
 import { getStripeServerClient } from '@/lib/stripe/server';
 import { ensureShopOwner } from '../lib/auth';
+import { getShopName } from '@/lib/settings/store';
 
 export type RefundActionError =
   | RefundPlanError
@@ -161,7 +162,7 @@ export async function refundOrder(
   // 4. Tell the customer, in their language, with the owner in copy.
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ?? null;
   const customerLocale = order.locale || context.locale;
-  const shopName = process.env.NEXT_PUBLIC_SHOP_NAME || 'Our shop';
+  const shopName = await getShopName();
   const reference = orderReference(order);
   const refundedCents = order.refundedCents + plan.amountCents;
   const money = (cents: number) => formatPrice(cents, order.currency, customerLocale);
