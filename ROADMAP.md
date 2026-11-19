@@ -55,11 +55,10 @@ finished items, reorder when priorities change, and add new ones. The
 details for each item are in the numbered sections below.
 
 1. **Email marketing and template builder** (section 2d), in the phases
-   listed there, one at a time. A to F, E2 and G1 (model, saved templates
-   and test sends, the designer, subscribers, sending through Resend,
-   provider keys in the dashboard, Mailchimp, the brand and wording on
-   receipts) are done; H (more providers, now that the adapter exists) is
-   what is left.
+   listed there, one at a time. A to G2 (model, saved templates and test
+   sends, the designer, subscribers, sending through Resend, provider keys
+   in the dashboard, Mailchimp, the brand and the wording on receipts) are
+   done; H (more providers, now that the adapter exists) is what is left.
 2. **Section 0**, following `docs/single-codebase-plan.md`. The shared
    admin files moved to `shared-assets/app/[locale]/admin/` and the cached
    settings reader landed with the shop name as its first setting
@@ -197,7 +196,8 @@ details for each item are in the numbered sections below.
       is the decision (2026-11-04); today it is per product and free text
 - [ ] Admin UI for `src/lib/products/config.ts`: tick which product fields the
       shop manages, without editing the file. The columns already all exist,
-      so this needs no migration
+      so this needs no migration. Lands as a `product_fields` key in
+      `store_settings` and a section on `/admin/settings` (plan step 4)
 - [ ] Admin UI for the heat scale: rename or drop the word bands and switch
       how heat appears in the shop (word and number, word only, number only,
       chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
@@ -217,8 +217,8 @@ details for each item are in the numbered sections below.
 - [x] Localized order confirmation, refund and shipping emails — done
       2026-11-04 for all three (strings in `Email.*`); listed here only so
       the next email (marketing) follows the same pattern
-- [ ] Email marketing page in the admin: broken down into phases in
-      section 2d
+- [x] Email marketing page in the admin — done through 2d phase G2 (the
+      remaining phase, H, is more providers)
 - [ ] Import from Shopify and WooCommerce product CSV exports (variants,
       images, prices, stock), and customers where the export allows
 - [ ] Legal page templates: Impressum, AGB, Widerrufsbelehrung, privacy
@@ -571,6 +571,29 @@ with `db push --remote --yes`; the admin guard uses `getClaims()` /
 Checkout Session address shape. Still pinned by create-next-app itself:
 ESLint 9 (deprecated upstream, ESLint 10 exists) and `@types/node` 20.
 
+Decided on 2026-11-19:
+
+- **Languages.** Turkish and Arabic are no longer shipped: the shops this
+  will serve use EU languages, and machine translations of those two were
+  not good enough to keep. The right-to-left machinery stays, language
+  neutral, so a right-to-left locale can be added later without touching
+  the layouts.
+- **No existing shops.** No shop generated so far uses this package or
+  receives updates from it, so compatibility with already-generated shops
+  does not constrain the single-codebase work. The settings reader still
+  falls back to the generated files, because a fresh shop has nothing saved.
+- **Settings.** `store_settings` is a key/JSON table, readable by everyone
+  and written by the owner; secrets never go there (Vault does). Reads are
+  cached per key and expired on save (`updateTag`); a five-minute limit
+  catches edits made outside the admin. Every shop gets the chilli tables
+  (empty in a generic shop) in exchange for one schema. Locales will be
+  read the same cached way at the edge, not through a Vercel token. One
+  `/admin/settings` page with a section per area; email keeps its own.
+- **Working method.** One step at a time, each with its own commit on the
+  branch (separate commits when a step has independent parts), every build
+  check run in the foreground, and a report of what changed, what broke,
+  the checks and the open decisions.
+
 Decided on 2026-11-03:
 
 - Guest checkout stays open, and a guest's orders are attached to an account
@@ -628,9 +651,15 @@ Decided on 2026-11-02:
   the shipping email are in place around it (2026-11-04 to 2026-11-06).
   What is missing is mostly the later-stage pieces: other status emails,
   restock on refund, and stock reservation during checkout.
-- Email marketing (section 2d) is in place through phase F and E2:
-  templates, the designer, subscribers, and campaigns through Resend or
-  Mailchimp.
+- Email marketing (section 2d) is in place through phase G2: templates,
+  the designer, subscribers, campaigns through Resend or Mailchimp, and the
+  shop's brand and wording on the receipt, shipping and refund emails.
+- Store settings have a home: `store_settings` (0012), a cached typed
+  reader (`lib/settings/`), and `/admin/settings` with the shop name as
+  the first section. The plan for moving the other generation-time choices
+  there is `docs/single-codebase-plan.md`.
+- Shipped languages are English and German; any other locale starts as a
+  copy of English.
 
 **Known gaps in the generated store (not build failures):**
 
