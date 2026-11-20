@@ -7,7 +7,18 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(current_setting('request.jwt.claim.sub', true), current_setting('request.jwt.claims', true)::jsonb ->> 'sub'), '')::uuid
 $$;
 create or replace function auth.role() returns text language sql stable as $$ select current_setting('request.jwt.claim.role', true) $$;
-create or replace function auth.jwt() returns jsonb language sql stable as $$ select '{}'::jsonb $$;
+-- The claims PostgREST sets, so a policy can read `aal` (0013) as it does
+-- on Supabase. Tests set request.jwt.claims; an unset one reads as empty.
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb)
+$$;
+-- Supabase's enrolled second factors, enough of the table for 0013's policy.
+create table if not exists auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  status text not null default 'unverified',
+  created_at timestamptz not null default now()
+);
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
