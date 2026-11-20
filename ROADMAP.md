@@ -62,8 +62,9 @@ details for each item are in the numbered sections below.
 2. **Section 0**, following `docs/single-codebase-plan.md`. The shared
    admin files moved to `shared-assets/app/[locale]/admin/` and the cached
    settings reader landed with the shop name as its first setting
-   (`/admin/settings`), both 2026-11-19; next are the other small settings
-   (plan step 3: checkout address and countries, brands, sign-in and MFA).
+   (`/admin/settings`), both 2026-11-19; the checkout address and delivery
+   countries followed on 2026-11-20. Next are the last two small settings
+   (plan step 3: single/multi brand, then sign-in and MFA).
 
 ## 1. Storefront and orders
 
@@ -188,8 +189,9 @@ details for each item are in the numbered sections below.
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
       hardcoded `src/lib/shipping/config.ts`. The table exists since
-      2026-11-19 (`store_settings`, one JSON document per key, see 2d G1);
-      what is left is the keys, the admin forms and the readers
+      2026-11-19 (`store_settings`, one JSON document per key, see 2d G1)
+      and the delivery countries moved into it with the checkout settings
+      on 2026-11-20; what is left is the shipping rates and the currency
 - [ ] Shop currency as a generator choice: ask for it in the CLI (default
       EUR), seed products and the admin form with it, and use it as the
       default for amount discount codes and minimums. One currency per shop
@@ -655,8 +657,10 @@ Decided on 2026-11-02:
   the designer, subscribers, campaigns through Resend or Mailchimp, and the
   shop's brand and wording on the receipt, shipping and refund emails.
 - Store settings have a home: `store_settings` (0012), a cached typed
-  reader (`lib/settings/`), and `/admin/settings` with the shop name as
-  the first section. The plan for moving the other generation-time choices
+  reader (`lib/settings/`, falling back to the shop's environment and its
+  generated files), and `/admin/settings` with a Shop section (the name)
+  and a Checkout section (who collects the delivery address, and where the
+  shop delivers). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.

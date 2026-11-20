@@ -41,7 +41,7 @@ need an answer before code is written.
 |---|---|---|---|---|---|---|
 | 1 | Store mode (`generic` / `chilli`) | `--mode=` on both scripts, default `chilli` | Which `store-modes/<mode>/` directory is copied (admin, store components, `0001_init.sql`, seeds, brand row) and the field picker's catalogue filter | Nothing reads "the mode": it is baked into which files exist | `store_settings:shop` → `{ mode }`, with the chilli parts as a feature toggle. See section 3; this is the large one | L |
 | 2 | Locales and default locale | positional args 2 and 3, default `en` and `en,de` | `src/i18n/config.ts` (`LOCALES`, `DEFAULT_LOCALE`); message files copied from English for any language without one | Routing (`src/proxy.ts`), hreflang, sitemap, feeds, emails, the brand form's footer boxes | `store_settings:languages` → `{ locales, defaultLocale }`. Routing reads it at the edge, so it needs a cached read (see Q3). Message files for every supported language ship in the repo; a shop switches them on | M |
-| 3 | Delivery address collected by (`form` / `stripe`) | `--shipping=` on the extend script | `src/lib/checkout/config.ts` `CHECKOUT_CONFIG.shippingAddress` | Checkout page, checkout session route, webhook | `store_settings:checkout` → `{ shippingAddress, allowedCountries }` | S |
+| 3 | Delivery address collected by (`form` / `stripe`) | `--shipping=` on the extend script | `src/lib/checkout/config.ts` `CHECKOUT_CONFIG.shippingAddress` | Checkout page, checkout session route, webhook | `store_settings:checkout` → `{ shippingAddress, allowedCountries }` — done 2026-11-20 | S |
 | 4 | Skip Supabase (`--skip-supabase`) | flag, or `SHOPFORGE_SKIP_SUPABASE` | Placeholder `.env.local`; no `db push` | Nothing at runtime | Disappears: the deploy button and Vercel's Supabase integration create and link the project (section 0). Stays only as a developer/CI switch | S |
 | 5 | Shop folder and package name | positional arg 1 | Folder name, `package.json` name, default `NEXT_PUBLIC_SHOP_NAME` | Shop name in emails, SEO, header (see #10) | Folder disappears (it is the fork). Name moves to #10 | — |
 
@@ -72,7 +72,7 @@ need an answer before code is written.
 | # | What | File | Route | Effort |
 |---|---|---|---|---|
 | 14 | Shipping box, item weight, flat rate, free-shipping threshold, label, currency | `src/lib/shipping/config.ts` | `store_settings:shipping` (already a roadmap item: "Store settings (currency, shipping zones)") | M |
-| — | Allowed delivery countries | `CHECKOUT_CONFIG.allowedCountries` | with #3 | S |
+| — | Allowed delivery countries | `CHECKOUT_CONFIG.allowedCountries` | with #3 — done 2026-11-20 | S |
 | — | Currency | per product, free text in the product form; `EUR` in shipping config | `store_settings:shop` → `{ currency }`, one per shop (decided 2026-11-04). Needs a migration that checks every product matches before the per-product column goes read-only | M |
 
 ## 5. What differs between the store modes
@@ -115,8 +115,14 @@ is retired.
    page). Any read failure falls back to the generated value and logs why.
 3. **Small settings** (S each): ~~shop name (#12)~~ done 2026-11-19 (all 16
    readers, the header included, which showed "🌶️ Store" in every mode;
-   `/admin/settings` with a "Shop" section). Still to do: checkout address
-   and countries (#3), single/multi brand (#6), sign-in and MFA (#7, #8).
+   `/admin/settings` with a "Shop" section). ~~Checkout address and
+   countries (#3)~~ done 2026-11-20: `store_settings:checkout`, the
+   session route, the checkout page and form, and the structured data
+   (`shippingPolicy()` is async and `shopReturnPolicy()` replaces reading
+   the config in the pages), with a country picker on `/admin/settings`.
+   Fallbacks can now read the generated files as well as the environment
+   (`lib/settings/generated.ts`), which the remaining two need.
+   Still to do: single/multi brand (#6), sign-in and MFA (#7, #8).
    Each one: a schema and fallback in `lib/settings/schema.ts`, a section
    on `/admin/settings`, readers switched to `getStoreSetting()`.
 4. **Product fields and heat scale** (M). Already on the roadmap; no
