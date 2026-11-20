@@ -82,7 +82,7 @@ and one chilli-only file (`Chip.tsx`). Grouped by what would replace them:
 
 | Group | Files | Why they differ | Route |
 |---|---|---|---|
-| **Schema** | `migrations/0001_init.sql` | Chilli adds `chilli_types`, `products_chilli_types`, `heat_level` on products and brands, their RLS and the views that expose them | Ship the chilli tables to every shop (empty and unused in a generic shop), as a new numbered migration rather than an edit to `0001`. Same principle as product fields: every column exists, settings decide what is used. Existing generic shops gain empty tables; existing chilli shops already have them (the migration is `if not exists`) |
+| **Schema** | `migrations/0001_init.sql` | Chilli adds `chilli_types`, `products_chilli_types`, `heat_level` and `scoville_shu` on products, their RLS and the view that exposes them (not on brands — the 2026-11-19 note said so and was wrong) | ~~Ship the chilli tables to every shop~~ **done 2026-11-20 in `lib/migrations/0014_chilli_everywhere.sql`**: a no-op in a chilli shop, empty tables and two more null columns in a generic one, `products_public` recreated with heat in it. The two `0001_init` files can be collapsed into one once nothing else differs |
 | **Seeds** | `seeds.sql`, `brand-single.sql` | Different example categories, brands, pepper types; `__HEAT_n__` rescaled | Seeds leave the migration series. The wizard offers "add example products" per mode, or nothing |
 | **Admin product pages** | `products/page.tsx`, `products/new`, `products/[id]`, `ProductForm.tsx`, `createProduct.ts`, `updateProduct.ts`, `deleteProduct.ts`, `ImageUploader.tsx` | Heat, chilli types and Scoville fields; chilli-type joins on save and delete | One set of files that render the chilli fields when `mode === 'chilli'`. The field catalogue already marks chilli-only fields (`modes: ['chilli']`), so most of the form can be driven by it |
 | **Storefront** | `ProductCard`, `ProductArchive`, `ShopArchive`, `ProductExtras`, `BrandCard`, `types.ts`, `Chip.tsx` | Heat meter, heat filter and sort, chilli-type chips | Same: one component, a mode check around the chilli parts. `ShopArchive` already isolates the fetching, so the query adds the chilli join only when enabled |
@@ -178,6 +178,27 @@ is retired.
 6. **Chilli as a toggle** (L, two or three sessions). The chilli-tables
    migration, then the admin pages, then the storefront, then the starters.
    Only after this does `--mode` stop meaning "copy a different directory".
+   - **Session 1 — done 2026-11-20.** `0014_chilli_everywhere.sql` (with
+     an SQL test that runs in both modes and fails without it), and
+     `shop.mode`: the generator writes `STORE_MODE` into
+     `src/lib/products/config.ts`, the setting falls back to it, and the
+     two places that had been inferring the mode — `availableProductFields()`
+     from the heat scale, `getHeatScale()` from whether a scale was
+     generated — read it instead. Three admin files stopped differing and
+     moved to `shared-assets`: `ImageUploader`, `deleteProduct` and the
+     product list (its heat column is now a mode check).
+   - **Session 2 — the admin product pages.** `ProductForm`, the new and
+     edit pages, and the create and update actions: the chilli-type
+     multi-select and the join-table sync on save, behind the mode. The
+     care needed is in the join sync — a generated chilli store once wiped
+     a product's chilli types on every save (ROADMAP section 4), and that
+     is the bug to not reintroduce.
+   - **Session 3 — the storefront and the switch.** `ProductCard`,
+     `ProductArchive`, `ShopArchive`, `ProductExtras`, `BrandCard`,
+     `types.ts` (which the admin list is currently working around) and the
+     email starters, then the mode picker on `/admin/settings` — deliberately
+     not shipped before the components follow it, so the switch never
+     half-works — and finally one `0001_init` for both modes.
 7. **Languages at runtime** (M). `src/proxy.ts` reads the locales through
    the same cached reader (Q3).
 8. **Then** section 0's later items: the deploy button, the first-run wizard

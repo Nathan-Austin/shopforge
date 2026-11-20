@@ -90,8 +90,11 @@ details for each item are in the numbered sections below.
    shipping half of step 5 — rates, label, parcel weights and the home
    country — followed the same day, and so did 5b, one currency per shop:
    no migration was needed in the end, a save-time guard instead (the
-   dry run first, as agreed). Step 5 is done. Next is plan step 6, the
-   big one: the chilli mode as a feature toggle (two or three sessions).
+   dry run first, as agreed). Step 5 is done, and step 6 has started:
+   session 1 landed 2026-11-20 — every shop has the chilli tables
+   (`0014`), the store mode is a setting, and three admin product files
+   stopped differing. Session 2 is the product form, its pages and the
+   create/update actions.
 3. **Storefront content without code** (section 2f), once the settings
    above are in place. The logo landed 2026-11-20 (Q5 closed); next are
    the home page sections, then navigation. These are what make a shop
