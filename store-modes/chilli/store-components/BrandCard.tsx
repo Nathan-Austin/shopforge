@@ -4,19 +4,21 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import type { StoreBrand, StoreProduct } from './types';
-import { formatHeat, heatFraction } from '@/lib/products/heat';
+import { formatHeatOn, heatFractionOn, type HeatScale } from '@/lib/products/heat';
 
 interface BrandCardProps {
   brand: StoreBrand;
   products?: StoreProduct[];
   locale?: string;
   websiteUrl?: string;
+  /** The shop's heat scale, passed down from the server page. */
+  heatScale?: HeatScale | null;
 }
 
 // Heat is a number on the shop's own scale, so colour by where it sits
 // rather than by matching words.
-const heatColor = (heatLevel?: string | number | null) => {
-  const fraction = heatFraction(heatLevel);
+const heatColor = (scale: HeatScale | null, heatLevel?: string | number | null) => {
+  const fraction = heatFractionOn(scale, heatLevel);
   if (fraction <= 0.3) return 'bg-green-400';
   if (fraction <= 0.6) return 'bg-yellow-400';
   if (fraction <= 0.8) return 'bg-orange-400';
@@ -27,7 +29,8 @@ export default function BrandCard({
   brand,
   products,
   locale: propLocale,
-  websiteUrl
+  websiteUrl,
+  heatScale = null
 }: BrandCardProps) {
   const hookLocale = useLocale();
   const locale = propLocale || hookLocale;
@@ -110,7 +113,7 @@ export default function BrandCard({
                   </div>
                   {product.heatLevel && (
                     <div className="absolute -top-1 -right-1 bg-white rounded-full p-1 shadow-sm">
-                      <div className={`w-3 h-3 rounded-full ${heatColor(product.heatLevel)}`} />
+                      <div className={`w-3 h-3 rounded-full ${heatColor(heatScale, product.heatLevel)}`} />
                     </div>
                   )}
                 </div>
@@ -137,9 +140,9 @@ export default function BrandCard({
                     </Link>
                     {product.heatLevel && (
                       <div className="flex items-center gap-1 ml-2">
-                        <div className={`w-2 h-2 rounded-full ${heatColor(product.heatLevel)}`} />
+                        <div className={`w-2 h-2 rounded-full ${heatColor(heatScale, product.heatLevel)}`} />
                         <span className="text-xs text-text-muted">
-                          {formatHeat(product.heatLevel)}
+                          {formatHeatOn(heatScale, product.heatLevel)}
                         </span>
                       </div>
                     )}

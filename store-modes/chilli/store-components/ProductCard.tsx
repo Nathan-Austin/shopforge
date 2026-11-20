@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import type { ReactNode } from 'react';
 import type { StoreProduct } from './types';
-import { formatHeat } from '@/lib/products/heat';
+import { formatHeatOn, type HeatScale } from '@/lib/products/heat';
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -21,6 +21,8 @@ interface ProductCardProps {
    * is invalid HTML and swallows the click.
    */
   action?: ReactNode;
+  /** The shop's heat scale, passed down from the server page. */
+  heatScale?: HeatScale | null;
 }
 
 export default function ProductCard({
@@ -28,6 +30,7 @@ export default function ProductCard({
   specialPrice,
   locale: propLocale,
   action,
+  heatScale = null,
 }: ProductCardProps) {
   const hookLocale = useLocale();
   const locale = propLocale || hookLocale;
@@ -68,7 +71,7 @@ export default function ProductCard({
             )}
             {product.heatLevel !== null && product.heatLevel !== undefined && (
               <span className="text-xs font-bold text-orange-600 uppercase">
-                {formatHeat(product.heatLevel)}
+                {formatHeatOn(heatScale, product.heatLevel)}
               </span>
             )}
           </div>

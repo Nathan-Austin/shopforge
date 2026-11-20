@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import type { Category, StoreBrand } from '@/components/store/types';
 import { requireShopOwner } from '../../lib/auth';
 import { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
-import { getProductFieldKeys } from '@/lib/settings/store';
+import { getHeatScale, getProductFieldKeys } from '@/lib/settings/store';
 import ProductForm, { type ProductFormProduct } from '../../components/ProductForm';
 import { updateProduct } from '../../actions/updateProduct';
 import { deleteProduct } from '../../actions/deleteProduct';
@@ -55,6 +55,7 @@ export default async function EditProductPage({ params }: ProductPageProps) {
 
   // The fields this shop manages, as saved under Admin → Settings.
   const fieldGroups = enabledProductFieldGroupsFrom(await getProductFieldKeys());
+  const heatScale = await getHeatScale();
   return (
     <div className="space-y-4">
       <div>
@@ -64,6 +65,7 @@ export default async function EditProductPage({ params }: ProductPageProps) {
 
       <ProductForm
         fieldGroups={fieldGroups}
+        heatScale={heatScale}
         product={product}
         categories={categories}
         brands={brands}

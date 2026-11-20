@@ -5,13 +5,13 @@
 
 import type { CampaignModeHooks } from '@/lib/email/campaigns/server';
 import type { StarterDefinition } from '@/lib/email/campaigns/templates';
-import { formatHeat } from '@/lib/products/heat';
+import { formatHeatOn } from '@/lib/products/heat';
 
 export const CAMPAIGN_MODE: CampaignModeHooks = {
   productColumns: ', heat_level, scoville_shu',
-  productExtras: (row) => {
+  productExtras: (row, { heatScale }) => {
     const lines: string[] = [];
-    const heat = formatHeat(row.heat_level as number | null);
+    const heat = formatHeatOn(heatScale, row.heat_level as number | null);
     if (heat) lines.push(`🌶 ${heat}`);
     if (typeof row.scoville_shu === 'number' && row.scoville_shu > 0) {
       lines.push(`${row.scoville_shu.toLocaleString('en')} SHU`);

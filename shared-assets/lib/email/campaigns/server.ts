@@ -25,7 +25,8 @@ import type { MergeValues } from './mergeTags';
 import { campaignStrings, renderCampaign, type CampaignProduct, type CampaignRenderContext } from './render';
 import { documentReferences, type EmailTemplate } from './templates';
 import { maskEmail, testSendLogEntry, testSendLogFile, type TestSendResult } from './testSendLog';
-import { getShopName } from '../../settings/store';
+import type { HeatScale } from '../../products/heat';
+import { getHeatScale, getShopName } from '../../settings/store';
 
 /**
  * Campaign rendering and test sends against the shop's data.
@@ -35,12 +36,22 @@ import { getShopName } from '../../settings/store';
  * and discount codes through the owner's RLS.
  */
 
+/**
+ * What a mode's hooks are told about the shop, read once per render rather
+ * than by the hook itself: the hooks stay plain functions, which is what
+ * makes them easy to pass in from a test.
+ */
+export interface CampaignModeContext {
+  /** The shop's heat scale, or null where the shop does not track heat. */
+  heatScale: HeatScale | null;
+}
+
 /** What differs between store modes; each mode's admin passes its own. */
 export interface CampaignModeHooks {
   /** Extra products_public columns, starting with a comma (`, heat_level`). */
   productColumns: string;
   /** Lines under a product's name, e.g. a chilli shop's heat. */
-  productExtras: (row: Record<string, unknown>) => string[];
+  productExtras: (row: Record<string, unknown>, context: CampaignModeContext) => string[];
 }
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -87,12 +98,13 @@ export async function buildCampaignContext(
     getTranslations({ locale: options.locale, namespace: 'Email.campaign' })
   ]);
 
+  const modeContext: CampaignModeContext = { heatScale: await getHeatScale() };
   const products: Record<string, CampaignProduct> = {};
   for (const row of (productsResult.data ?? []) as unknown as (CampaignProductRow & Record<string, unknown>)[]) {
     const product = toCampaignProduct(row, {
       locale: options.locale,
       siteUrl: shop.url,
-      extras: options.mode.productExtras(row)
+      extras: options.mode.productExtras(row, modeContext)
     });
     if (product) products[row.id] = product;
   }
@@ -128,9 +140,9 @@ function discountWording(t: Translate): DiscountWording {
 /** How many products the designer's picker shows before the owner searches. */
 export const CATALOG_PAGE = 24;
 
-function catalogRows(rows: unknown, mode: CampaignModeHooks): CatalogProduct[] {
+function catalogRows(rows: unknown, mode: CampaignModeHooks, context: CampaignModeContext): CatalogProduct[] {
   return ((rows ?? []) as (CampaignProductRow & Record<string, unknown>)[]).map((row) =>
-    toCatalogProduct(row, mode.productExtras(row))
+    toCatalogProduct(row, mode.productExtras(row, context))
   );
 }
 
@@ -154,8 +166,10 @@ export async function loadDesignerData(
     supabase.from('discount_codes').select(DISCOUNT_COLUMNS).order('code')
   ]);
 
+  const modeContext: CampaignModeContext = { heatScale: await getHeatScale() };
   const catalog = new Map<string, CatalogProduct>();
-  for (const product of [...catalogRows(used.data, mode), ...catalogRows(firstPage.data, mode)]) catalog.set(product.id, product);
+  for (const product of [...catalogRows(used.data, mode, modeContext), ...catalogRows(firstPage.data, mode, modeContext)])
+    catalog.set(product.id, product);
 
   const now = new Date();
   const liveCodes = ((codes.data ?? []) as DiscountRow[]).map(toDiscountCode).filter((code) => {
@@ -193,7 +207,7 @@ export async function searchCatalog(supabase: SupabaseClient, query: string, mod
     .ilike('name', pattern)
     .order('name')
     .limit(CATALOG_PAGE);
-  return catalogRows(data, mode);
+  return catalogRows(data, mode, { heatScale: await getHeatScale() });
 }
 
 export interface TestSendRequest {

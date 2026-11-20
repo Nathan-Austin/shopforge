@@ -1,11 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 
-import {
-  formatHeat,
-  heatFraction,
-  heatScale,
-  heatWord
-} from '@/lib/products/heat';
+import { formatHeatOn, heatFractionOn, heatWordOn } from '@/lib/products/heat';
+import { getHeatScale } from '@/lib/settings/store';
 import { many } from '@/lib/supabase/relations';
 import { createClient } from '@/lib/supabase/server';
 import Chip from './Chip';
@@ -59,13 +55,14 @@ export default async function ProductExtras({
 }: ProductExtrasProps) {
   const t = await getTranslations({ locale, namespace: 'Product' });
   const chilliTypes = await loadChilliTypes(productId);
+  const heatScale = await getHeatScale();
 
   const hasHeat = heatLevel !== null && heatLevel !== undefined && heatScale !== null;
   const hasScoville = typeof scovilleShu === 'number' && scovilleShu > 0;
   if (!hasHeat && !hasScoville && chilliTypes.length === 0) return null;
 
-  const word = hasHeat ? heatWord(heatLevel) : null;
-  const percent = Math.round(heatFraction(heatLevel) * 100);
+  const word = hasHeat ? heatWordOn(heatScale, heatLevel) : null;
+  const percent = Math.round(heatFractionOn(heatScale, heatLevel) * 100);
 
   return (
     <section aria-labelledby="product-heat" className="space-y-3">
@@ -76,7 +73,7 @@ export default async function ProductExtras({
       {hasHeat && heatScale && (
         <div className="space-y-1">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-lg font-bold text-orange-600">{formatHeat(heatLevel)}</span>
+            <span className="text-lg font-bold text-orange-600">{formatHeatOn(heatScale, heatLevel)}</span>
             {word && heatScale.display === 'number' && (
               <span className="text-sm text-gray-600">{word}</span>
             )}
@@ -112,7 +109,7 @@ export default async function ProductExtras({
                 <Chip>
                   {type.name}
                   {type.heatLevel !== null && type.heatLevel !== undefined && (
-                    <span className="text-text-muted">· {formatHeat(type.heatLevel)}</span>
+                    <span className="text-text-muted">· {formatHeatOn(heatScale, type.heatLevel)}</span>
                   )}
                 </Chip>
               </li>

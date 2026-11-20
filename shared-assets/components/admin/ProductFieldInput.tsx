@@ -8,12 +8,14 @@ import {
   NUTRITION_KEYS,
   type ProductField
 } from '@/lib/products/catalogue';
-import { heatLevels, heatWord } from '@/lib/products/heat';
+import { heatLevelsOn, heatWordOn, type HeatScale } from '@/lib/products/heat';
 
 interface ProductFieldInputProps {
   field: ProductField;
   /** The product being edited, or undefined when creating one. */
   values?: Record<string, unknown> | null;
+  /** The shop's heat scale, as the page read it; null when it has none. */
+  heatScale?: HeatScale | null;
 }
 
 function asString(value: unknown): string {
@@ -37,7 +39,8 @@ function asRecord(value: unknown): Record<string, number> {
  */
 export default function ProductFieldInput({
   field,
-  values
+  values,
+  heatScale = null
 }: ProductFieldInputProps) {
   const raw = values?.[field.column];
   const help = field.help ? (
@@ -169,7 +172,7 @@ export default function ProductFieldInput({
       // Heat gets a dropdown over the shop's own scale rather than a free
       // number box, so the words stay meaningful.
       if (field.key === 'heat_level') {
-        const levels = heatLevels();
+        const levels = heatLevelsOn(heatScale);
         return (
           <div className="space-y-2">
             <Label htmlFor={field.key}>{field.label}</Label>
@@ -181,7 +184,7 @@ export default function ProductFieldInput({
             >
               <option value="">Not set</option>
               {levels.map((level) => {
-                const word = heatWord(level);
+                const word = heatWordOn(heatScale, level);
                 return (
                   <option key={level} value={level}>
                     {word ? `${level} — ${word}` : String(level)}

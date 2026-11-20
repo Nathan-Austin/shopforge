@@ -35,6 +35,11 @@ export const CUSTOMER_SIGN_IN_METHODS = ['password', 'otp'] as const;
 /** Whether the admin asks for an authenticator code as well as the password. */
 export const ADMIN_MFA_MODES = ['required', 'off'] as const;
 
+/** How heat reads in the shop. Mirrors HeatDisplay in lib/products/heat.ts. */
+export const HEAT_DISPLAYS = ['number', 'word', 'both', 'peppers'] as const;
+
+export const HEAT_BAND_WORD_MAX = 40;
+
 /** Where a shop delivers until it says otherwise. */
 export const DEFAULT_ALLOWED_COUNTRIES = ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'];
 
@@ -62,6 +67,22 @@ export const STORE_SETTING_SCHEMAS = {
   auth: z.object({
     customerSignIn: z.enum(CUSTOMER_SIGN_IN_METHODS),
     adminMfa: z.enum(ADMIN_MFA_MODES)
+  }),
+  heat: z.object({
+    // Top of the shop's scale; levels are stored on it, so changing this
+    // rewrites the rows (see rescaleHeat and the settings action).
+    max: z.number().int().min(1).max(100),
+    display: z.enum(HEAT_DISPLAYS),
+    bands: z
+      .array(
+        z.object({
+          word: z.string().trim().min(1, { message: 'Enter a word' }).max(HEAT_BAND_WORD_MAX),
+          upTo: z.number().int().min(0).max(100)
+        })
+      )
+      .max(20)
+      // Ascending, so the first band a level fits inside is its word.
+      .transform((bands) => [...bands].sort((a, b) => a.upTo - b.upTo))
   }),
   product_fields: z.object({
     // Catalogue keys. Which keys exist is the product catalogue's business
@@ -92,6 +113,8 @@ export type GeneratedConfig = {
   checkout?: unknown;
   auth?: unknown;
   productFields?: unknown;
+  /** The generated HEAT_SCALE, or null in a store mode without heat. */
+  heat?: unknown;
 };
 
 /** Where a fallback may look: the environment and the generated files. */
@@ -121,6 +144,13 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     // in with, and a second factor on the admin.
     const parsed = STORE_SETTING_SCHEMAS.auth.safeParse(generated.auth);
     return parsed.success ? parsed.data : { customerSignIn: 'password', adminMfa: 'required' };
+  },
+  heat: ({ generated = {} }) => {
+    // The generated HEAT_SCALE. A shop whose mode has no heat never reads
+    // this setting (getHeatScale() answers null before it gets here), so
+    // the default below is only for a chilli shop with an unusable config.
+    const parsed = STORE_SETTING_SCHEMAS.heat.safeParse(generated.heat);
+    return parsed.success ? parsed.data : { max: 10, display: 'both', bands: [] };
   },
   product_fields: ({ generated = {} }) => {
     // PRODUCT_FIELD_KEYS from the generated src/lib/products/config.ts,

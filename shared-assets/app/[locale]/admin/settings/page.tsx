@@ -3,15 +3,17 @@ import { getTranslations } from 'next-intl/server';
 import { countriesByName } from '@/lib/checkout/countries';
 import { availableProductFields, PRODUCT_FIELD_GROUPS } from '@/lib/products/catalogue';
 import { STORE_SETTING_SCHEMAS, type StoreSettingKey } from '@/lib/settings/schema';
-import { getStoreSetting } from '@/lib/settings/store';
+import { getHeatScale, getStoreSetting } from '@/lib/settings/store';
 import {
   saveAuthSettings,
   saveCheckoutSettings,
+  saveHeatSettings,
   saveProductFieldSettings,
   saveShopSettings
 } from '../actions/storeSettings';
 import AuthSettingsForm from '../components/AuthSettingsForm';
 import CheckoutSettingsForm from '../components/CheckoutSettingsForm';
+import HeatSettingsForm from '../components/HeatSettingsForm';
 import ProductFieldsForm from '../components/ProductFieldsForm';
 import ShopSettingsForm from '../components/ShopSettingsForm';
 import { requireShopOwner } from '../lib/auth';
@@ -31,7 +33,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
 
   // Which sections have a row of their own, read fresh (not through the
   // cache) so each hint is right straight after a save.
-  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth', 'product_fields'];
+  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth', 'product_fields', 'heat'];
   const { data: rows } = await supabase.from('store_settings').select('key, value').in('key', keys);
   const isSaved = (key: StoreSettingKey) => {
     const row = rows?.find((candidate) => candidate.key === key);
@@ -42,6 +44,8 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
   const checkout = await getStoreSetting('checkout');
   const auth = await getStoreSetting('auth');
   const productFields = await getStoreSetting('product_fields');
+  // Null in a shop whose store mode does not track heat; it gets no section.
+  const heat = await getHeatScale();
 
   // Every field this shop could offer, grouped for the picker.
   const available = availableProductFields();
@@ -81,6 +85,13 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         keys={productFields.keys}
         fromDefault={!isSaved('product_fields')}
       />
+      {heat && (
+        <HeatSettingsForm
+          save={saveHeatSettings.bind(null, { locale })}
+          scale={heat}
+          fromDefault={!isSaved('heat')}
+        />
+      )}
     </div>
   );
 }

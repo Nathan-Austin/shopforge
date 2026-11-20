@@ -883,7 +883,8 @@ cat > src/messages/en.json <<'EOF'
           "not_authorized": "You are not allowed to do that.",
           "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Enter a name of up to 80 characters.",
-          "failed": "The settings could not be saved."
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
         }
       },
       "checkout": {
@@ -906,7 +907,8 @@ cat > src/messages/en.json <<'EOF'
           "not_authorized": "You are not allowed to do that.",
           "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Pick at least one country you deliver to.",
-          "failed": "The settings could not be saved."
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
         }
       },
       "auth": {
@@ -931,7 +933,8 @@ cat > src/messages/en.json <<'EOF'
           "not_authorized": "You are not allowed to do that.",
           "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Pick one option in each group.",
-          "failed": "The settings could not be saved."
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
         }
       },
       "productFields": {
@@ -947,7 +950,39 @@ cat > src/messages/en.json <<'EOF'
           "not_authorized": "You are not allowed to do that.",
           "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Those fields could not be saved.",
-          "failed": "The settings could not be saved."
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
+        }
+      },
+      "heat": {
+        "heading": "Heat",
+        "hint": "How hot your products are, and how that reads in the shop.",
+        "fromDefault": "Not saved yet: this is the scale the shop was set up with. Save to make it yours.",
+        "max": "Top of the scale",
+        "maxHint": "Heat runs from 0 to this number. Ten is a good default; twenty suits a shop that wants finer steps.",
+        "rescaleWarning": "Saving moves every product from the {from}-point scale to the {to}-point one, keeping each one in proportion. Nothing is lost, but the numbers on your products will change.",
+        "displayHeading": "How heat reads",
+        "display_number": "The number",
+        "display_word": "The word",
+        "display_both": "Word and number",
+        "display_peppers": "Chilli icons",
+        "displayEmpty": "Nothing, until a product has heat",
+        "bandsHeading": "Words",
+        "bandsHint": "Each word covers everything up to its number, so the first one a product fits inside is the word it gets.",
+        "bandsEmpty": "No words: heat shows as a number only.",
+        "bandWord": "Word",
+        "bandUpTo": "Up to",
+        "bandAdd": "Add a word",
+        "bandRemove": "Remove",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. The shop follows the new scale.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
+          "invalid": "Check the scale and the words, then try again.",
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
         }
       }
     },
@@ -2254,7 +2289,8 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Geben Sie einen Namen mit höchstens 80 Zeichen ein.",
-          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
         }
       },
       "checkout": {
@@ -2277,7 +2313,8 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Wählen Sie mindestens ein Lieferland aus.",
-          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
         }
       },
       "auth": {
@@ -2302,7 +2339,8 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Wählen Sie in jeder Gruppe eine Option.",
-          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
         }
       },
       "productFields": {
@@ -2318,7 +2356,39 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Diese Felder konnten nicht gespeichert werden.",
-          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
+        }
+      },
+      "heat": {
+        "heading": "Schärfe",
+        "hint": "Wie scharf Ihre Produkte sind und wie das im Shop erscheint.",
+        "fromDefault": "Noch nicht gespeichert: Das ist die Skala aus der Einrichtung. Speichern Sie sie, um sie festzulegen.",
+        "max": "Obergrenze der Skala",
+        "maxHint": "Schärfe reicht von 0 bis zu dieser Zahl. Zehn ist ein guter Standard, zwanzig für feinere Abstufungen.",
+        "rescaleWarning": "Beim Speichern werden alle Produkte von der {from}er- auf die {to}er-Skala umgerechnet, jeweils im gleichen Verhältnis. Es geht nichts verloren, aber die Zahlen an Ihren Produkten ändern sich.",
+        "displayHeading": "Darstellung der Schärfe",
+        "display_number": "Die Zahl",
+        "display_word": "Das Wort",
+        "display_both": "Wort und Zahl",
+        "display_peppers": "Chili-Symbole",
+        "displayEmpty": "Nichts, solange ein Produkt keine Schärfe hat",
+        "bandsHeading": "Wörter",
+        "bandsHint": "Jedes Wort gilt bis zu seiner Zahl; ein Produkt erhält das erste Wort, in dessen Bereich es fällt.",
+        "bandsEmpty": "Keine Wörter: Die Schärfe erscheint nur als Zahl.",
+        "bandWord": "Wort",
+        "bandUpTo": "Bis",
+        "bandAdd": "Wort hinzufügen",
+        "bandRemove": "Entfernen",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Der Shop folgt der neuen Skala.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
+          "invalid": "Prüfen Sie Skala und Wörter und versuchen Sie es erneut.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
         }
       }
     },

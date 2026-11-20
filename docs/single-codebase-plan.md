@@ -144,15 +144,17 @@ is retired.
    product pages reading it, the two `ProductForm`s taking the grouped
    fields as a prop, and a picker on `/admin/settings`. No migration, as
    expected: every column already exists.
-   The heat scale is what is left, and it waits on Q4, whose answer
-   changed once the column type and the view that depends on it were
-   looked at. Shape of the work: `lib/products/heat.ts` loses its
-   module-level scale the way the catalogue lost its key list (everything
-   through the `*On` functions), the scale is read by the server parents
-   and passed into `ProductCard`, `ProductArchive`, `ProductExtras`,
-   `BrandCard`, `ProductFieldInput` and the chilli email starters, the
-   generator stops rescaling `__HEAT_n__` seeds, and `/admin/settings`
-   gains the scale, the display choice and the word bands.
+   ~~The heat scale~~ done 2026-11-20 on answer (c) to Q4:
+   `lib/products/heat.ts` lost its module-level scale the way the
+   catalogue lost its key list (everything goes through the `*On`
+   functions), the server parents read `getHeatScale()` and pass it into
+   `ProductCard`, `ProductArchive`, `ProductExtras`, `BrandCard`,
+   `ProductFieldInput` and the chilli email starters, and
+   `/admin/settings` has the scale, the display choice and the word bands.
+   Storage is unchanged, so the generator still rescales `__HEAT_n__`
+   seeds; changing the scale rewrites the rows instead (`rescaleHeat`).
+   A generic shop has no scale and never reads the row — which store modes
+   track heat is still step 6's question. **Step 4 is complete.**
 5. **Shipping and currency** (M). The currency migration is the risky one;
    it gets its own session and a dry-run query first. Includes a home
    country setting (decided 2026-11-20): the one country the return-policy
@@ -207,10 +209,13 @@ first steps).
     and the display code stays exactly as it is. The loss is only at the
     moment of a rescale, which is inherent to rescaling.
 
-  *Recommendation (revised after looking): (c).* Scale changes are rare
-  and one-off, the rounding cost is the same as (b) at the moment it
-  happens, and it avoids both the type migration and the view rebuild.
-  **Needs a decision before the heat half of step 4 is written.**
+  *Answered 2026-11-20: (c).* No migration and no rounding drift on
+  re-saves. Changing `max` rewrites the rows once, in the settings action:
+  one statement per level rather than per product, walked in the direction
+  that moves levels away from the ones not yet done, so no row is caught
+  twice. The setting is written before the rows on purpose — if the
+  rewrite fails, products read low against the new scale, which is wrong
+  but in range, rather than reading 14/10.
 - **Q5. One logo.** The email brand has a logo; the SEO structured data
   (`lib/seo/store.ts`) reads `NEXT_PUBLIC_SHOP_LOGO_URL`; the site header
   shows only the name. Merge into one shop setting that the email brand,

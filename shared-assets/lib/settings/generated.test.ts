@@ -28,6 +28,24 @@ describe('the generated configuration', () => {
     expect(settingFallback('auth', { generated: GENERATED_CONFIG })).toEqual(generated);
   });
 
+  it('holds a heat scale the schema accepts, in a shop that tracks heat', () => {
+    // A generic shop has no scale at all, and getHeatScale() answers null
+    // for it without ever reading the setting.
+    if (!GENERATED_CONFIG.heat) {
+      expect(GENERATED_CONFIG.heat).toBeNull();
+      return;
+    }
+    const parsed = STORE_SETTING_SCHEMAS.heat.safeParse(GENERATED_CONFIG.heat);
+    expect(parsed.error?.issues ?? []).toEqual([]);
+
+    // The shop's own scale, not the shipped ten-point default: a shop
+    // generated with SHOPFORGE_HEAT_MAX=20 must come up on twenty.
+    const generated = GENERATED_CONFIG.heat as { max: number; display: string };
+    const fallback = settingFallback('heat', { generated: GENERATED_CONFIG });
+    expect(fallback.max).toBe(generated.max);
+    expect(fallback.display).toBe(generated.display);
+  });
+
   it('is what the checkout setting falls back to', () => {
     const generated = GENERATED_CONFIG.checkout as { shippingAddress: string; allowedCountries: string[] };
     const fallback = settingFallback('checkout', { generated: GENERATED_CONFIG });

@@ -12,7 +12,7 @@ import {
   type ArchiveQuery,
   type ArchiveSort
 } from '@/lib/products/archive';
-import { formatHeat, heatScale } from '@/lib/products/heat';
+import { formatHeatOn, type HeatScale } from '@/lib/products/heat';
 import type { StoreProduct, ChilliType, Category } from './types';
 import ProductCard from './ProductCard';
 import Chip from './Chip';
@@ -27,9 +27,6 @@ const SORT_LABEL_KEYS: Record<ArchiveSort, string> = {
 
 const PAGE_SIZE = 12;
 
-// Heat is stored as a number; the filter buttons are the shop's word bands.
-const HEAT_WORDS = heatScale?.bands.map((band) => band.word) ?? [];
-
 interface ProductArchiveProps {
   products: StoreProduct[];
   chilliTypes: ChilliType[];
@@ -39,6 +36,8 @@ interface ProductArchiveProps {
   initialQuery: ArchiveQuery;
   /** From availableSorts(): the mode's sorts, minus any not yet meaningful. */
   sortOptions: ArchiveSort[];
+  /** The shop's heat scale, as the server page read it. */
+  heatScale: HeatScale | null;
 }
 
 /**
@@ -54,9 +53,12 @@ export default function ProductArchive({
   categories,
   locale,
   initialQuery,
-  sortOptions
+  sortOptions,
+  heatScale
 }: ProductArchiveProps) {
   const t = useTranslations('SauceArchive');
+  // Heat is stored as a number; the filter buttons are the shop's word bands.
+  const heatWords = heatScale?.bands.map((band) => band.word) ?? [];
   const pathname = usePathname();
   const [query, setQuery] = useState<ArchiveQuery>(initialQuery);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
@@ -71,7 +73,7 @@ export default function ProductArchive({
 
   const filtered = useMemo(
     () => sortArchive(filterArchive(products, query, heatScale), query.sort),
-    [products, query]
+    [products, query, heatScale]
   );
 
   const selectedCategory = useMemo(
@@ -119,7 +121,7 @@ export default function ProductArchive({
                 {t('search.filters.heatLevel')}
               </legend>
               <div className="mt-1 flex flex-wrap gap-2 items-center">
-                {HEAT_WORDS.map((word) => (
+                {heatWords.map((word) => (
                   <button
                     key={word}
                     type="button"
@@ -197,7 +199,7 @@ export default function ProductArchive({
               {selectedPepper && (
                 <Chip variant="filter" onRemove={() => update({ chilliType: '' })}>
                   {selectedPepper.name}
-                  {selectedPepper.heatLevel ? ` • ${formatHeat(selectedPepper.heatLevel)}` : ''}
+                  {selectedPepper.heatLevel ? ` • ${formatHeatOn(heatScale, selectedPepper.heatLevel)}` : ''}
                 </Chip>
               )}
               {query.heat && (
@@ -250,6 +252,7 @@ export default function ProductArchive({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayed.map((product) => (
               <ProductCard
+                heatScale={heatScale}
                 key={product.id}
                 product={product}
                 locale={locale}

@@ -6,6 +6,7 @@ import {
   heatLevelsOn,
   heatPeppersOn,
   heatWordOn,
+  rescaleHeat,
   type HeatScale
 } from './heat';
 
@@ -139,5 +140,46 @@ describe('heatLevelsOn', () => {
 
   it('is empty without a scale', () => {
     expect(heatLevelsOn(null)).toEqual([]);
+  });
+});
+
+describe('rescaleHeat', () => {
+  it('keeps the top of the scale at the top', () => {
+    expect(rescaleHeat(10, 10, 20)).toBe(20);
+    expect(rescaleHeat(20, 20, 10)).toBe(10);
+    expect(rescaleHeat(5, 5, 3)).toBe(3);
+  });
+
+  it('keeps the middle in proportion', () => {
+    expect(rescaleHeat(5, 10, 20)).toBe(10);
+    expect(rescaleHeat(14, 20, 10)).toBe(7);
+    expect(rescaleHeat(3, 10, 5)).toBe(2);
+  });
+
+  it('never rounds a hot product down to no heat at all', () => {
+    // 1 on a 20-point scale is 0.5 on a 10-point one: still hot, not mild.
+    expect(rescaleHeat(1, 20, 10)).toBe(1);
+    expect(rescaleHeat(1, 100, 3)).toBe(1);
+  });
+
+  it('leaves zero as zero, and a row with no heat alone', () => {
+    expect(rescaleHeat(0, 10, 20)).toBe(0);
+    expect(rescaleHeat(null, 10, 20)).toBeNull();
+    expect(rescaleHeat('', 10, 20)).toBeNull();
+    expect(rescaleHeat('not a number', 10, 20)).toBeNull();
+  });
+
+  it('is a no-op when the scale has not changed', () => {
+    expect(rescaleHeat(7, 10, 10)).toBe(7);
+  });
+
+  it('clamps a level that sits above its own scale', () => {
+    expect(rescaleHeat(30, 10, 10)).toBe(10);
+    expect(rescaleHeat(30, 10, 20)).toBe(20);
+  });
+
+  it('refuses a scale that makes no sense', () => {
+    expect(rescaleHeat(5, 0, 10)).toBeNull();
+    expect(rescaleHeat(5, 10, 0)).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import type { Category, StoreBrand } from '@/components/store/types';
 import { requireShopOwner } from '../../lib/auth';
 import { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
-import { getProductFieldKeys } from '@/lib/settings/store';
+import { getHeatScale, getProductFieldKeys } from '@/lib/settings/store';
 import ProductForm from '../../components/ProductForm';
 import { createProduct } from '../../actions/createProduct';
 
@@ -34,6 +34,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
 
   // The fields this shop manages, as saved under Admin → Settings.
   const fieldGroups = enabledProductFieldGroupsFrom(await getProductFieldKeys());
+  const heatScale = await getHeatScale();
   return (
     <div className="space-y-4">
       <div>
@@ -43,6 +44,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
 
       <ProductForm
         fieldGroups={fieldGroups}
+        heatScale={heatScale}
         categories={categories}
         brands={brands}
         onSubmit={createAction}

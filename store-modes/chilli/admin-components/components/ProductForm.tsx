@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
+import type { HeatScale } from '@/lib/products/heat';
 import ProductFieldInput from '@/components/admin/ProductFieldInput';
 import type { DbId } from '@/components/store/types';
 import { ImageUploader } from './ImageUploader';
@@ -74,6 +75,8 @@ interface ProductFormProps {
    * product_fields setting.
    */
   fieldGroups: ProductFieldGroups;
+  /** The shop's heat scale, for the heat dropdown. Null when it has none. */
+  heatScale?: HeatScale | null;
 }
 
 export default function ProductForm({
@@ -85,6 +88,7 @@ export default function ProductForm({
   onDelete,
   successRedirectPath,
   fieldGroups,
+  heatScale = null,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -270,7 +274,12 @@ export default function ProductForm({
               </CardHeader>
               <CardContent className="space-y-4">
                 {fields.map((field) => (
-                  <ProductFieldInput key={field.key} field={field} values={product} />
+                  <ProductFieldInput
+                    key={field.key}
+                    field={field}
+                    values={product}
+                    heatScale={heatScale}
+                  />
                 ))}
 
                 {group.key === 'chilli' && chilliTypes.length > 0 && (

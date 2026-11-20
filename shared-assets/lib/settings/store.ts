@@ -3,6 +3,7 @@ import 'server-only';
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
 import { unstable_cache, updateTag } from 'next/cache';
 
+import type { HeatScale } from '@/lib/products/heat';
 import { GENERATED_CONFIG } from './generated';
 import {
   parseSetting,
@@ -91,6 +92,20 @@ export async function getAuthSettings(): Promise<StoreSettings['auth']> {
 /** The catalogue keys this shop's admin manages. */
 export async function getProductFieldKeys(): Promise<string[]> {
   return (await getStoreSetting('product_fields')).keys;
+}
+
+/**
+ * The shop's heat scale, or null for a shop that does not track heat.
+ *
+ * A generic shop has no `heat_level` column and no scale in its generated
+ * config, and nothing it renders asks about heat; it never reads the row,
+ * so no saved setting can conjure heat into a shop that has nowhere to put
+ * it. Which store modes track heat becomes a setting of its own in plan
+ * step 6, and this is the line that changes then.
+ */
+export async function getHeatScale(): Promise<HeatScale | null> {
+  if (!GENERATED_CONFIG.heat) return null;
+  return getStoreSetting('heat');
 }
 
 export type SaveSettingResult<K extends StoreSettingKey> =

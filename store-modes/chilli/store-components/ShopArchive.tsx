@@ -12,6 +12,7 @@ import {
   type ArchiveSort
 } from '@/lib/products/archive';
 import { many } from '@/lib/supabase/relations';
+import { getHeatScale } from '@/lib/settings/store';
 import { createClient } from '@/lib/supabase/server';
 import ProductArchive from './ProductArchive';
 import type { StoreProduct, Category, ChilliType } from './types';
@@ -185,6 +186,7 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     <>
       <JsonLd data={itemList} />
       <ProductArchive
+      heatScale={await getHeatScale()}
       products={products}
       chilliTypes={chilliTypesInUse(chilliTypes, products)}
       categories={categories}

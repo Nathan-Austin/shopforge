@@ -2,8 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { rescaleHeat } from '@/lib/products/heat';
 import type { SettingIssue } from '@/lib/settings/schema';
-import { saveStoreSetting } from '@/lib/settings/store';
+import { getHeatScale, saveStoreSetting } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 /**
@@ -20,7 +23,7 @@ export type StoreSettingsActionResult =
   | { ok: true }
   | {
       ok: false;
-      error: 'not_authorized' | 'mfa_required' | 'invalid' | 'failed';
+      error: 'not_authorized' | 'mfa_required' | 'invalid' | 'failed' | 'rescale_failed';
       issues?: SettingIssue[];
       message?: string;
     };
@@ -173,6 +176,86 @@ export async function saveProductFieldSettings(
   }
 
   // The product form, the product pages and the feeds.
+  revalidatePath('/', 'layout');
+  revalidatePath(`/${context.locale}/admin/settings`);
+  return { ok: true };
+}
+
+/**
+ * Moves every stored heat level from one scale to another.
+ *
+ * Heat is stored on the shop's own scale, so changing the top of the scale
+ * means rewriting the rows (option (c) of Q4 in
+ * docs/single-codebase-plan.md). One statement per level rather than one
+ * per product, so the cost is the length of the scale and not the size of
+ * the catalogue, and the levels are walked in the direction that moves
+ * them away from the ones not yet done — downwards when the scale grows,
+ * upwards when it shrinks — so no row is ever caught twice.
+ */
+async function rescaleStoredHeat(
+  supabase: SupabaseClient,
+  fromMax: number,
+  toMax: number
+): Promise<string | null> {
+  const levels = Array.from({ length: fromMax + 1 }, (_, level) => level);
+  const order = toMax > fromMax ? [...levels].reverse() : levels;
+
+  for (const table of ['products', 'chilli_types']) {
+    for (const level of order) {
+      const next = rescaleHeat(level, fromMax, toMax);
+      if (next === null || next === level) continue;
+      const { error } = await supabase.from(table).update({ heat_level: next }).eq('heat_level', level);
+      if (error) return error.message;
+    }
+  }
+  return null;
+}
+
+export async function saveHeatSettings(
+  context: Context,
+  _previous: StoreSettingsActionResult | null,
+  formData: FormData
+): Promise<StoreSettingsActionResult> {
+  const { error, supabase, user } = await ensureShopOwner();
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
+
+  // A shop whose store mode has no heat has no scale and no column to put
+  // one in; the section is not rendered for it either.
+  const current = await getHeatScale();
+  if (!current) return { ok: false, error: 'failed', message: 'This shop does not track heat.' };
+
+  const words = formData.getAll('bandWord').map((value) => value.toString());
+  const upTos = formData.getAll('bandUpTo').map((value) => value.toString());
+  const bands = words
+    .map((word, index) => ({ word: word.trim(), upTo: Number(upTos[index]) }))
+    // A row left blank is a row the owner did not fill in, not an error.
+    .filter((band) => band.word.length > 0);
+
+  const saved = await saveStoreSetting(
+    supabase,
+    'heat',
+    { max: Number(formData.get('max')), display: formData.get('display')?.toString() ?? '', bands },
+    user?.id ?? null
+  );
+  if (!saved.ok) {
+    return saved.error === 'invalid'
+      ? { ok: false, error: 'invalid', issues: saved.issues }
+      : { ok: false, error: 'failed', message: saved.message };
+  }
+
+  // The setting is written first on purpose. If the rewrite below fails,
+  // the shop reads every product against the new scale — understated heat,
+  // which looks wrong but stays within the scale — rather than the other
+  // way round, where a level from the old scale would read as 14/10.
+  if (saved.value.max !== current.max) {
+    const failure = await rescaleStoredHeat(supabase, current.max, saved.value.max);
+    if (failure) {
+      console.error('The heat scale was saved but the products were not rescaled:', failure);
+      return { ok: false, error: 'rescale_failed', message: failure };
+    }
+  }
+
+  // Heat shows on the product pages, the shop listing and the admin form.
   revalidatePath('/', 'layout');
   revalidatePath(`/${context.locale}/admin/settings`);
   return { ok: true };

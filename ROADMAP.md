@@ -83,10 +83,9 @@ details for each item are in the numbered sections below.
    settings reader landed with the shop name as its first setting
    (`/admin/settings`), both 2026-11-19; the checkout address and delivery
    countries followed on 2026-11-20, as did the single/multi brand mode
-   and the sign-in and MFA settings — plan step 3 is done. Plan step 4 is
-   half done: the product fields landed 2026-11-20, and the heat scale is
-   next, once Q4 in the plan is answered (see the decision recorded
-   there).
+   and the sign-in and MFA settings — plan step 3 is done, and so is step
+   4 (product fields and the heat scale, both 2026-11-20). Next is plan
+   step 5: shipping and currency, which carries the home-country setting.
 
 ## 1. Storefront and orders
 
@@ -224,12 +223,12 @@ details for each item are in the numbered sections below.
       `/admin/settings`, with no migration (every column already exists).
       A field switched off is hidden, never cleared, and a key belonging to
       another store mode is ignored rather than trusted
-- [ ] Admin UI for the heat scale: rename or drop the word bands and switch
-      how heat appears in the shop (word and number, word only, number only,
-      chilli icons). `HEAT_SCALE.display` already drives `formatHeat`.
-      Next in plan step 4, and it carries Q4 (how heat is stored when the
-      scale can change): the answer changed once `heat_level` turned out to
-      be an `integer` that `products_public` depends on
+- [x] Admin UI for the heat scale — done 2026-11-20: the top of the scale,
+      how heat reads (word, number, both, chilli icons) and the word bands,
+      all on `/admin/settings`, for shops that track heat. Heat stays stored
+      on the shop's own scale (Q4, answer (c)), so moving the scale rewrites
+      the products once, in the action, with no migration and no drift on a
+      re-save
 - [ ] Theme tokens instead of hardcoded colours (the first step of the theme
       system, see section 2e)
 - [x] Discount codes — done 2026-11-04: `/admin/discounts` creates percent,
@@ -697,7 +696,8 @@ Decided on 2026-11-02:
   (how customers sign in, and the admin's second factor). Writing any
   setting needs the second factor when the account has one enrolled
   (`0013`), because the MFA switch is now a row like any other. A Product
-  fields section picks what the product form asks for. The plan for moving the other generation-time choices
+  fields section picks what the product form asks for, and a chilli shop
+  also gets a Heat section (scale, presentation, words). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
