@@ -1829,7 +1829,7 @@ cat > src/messages/en.json <<'EOF'
             "serif": "Georgia / Times"
           },
           "logo": "Logo",
-          "logoHint": "Shown at the top of every email, linked to your shop. Leave empty for no logo.",
+          "logoHint": "Shown at the top of every email, linked to your shop. Leave empty to use the shop logo from Settings, if one is set.",
           "logoWidth": "Logo width",
           "logoWidthHint": "Pixels, 40 to 300.",
           "footer": "Footer, per language",
@@ -3269,7 +3269,7 @@ cat > src/messages/de.json <<'EOF'
             "serif": "Georgia / Times"
           },
           "logo": "Logo",
-          "logoHint": "Oben in jeder E-Mail, verlinkt auf Ihren Shop. Leer lassen für kein Logo.",
+          "logoHint": "Oben in jeder E-Mail, verlinkt auf Ihren Shop. Leer lassen, um das Shop-Logo aus den Einstellungen zu verwenden, falls eines gesetzt ist.",
           "logoWidth": "Logobreite",
           "logoWidthHint": "Pixel, 40 bis 300.",
           "footer": "Fußzeile, je Sprache",
@@ -4122,7 +4122,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           onlineStoreJsonLd({
             name,
             url,
-            logo: logoUrl(),
+            logo: await logoUrl(),
             shipping: await shippingPolicy(),
             returnPolicy: await shopReturnPolicy()
           }),
@@ -4862,12 +4862,12 @@ cat > src/components/Header.tsx <<'EOF'
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { getShopName } from '@/lib/settings/store';
+import { getStoreSetting } from '@/lib/settings/store';
 import CartBadge from '@/components/cart/CartBadge';
 
 export default async function Header({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Nav' });
-  const shopName = await getShopName();
+  const { name: shopName, logoUrl } = await getStoreSetting('shop');
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -4885,7 +4885,14 @@ export default async function Header({ locale }: { locale: string }) {
     <header className="border-b border-gray-200 bg-white">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-3">
         <Link href={`/${locale}`} className="font-bold text-lg tracking-tight">
-          {shopName}
+          {/* A plain img on purpose: the logo may live on any https host,
+              and next/image only serves the hosts in next.config. */}
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={shopName} className="h-8 w-auto" />
+          ) : (
+            shopName
+          )}
         </Link>
 
         <nav className="flex items-center gap-5 text-sm">

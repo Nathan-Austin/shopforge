@@ -4,7 +4,7 @@
  * the product page, the home page and the feed say the same thing.
  */
 
-import { getCheckoutSettings, getShippingSettings, getShopCurrency, getShopName } from '@/lib/settings/store';
+import { getCheckoutSettings, getShippingSettings, getShopCurrency, getShopName, getStoreSetting } from '@/lib/settings/store';
 import { siteUrl } from './alternates';
 import type { ProductJsonLdInput } from './jsonld';
 
@@ -18,9 +18,13 @@ export function googleSiteVerification(): string | null {
   return process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() || null;
 }
 
-/** Absolute logo URL when the shop has one at /logo.png, else null. */
-export function logoUrl(): string | null {
-  const configured = process.env.NEXT_PUBLIC_SHOP_LOGO_URL?.trim();
+/**
+ * Absolute logo URL, or null when the shop has none. The shop setting (Q5),
+ * falling back to NEXT_PUBLIC_SHOP_LOGO_URL; a site-relative path is made
+ * absolute, as structured data requires.
+ */
+export async function logoUrl(): Promise<string | null> {
+  const { logoUrl: configured } = await getStoreSetting('shop');
   if (configured) return configured.startsWith('http') ? configured : `${siteUrl()}${configured}`;
   return null;
 }

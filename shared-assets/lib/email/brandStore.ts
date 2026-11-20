@@ -3,6 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { DEFAULT_LOCALE } from '@/i18n/config';
+import { getStoreSetting } from '../settings/store';
 import { DEFAULT_EMAIL_BRAND, EMAIL_BRAND_KEY, emailBrandOrDefault, type EmailBrand } from './brand';
 import type { TransactionalOptions } from './layout';
 
@@ -29,11 +30,30 @@ export async function loadEmailBrand(supabase: SupabaseClient): Promise<LoadedEm
   return { brand: emailBrandOrDefault(data.value), stored: true };
 }
 
+/**
+ * A brand with the shop's one logo (Q5) where it has none of its own.
+ * Render paths only — the brand form must keep showing what is saved.
+ * An email needs an absolute https address, so a site-relative shop logo
+ * counts only when the site's own address is https.
+ */
+export async function withShopLogo(brand: EmailBrand): Promise<EmailBrand> {
+  if (brand.logoUrl) return brand;
+  const { logoUrl } = await getStoreSetting('shop');
+  if (!logoUrl) return brand;
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '');
+  const absolute = logoUrl.startsWith('https://')
+    ? logoUrl
+    : site?.startsWith('https://')
+      ? `${site}${logoUrl}`
+      : null;
+  return absolute ? { ...brand, logoUrl: absolute } : brand;
+}
+
 /** Everything a transactional renderer wants besides the order: the brand, the shop's address, the fallback locale. */
 export async function transactionalOptions(supabase: SupabaseClient): Promise<TransactionalOptions> {
   const { brand } = await loadEmailBrand(supabase);
   return {
-    brand,
+    brand: await withShopLogo(brand),
     shopUrl: process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || null,
     defaultLocale: DEFAULT_LOCALE
   };

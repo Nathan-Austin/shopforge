@@ -3,7 +3,7 @@
 import { getTranslations } from 'next-intl/server';
 
 import { TRANSACTIONAL_KINDS, type TransactionalKind } from '@/lib/email/brand';
-import { loadEmailBrand } from '@/lib/email/brandStore';
+import { loadEmailBrand, withShopLogo } from '@/lib/email/brandStore';
 import { renderSampleEmail } from '@/lib/email/samples';
 import { sendEmail } from '@/lib/email/send';
 import { ensureShopOwner } from '../lib/auth';
@@ -42,7 +42,7 @@ export async function sendSampleEmail(
   if (!to) return { ok: false, error: 'no_address' };
 
   const { brand } = await loadEmailBrand(supabase);
-  const email = await renderSampleEmail(kind, context.locale, brand);
+  const email = await renderSampleEmail(kind, context.locale, await withShopLogo(brand));
   const t = await getTranslations({ locale: context.locale, namespace: 'Admin.email.settings.samples' });
   const result = await sendEmail({ to, subject: t('subjectPrefix', { subject: email.subject }), html: email.html, text: email.text });
   if (result.sent) return { ok: true, kind, to };
