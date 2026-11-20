@@ -526,7 +526,10 @@ Order of work, one session each:
       chilli types on every save
 - [ ] Node CLI replacing the heredocs in the shell scripts
 - [ ] Docker self-hosting path alongside Vercel
-- [ ] Payment adapters: Stripe, Mollie, PayPal
+- [ ] Payment adapters: Stripe, Mollie, PayPal. The adapter must say which
+      delivery countries the provider supports, and the checkout settings
+      (picker and validation) follow it, so a shop cannot take payment for
+      a sanctioned country (decided 2026-11-20, see plan Q7)
 - ~~A documented way to bring template improvements into an existing
   generated store~~ — dropped 2026-11-19 for the same reason
 - [ ] Demo store, screenshots and a short feature list in the README

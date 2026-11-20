@@ -128,7 +128,10 @@ is retired.
 4. **Product fields and heat scale** (M). Already on the roadmap; no
    migration for fields, one design decision for heat (Q4).
 5. **Shipping and currency** (M). The currency migration is the risky one;
-   it gets its own session and a dry-run query first.
+   it gets its own session and a dry-run query first. Includes a home
+   country setting (decided 2026-11-20): the one country the return-policy
+   markup names, instead of the alphabetically first the shop delivers to,
+   and later the returns address.
 6. **Chilli as a toggle** (L, two or three sessions). The chilli-tables
    migration, then the admin pages, then the storefront, then the starters.
    Only after this does `--mode` stop meaning "copy a different directory".
@@ -165,6 +168,12 @@ first steps).
 - **Q6. Chilli tables in generic shops.** *Answered: yes.* Every shop gets
   the chilli tables, empty and unused in a generic shop, in exchange for
   one schema.
+- **Q7. Delivery countries vs the payment provider.** *Decided 2026-11-20:*
+  the picker stays the full ISO list for now, with Stripe's own refusal at
+  session creation as the guard. Once the payment adapters exist (ROADMAP
+  section 4), the picker and the checkout-setting validation must follow
+  the active provider's supported countries, so a shop can never offer a
+  country its provider refuses or one under sanctions.
 
 ## 8. Not in scope here
 
