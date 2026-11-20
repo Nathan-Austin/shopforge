@@ -89,6 +89,11 @@ export async function getAuthSettings(): Promise<StoreSettings['auth']> {
   return getStoreSetting('auth');
 }
 
+/** What kind of shop this is: 'chilli' turns the heat features on. */
+export async function getShopMode(): Promise<StoreSettings['shop']['mode']> {
+  return (await getStoreSetting('shop')).mode;
+}
+
 /** The one currency every price in the shop is in. */
 export async function getShopCurrency(): Promise<StoreSettings['shop']['currency']> {
   return (await getStoreSetting('shop')).currency;
@@ -107,14 +112,13 @@ export async function getProductFieldKeys(): Promise<string[]> {
 /**
  * The shop's heat scale, or null for a shop that does not track heat.
  *
- * A generic shop has no `heat_level` column and no scale in its generated
- * config, and nothing it renders asks about heat; it never reads the row,
- * so no saved setting can conjure heat into a shop that has nowhere to put
- * it. Which store modes track heat becomes a setting of its own in plan
- * step 6, and this is the line that changes then.
+ * The mode setting decides, now that every shop has the columns (0014): a
+ * generic shop reads no scale and renders no heat, and one switched to
+ * chilli gets the saved scale, or the shipped default if it never had one
+ * of its own.
  */
 export async function getHeatScale(): Promise<HeatScale | null> {
-  if (!GENERATED_CONFIG.heat) return null;
+  if ((await getShopMode()) !== 'chilli') return null;
   return getStoreSetting('heat');
 }
 

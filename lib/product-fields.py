@@ -115,6 +115,12 @@ def config(path, mode, keys_csv, heat_json, out_path):
         '',
         "import type { HeatScale } from './heat';",
         '',
+        '/**',
+        ' * The store mode this shop was generated in. The `mode` store',
+        ' * setting falls back to it, and the admin can change it.',
+        ' */',
+        f"export const STORE_MODE = '{mode}' as const;",
+        '',
         '/** Fields the admin form shows and the server actions save. */',
         'export const PRODUCT_FIELD_KEYS = [',
     ]

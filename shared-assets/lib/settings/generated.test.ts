@@ -46,6 +46,12 @@ describe('the generated configuration', () => {
     expect(fallback.display).toBe(generated.display);
   });
 
+  it('is where the store mode falls back to', () => {
+    // A chilli shop that silently read as generic would lose heat
+    // everywhere, so this is worth pinning to the generated constant.
+    expect(settingFallback('shop', { generated: GENERATED_CONFIG }).mode).toBe(GENERATED_CONFIG.mode);
+  });
+
   it('is where the shop currency falls back to', () => {
     const generated = GENERATED_CONFIG.shipping as { currency: string };
     expect(settingFallback('shop', { generated: GENERATED_CONFIG }).currency).toBe(generated.currency.toUpperCase());

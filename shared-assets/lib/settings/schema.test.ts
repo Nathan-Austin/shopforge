@@ -14,6 +14,7 @@ describe('settingFallback', () => {
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: ' Test Shop ' } })).toEqual({
       name: 'Test Shop',
       brands: 'single',
+      mode: 'generic',
       currency: 'EUR',
       logoUrl: null
     });
@@ -28,6 +29,12 @@ describe('settingFallback', () => {
     // A hand-edited file saying something unsupported falls back to EUR.
     expect(settingFallback('shop', { generated: { shipping: { currency: 'JPY' } } }).currency).toBe('EUR');
     expect(settingFallback('shop', {}).currency).toBe('EUR');
+  });
+
+  it('takes the store mode from the generated product config', () => {
+    expect(settingFallback('shop', { generated: { mode: 'chilli' } }).mode).toBe('chilli');
+    expect(settingFallback('shop', { generated: { mode: 'sauce' } }).mode).toBe('generic');
+    expect(settingFallback('shop', {}).mode).toBe('generic');
   });
 
   it('takes the logo from the environment, when it looks like one', () => {
@@ -76,17 +83,22 @@ describe('resolveSetting', () => {
 
   it('prefers a saved value over the environment', () => {
     expect(
-      resolveSetting('shop', { name: 'Saved Name', brands: 'multi', currency: 'SEK', logoUrl: null }, sources)
+      resolveSetting(
+        'shop',
+        { name: 'Saved Name', brands: 'multi', mode: 'chilli', currency: 'SEK', logoUrl: null },
+        sources
+      )
     ).toEqual({
       name: 'Saved Name',
       brands: 'multi',
+      mode: 'chilli',
       currency: 'SEK',
       logoUrl: null
     });
   });
 
   it('falls back when nothing is saved', () => {
-    const expected = { name: 'From Env', brands: 'single', currency: 'EUR', logoUrl: null };
+    const expected = { name: 'From Env', brands: 'single', mode: 'generic', currency: 'EUR', logoUrl: null };
     expect(resolveSetting('shop', null, sources)).toEqual(expected);
     expect(resolveSetting('shop', undefined, sources)).toEqual(expected);
   });
@@ -95,6 +107,7 @@ describe('resolveSetting', () => {
     expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({
       name: 'Saved Name',
       brands: 'single',
+      mode: 'generic',
       currency: 'EUR',
       logoUrl: null
     });
@@ -105,6 +118,7 @@ describe('resolveSetting', () => {
     expect(resolveSetting('shop', { name: 42, brands: 'multi' }, sources)).toEqual({
       name: 'From Env',
       brands: 'multi',
+      mode: 'generic',
       currency: 'EUR',
       logoUrl: null
     });
@@ -228,31 +242,37 @@ describe('resolveSetting, auth', () => {
 describe('parseSetting', () => {
   it('trims and accepts a good name, and tidies the currency', () => {
     expect(
-      parseSetting('shop', { name: '  Ann & Co  ', brands: 'single', currency: ' eur ', logoUrl: null })
+      parseSetting('shop', {
+        name: '  Ann & Co  ',
+        brands: 'single',
+        mode: 'chilli',
+        currency: ' eur ',
+        logoUrl: null
+      })
     ).toEqual({
       ok: true,
-      value: { name: 'Ann & Co', brands: 'single', currency: 'EUR', logoUrl: null }
+      value: { name: 'Ann & Co', brands: 'single', mode: 'chilli', currency: 'EUR', logoUrl: null }
     });
     expect(
-      parseSetting('shop', { name: 'Ann & Co', brands: 'single', currency: 'EUR', logoUrl: 'ftp://no' }).ok
+      parseSetting('shop', { name: 'Ann & Co', brands: 'single', mode: 'generic', currency: 'EUR', logoUrl: 'ftp://no' }).ok
     ).toBe(false);
   });
 
   it('refuses a currency outside the supported list', () => {
-    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'single', currency: 'JPY' });
+    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'single', mode: 'generic', currency: 'JPY' });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.issues[0].path).toBe('currency');
   });
 
   it('refuses an empty or overlong name and says where', () => {
-    const empty = parseSetting('shop', { name: '   ', brands: 'single', currency: 'EUR' });
+    const empty = parseSetting('shop', { name: '   ', brands: 'single', mode: 'generic', currency: 'EUR' });
     expect(empty.ok).toBe(false);
     if (!empty.ok) expect(empty.issues[0].path).toBe('name');
-    expect(parseSetting('shop', { name: 'x'.repeat(81), brands: 'single', currency: 'EUR' }).ok).toBe(false);
+    expect(parseSetting('shop', { name: 'x'.repeat(81), brands: 'single', mode: 'generic', currency: 'EUR' }).ok).toBe(false);
   });
 
   it('refuses a brand mode it does not know', () => {
-    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'several', currency: 'EUR' });
+    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'several', mode: 'generic', currency: 'EUR' });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.issues[0].path).toBe('brands');
   });

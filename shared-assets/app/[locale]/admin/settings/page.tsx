@@ -51,7 +51,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
   const shipping = await getStoreSetting('shipping');
 
   // Every field this shop could offer, grouped for the picker.
-  const available = availableProductFields();
+  const available = availableProductFields(shop.mode);
   const fieldGroups = PRODUCT_FIELD_GROUPS.map((group) => ({
     group,
     fields: available.filter((field) => field.group === group.key)

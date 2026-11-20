@@ -16,7 +16,10 @@
  * appears in the form and is saved automatically.
  */
 
-import { HEAT_SCALE } from './config';
+import { STORE_MODES } from '@/lib/settings/schema';
+
+/** 'generic' or 'chilli', as the `mode` setting holds it. */
+export type StoreMode = (typeof STORE_MODES)[number];
 
 export type ProductFieldType =
   /** Single-line text. */
@@ -401,14 +404,11 @@ export const PRODUCT_FIELDS: ProductField[] = [
 const FIELDS_BY_KEY = new Map(PRODUCT_FIELDS.map((field) => [field.key, field]));
 
 /**
- * Every field this shop *could* offer: the whole catalogue, minus fields
- * belonging to a store mode this shop is not. Heat is the only marker a
- * shop carries at runtime today (a generic shop has no scale and no
- * heat_level column), so it stands in for the mode until the mode itself
- * becomes a setting — plan step 6 in docs/single-codebase-plan.md.
+ * Every field a shop in this mode could offer: the whole catalogue, minus
+ * fields belonging to another store mode. The mode is the `mode` store
+ * setting (every shop has the columns since 0014), read by the caller.
  */
-export function availableProductFields(): ProductField[] {
-  const mode = HEAT_SCALE ? 'chilli' : 'generic';
+export function availableProductFields(mode: StoreMode): ProductField[] {
   return PRODUCT_FIELDS.filter((field) => !field.modes || field.modes.includes(mode));
 }
 
@@ -417,17 +417,20 @@ export function availableProductFields(): ProductField[] {
  * shop has no field for is ignored rather than trusted, so a list saved in
  * a chilli shop cannot make a generic one write a column it has not got.
  */
-export function enabledProductFieldsFrom(keys: readonly string[]): ProductField[] {
+export function enabledProductFieldsFrom(keys: readonly string[], mode: StoreMode): ProductField[] {
   const wanted = new Set(keys);
-  return availableProductFields().filter((field) => wanted.has(field.key));
+  return availableProductFields(mode).filter((field) => wanted.has(field.key));
 }
 
 /** Enabled fields grouped for rendering, skipping groups with no fields. */
-export function enabledProductFieldGroupsFrom(keys: readonly string[]): {
+export function enabledProductFieldGroupsFrom(
+  keys: readonly string[],
+  mode: StoreMode
+): {
   group: ProductFieldGroup;
   fields: ProductField[];
 }[] {
-  const fields = enabledProductFieldsFrom(keys);
+  const fields = enabledProductFieldsFrom(keys, mode);
   return PRODUCT_FIELD_GROUPS.map((group) => ({
     group,
     fields: fields.filter((field) => field.group === group.key)
@@ -435,9 +438,9 @@ export function enabledProductFieldGroupsFrom(keys: readonly string[]): {
 }
 
 /** Columns to select for the admin edit form, for a saved list of keys. */
-export function productSelectColumnsFrom(keys: readonly string[]): string[] {
+export function productSelectColumnsFrom(keys: readonly string[], mode: StoreMode): string[] {
   const columns = [...CORE_PRODUCT_COLUMNS, 'id'];
-  for (const field of enabledProductFieldsFrom(keys)) {
+  for (const field of enabledProductFieldsFrom(keys, mode)) {
     columns.push(field.column);
     if (field.unitColumn) columns.push(field.unitColumn);
   }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { enabledProductFieldsFrom, parseProductFieldsFor } from '@/lib/products/catalogue';
-import { getBrandMode, getProductFieldKeys, getShopCurrency } from '@/lib/settings/store';
+import { getBrandMode, getProductFieldKeys, getShopCurrency, getShopMode } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 interface UpdateProductContext {
@@ -50,7 +50,10 @@ export async function updateProduct(
   }
 
   // Everything the shop manages (Admin → Settings → Product fields).
-  const fields = parseProductFieldsFor(enabledProductFieldsFrom(await getProductFieldKeys()), formData);
+  const fields = parseProductFieldsFor(
+    enabledProductFieldsFrom(await getProductFieldKeys(), await getShopMode()),
+    formData
+  );
 
   const { error: updateError } = await supabase
     .from('products')

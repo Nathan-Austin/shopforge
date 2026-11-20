@@ -139,25 +139,25 @@ describe('parseProductFieldsFor', () => {
 
 describe('productSelectColumnsFrom', () => {
   it('always includes the core columns, whatever the shop enabled', () => {
-    const columns = productSelectColumnsFrom([]);
+    const columns = productSelectColumnsFrom([], 'chilli');
     for (const column of ['id', 'name', 'slug', 'price_cents', 'currency']) {
       expect(columns).toContain(column);
     }
   });
 
   it('adds the column of each enabled field, and its unit column', () => {
-    const columns = productSelectColumnsFrom(['net_content']);
+    const columns = productSelectColumnsFrom(['net_content'], 'chilli');
     expect(columns).toContain('net_content');
     expect(columns).toContain('net_content_unit');
-    expect(productSelectColumnsFrom([])).not.toContain('net_content');
+    expect(productSelectColumnsFrom([], 'chilli')).not.toContain('net_content');
   });
 
   it('ignores a key this shop has no field for', () => {
-    expect(productSelectColumnsFrom(['not_a_field'])).toEqual(productSelectColumnsFrom([]));
+    expect(productSelectColumnsFrom(['not_a_field'], 'chilli')).toEqual(productSelectColumnsFrom([], 'chilli'));
   });
 
   it('has no duplicates', () => {
-    const columns = productSelectColumnsFrom(['net_content', 'net_content']);
+    const columns = productSelectColumnsFrom(['net_content', 'net_content'], 'chilli');
     expect(new Set(columns).size).toBe(columns.length);
   });
 });

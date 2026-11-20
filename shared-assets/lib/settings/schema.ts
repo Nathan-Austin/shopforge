@@ -32,6 +32,13 @@ export const CHECKOUT_ADDRESS_COLLECTORS = ['form', 'stripe'] as const;
 /** How customers sign in. The shop owner always has a password. */
 export const CUSTOMER_SIGN_IN_METHODS = ['password', 'otp'] as const;
 
+/**
+ * What kind of shop this is. 'chilli' turns on heat, Scoville and chilli
+ * types; every shop carries the tables either way (0014), so this is a
+ * setting and never a migration.
+ */
+export const STORE_MODES = ['generic', 'chilli'] as const;
+
 /** Whether the admin asks for an authenticator code as well as the password. */
 export const ADMIN_MFA_MODES = ['required', 'off'] as const;
 
@@ -74,6 +81,7 @@ export const STORE_SETTING_SCHEMAS = {
   shop: z.object({
     name: z.string().trim().min(1, { message: 'Enter a name' }).max(SHOP_NAME_MAX),
     brands: z.enum(BRAND_MODES),
+    mode: z.enum(STORE_MODES),
     /**
      * The one currency every price in the shop is in (decided 2026-11-04).
      * Saving a different one is refused while any product or amount code
@@ -174,6 +182,8 @@ export type SettingsEnv = Partial<Record<string, string | undefined>>;
  * files in; a test passes a fixture.
  */
 export type GeneratedConfig = {
+  /** STORE_MODE from the generated product config. */
+  mode?: unknown;
   checkout?: unknown;
   auth?: unknown;
   productFields?: unknown;
@@ -195,6 +205,8 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     // falls back to the generator's own default.
     const configured = ((generated.shipping ?? {}) as Record<string, unknown>).currency;
     const currency = SHOP_CURRENCIES.find((candidate) => candidate === String(configured ?? '').toUpperCase()) ?? 'EUR';
+    // The store mode the generator wrote into src/lib/products/config.ts.
+    const mode = STORE_MODES.find((candidate) => candidate === generated.mode) ?? 'generic';
     // The environment's logo, if it is one this schema would accept.
     const envLogo = shopLogoSchema.safeParse(env.NEXT_PUBLIC_SHOP_LOGO_URL ?? '');
     return {
@@ -202,6 +214,7 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
       // Exactly the reading the product actions used to do themselves:
       // anything but 'multi', including unset, means single.
       brands: env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single',
+      mode,
       currency,
       logoUrl: envLogo.success ? envLogo.data : null
     };
