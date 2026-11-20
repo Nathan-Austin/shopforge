@@ -86,8 +86,10 @@ details for each item are in the numbered sections below.
    and the sign-in and MFA settings — plan step 3 is done, and so is step
    4 (product fields and the heat scale, both 2026-11-20), and the
    shipping half of step 5 — rates, label, parcel weights and the home
-   country — followed the same day. Next is step 5b: one currency per
-   shop, the plan's riskiest migration, with a dry-run query first.
+   country — followed the same day, and so did 5b, one currency per shop:
+   no migration was needed in the end, a save-time guard instead (the
+   dry run first, as agreed). Step 5 is done. Next is plan step 6, the
+   big one: the chilli mode as a feature toggle (two or three sessions).
 3. **Storefront content without code** (section 2f), once the settings
    above are in place: the logo first, then the home page sections, then
    navigation. These are what make a shop editable by its owner rather
@@ -222,11 +224,17 @@ details for each item are in the numbered sections below.
       2026-11-20, and the shipping rates, label, parcel weights and home
       country followed the same day (the Shipping section on
       `/admin/settings`; the return-policy markup names the home country
-      now). What is left is the currency — step 5b in the plan
-- [ ] Shop currency as a generator choice: ask for it in the CLI (default
-      EUR), seed products and the admin form with it, and use it as the
-      default for amount discount codes and minimums. One currency per shop
-      is the decision (2026-11-04); today it is per product and free text
+      now), and the currency closed it on 2026-11-20 (the item below).
+      Done — shipping *zones* (different rates by country) remain future
+      work and belong with the carrier integrations
+- [x] Shop currency — done 2026-11-20, as a store setting rather than the
+      CLI prompt this item imagined: `shop.currency` on `/admin/settings`
+      (falling back to the generated shipping config's EUR), the product
+      form's free-text field gone (the price label names the currency),
+      amount codes and minimums created in it, and a save guard that
+      refuses a change while anything is still priced in another currency,
+      listing the offenders with links — a currency change is a repricing,
+      never a conversion. One currency per shop, as decided 2026-11-04
 - [x] Admin UI for `src/lib/products/config.ts`: tick which product fields the
       shop manages, without editing the file — done 2026-11-20 as a
       `product_fields` key in `store_settings` and a section on
@@ -304,8 +312,9 @@ details for each item are in the numbered sections below.
       `Product`/`Offer`/`Brand` with GTIN, SKU, availability, shipping —
       done 2026-11-04; visible breadcrumbs on the product page
 - [x] Merchant Center feed per locale and `/admin/seo` — done 2026-11-04
-- [ ] Per-market prices and currency (needs the shop-currency choice above
-      first); until then a non-euro market cannot pass Merchant Center review
+- [ ] Per-market prices and currency (the shop currency exists since
+      2026-11-20; per-market pricing is what is left); until then a
+      non-euro market cannot pass Merchant Center review
 - [ ] Merchant API sync from the admin (service account + merchant id;
       create the data source once, upsert on save, delete on archive)
 - [ ] `ProductGroup` variant markup once variants carry their own SKU/price
@@ -761,7 +770,8 @@ Decided on 2026-11-02:
   fields section picks what the product form asks for, and a chilli shop
   also gets a Heat section (scale, presentation, words). A Shipping
   section holds the rates, the label, the parcel weights and the home
-  country. The plan for moving the other generation-time choices
+  country, and the Shop section holds the one currency every price is in,
+  guarded so it can only change when nothing priced disagrees. The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
@@ -806,8 +816,9 @@ Decided on 2026-11-02:
   person using a code twice from two carts. The usage cap is the only
   brake. Per-email limits are a listed follow-up.
 - Money is entered in major units and stored as cents everywhere, but the
-  currency is per product and free text. A store-level currency belongs with
-  the store settings work above.
+  currency was per product and free text until 2026-11-20; it is one shop
+  setting now, with a save guard listing anything that disagrees. The
+  per-product column stays (orders snapshot it; the guard reads it).
 - `pnpm build` only warns, not fails, when Tailwind isn't wired in. Check the
   build log for "Unknown at rule: @theme" if styles ever disappear again.
 - Next 16 does not run ESLint during `next build`; `pnpm lint` is a separate

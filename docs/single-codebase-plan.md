@@ -73,7 +73,7 @@ need an answer before code is written.
 |---|---|---|---|---|
 | 14 | Shipping box, item weight, flat rate, free-shipping threshold, label, currency | `src/lib/shipping/config.ts` | `store_settings:shipping` — done 2026-11-20 except the currency, which is 5b (the box dimensions stay generated, read by nothing yet) | M |
 | — | Allowed delivery countries | `CHECKOUT_CONFIG.allowedCountries` | with #3 — done 2026-11-20 | S |
-| — | Currency | per product, free text in the product form; `EUR` in shipping config | `store_settings:shop` → `{ currency }`, one per shop (decided 2026-11-04). Needs a migration that checks every product matches before the per-product column goes read-only | M |
+| — | Currency | per product, free text in the product form; `EUR` in shipping config | `store_settings:shop` → `{ currency }`, one per shop (decided 2026-11-04) — done 2026-11-20 with a save-time guard instead of a migration; the form field is gone and the actions write the setting | M |
 
 ## 5. What differs between the store modes
 
@@ -164,11 +164,17 @@ is retired.
    home country, and a Shipping section on `/admin/settings`. The box
    dimensions stay in the generated file (read by nothing, waiting for a
    carrier integration).
-   **Still to do (5b, its own session): one currency per shop.** The
-   migration is the risky one — it gets a dry-run query first. The
-   shipping setting deliberately carries no currency: today the amounts
-   are in the generated config's currency, and 5b moves that single fact
-   to `shop.currency`.
+   ~~One currency per shop (5b)~~ done 2026-11-20, dry run first: the
+   mismatch query proven against a migrated schema (case variance
+   tolerated, the column default matched, only genuine disagreements
+   surfaced), then `shop.currency` with the generated shipping config as
+   its fallback, a save guard that refuses a change while any product or
+   amount code still carries another currency (listed with links — a
+   repricing, never a conversion), the per-product field removed from the
+   forms, and every reader (product actions, discount creation, feeds'
+   shipping policy, the sample receipt) on the setting. No migration
+   after all; the column stays for order snapshots and the guard.
+   **Step 5 is complete.**
 6. **Chilli as a toggle** (L, two or three sessions). The chilli-tables
    migration, then the admin pages, then the storefront, then the starters.
    Only after this does `--mode` stop meaning "copy a different directory".
