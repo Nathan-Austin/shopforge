@@ -260,3 +260,56 @@ export async function saveHeatSettings(
   revalidatePath(`/${context.locale}/admin/settings`);
   return { ok: true };
 }
+
+/**
+ * A money field as cents. Empty is not zero: a blank required field must
+ * fail validation rather than quietly become free shipping.
+ */
+function centsFrom(raw: FormDataEntryValue | null): number {
+  const value = raw?.toString().trim() ?? '';
+  if (!value) return Number.NaN;
+  return Math.round(Number(value) * 100);
+}
+
+/** An integer field; empty and garbage both come out as NaN for the schema. */
+function integerFrom(raw: FormDataEntryValue | null): number {
+  const value = raw?.toString().trim() ?? '';
+  return value ? Number(value) : Number.NaN;
+}
+
+export async function saveShippingSettings(
+  context: Context,
+  _previous: StoreSettingsActionResult | null,
+  formData: FormData
+): Promise<StoreSettingsActionResult> {
+  const { error, supabase, user } = await ensureShopOwner();
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
+
+  const threshold = formData.get('freeShippingThreshold')?.toString().trim() ?? '';
+  const saved = await saveStoreSetting(
+    supabase,
+    'shipping',
+    {
+      flatRateCents: centsFrom(formData.get('flatRate')),
+      // An emptied threshold turns free shipping off; that is the one
+      // money field where blank is a meaning, not a mistake.
+      freeShippingThresholdCents: threshold ? centsFrom(formData.get('freeShippingThreshold')) : null,
+      label: formData.get('label')?.toString() ?? '',
+      itemWeightGrams: integerFrom(formData.get('itemWeightGrams')),
+      boxWeightGrams: integerFrom(formData.get('boxWeightGrams')),
+      homeCountry: formData.get('homeCountry')?.toString() || null
+    },
+    user?.id ?? null
+  );
+  if (!saved.ok) {
+    return saved.error === 'invalid'
+      ? { ok: false, error: 'invalid', issues: saved.issues }
+      : { ok: false, error: 'failed', message: saved.message };
+  }
+
+  // The cart and checkout totals, and the shipping facts in the
+  // structured data on every page.
+  revalidatePath('/', 'layout');
+  revalidatePath(`/${context.locale}/admin/settings`);
+  return { ok: true };
+}

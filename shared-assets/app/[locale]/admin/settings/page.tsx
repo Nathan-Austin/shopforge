@@ -2,6 +2,9 @@ import { getTranslations } from 'next-intl/server';
 
 import { countriesByName } from '@/lib/checkout/countries';
 import { availableProductFields, PRODUCT_FIELD_GROUPS } from '@/lib/products/catalogue';
+// Only for the currency the money fields are labelled with, until the
+// currency is a shop setting (5b).
+import { SHIPPING_CONFIG } from '@/lib/shipping/config';
 import { STORE_SETTING_SCHEMAS, type StoreSettingKey } from '@/lib/settings/schema';
 import { getHeatScale, getStoreSetting } from '@/lib/settings/store';
 import {
@@ -9,12 +12,14 @@ import {
   saveCheckoutSettings,
   saveHeatSettings,
   saveProductFieldSettings,
+  saveShippingSettings,
   saveShopSettings
 } from '../actions/storeSettings';
 import AuthSettingsForm from '../components/AuthSettingsForm';
 import CheckoutSettingsForm from '../components/CheckoutSettingsForm';
 import HeatSettingsForm from '../components/HeatSettingsForm';
 import ProductFieldsForm from '../components/ProductFieldsForm';
+import ShippingSettingsForm from '../components/ShippingSettingsForm';
 import ShopSettingsForm from '../components/ShopSettingsForm';
 import { requireShopOwner } from '../lib/auth';
 
@@ -33,7 +38,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
 
   // Which sections have a row of their own, read fresh (not through the
   // cache) so each hint is right straight after a save.
-  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth', 'product_fields', 'heat'];
+  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth', 'product_fields', 'heat', 'shipping'];
   const { data: rows } = await supabase.from('store_settings').select('key, value').in('key', keys);
   const isSaved = (key: StoreSettingKey) => {
     const row = rows?.find((candidate) => candidate.key === key);
@@ -46,6 +51,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
   const productFields = await getStoreSetting('product_fields');
   // Null in a shop whose store mode does not track heat; it gets no section.
   const heat = await getHeatScale();
+  const shipping = await getStoreSetting('shipping');
 
   // Every field this shop could offer, grouped for the picker.
   const available = availableProductFields();
@@ -72,6 +78,13 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         allowedCountries={checkout.allowedCountries}
         countries={countriesByName(locale)}
         fromDefault={!isSaved('checkout')}
+      />
+      <ShippingSettingsForm
+        save={saveShippingSettings.bind(null, { locale })}
+        shipping={shipping}
+        countries={countriesByName(locale)}
+        currency={SHIPPING_CONFIG.currency}
+        fromDefault={!isSaved('shipping')}
       />
       <AuthSettingsForm
         save={saveAuthSettings.bind(null, { locale })}

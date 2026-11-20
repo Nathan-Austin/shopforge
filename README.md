@@ -117,8 +117,9 @@ ship for English and German; other languages start from English.
 - **Orders after the sale:** refunds and shipping emails are built in
   (below); a refund does not restock the items, and only "shipped" emails
   the customer.
-- **Shipping:** one flat rate with a free-shipping threshold, set with
-  placeholder values in `src/lib/shipping/config.ts`. The countries you
+- **Shipping:** one flat rate with a free-shipping threshold and the
+  shop's home country, set under **Admin → Settings → Shipping**
+  (`src/lib/shipping/config.ts` holds the placeholder start). The countries you
   deliver to, and who asks for the address, are picked under **Admin →
   Settings → Checkout** (`src/lib/checkout/config.ts` is the starting
   point); the checkout form offers exactly those and stores the

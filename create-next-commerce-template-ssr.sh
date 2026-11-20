@@ -911,6 +911,34 @@ cat > src/messages/en.json <<'EOF'
           "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
         }
       },
+      "shipping": {
+        "heading": "Shipping",
+        "hint": "What an order costs to ship, and where you ship from.",
+        "fromDefault": "Not saved yet: these are the placeholder rates the shop was set up with. Save to make them yours.",
+        "flatRate": "Flat rate per order ({currency})",
+        "flatRateHint": "Charged on every order below the free-shipping threshold.",
+        "freeShippingThreshold": "Free shipping from ({currency})",
+        "freeShippingThresholdHint": "Orders at or above this amount ship free. Leave empty to never ship free.",
+        "label": "Name at checkout",
+        "labelHint": "Shown next to the shipping cost, on Stripe's page too.",
+        "itemWeight": "Weight per item (g)",
+        "itemWeightHint": "Used to estimate the parcel weight passed to Stripe.",
+        "boxWeight": "Empty box weight (g)",
+        "boxWeightHint": "Added once per order.",
+        "homeCountry": "Ships from",
+        "homeCountryHint": "The country your return policy names. The returns address will use it too.",
+        "homeCountryUnset": "Not set — the first country you deliver to",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. New orders use the new rates.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
+          "invalid": "Check the amounts and weights, then try again.",
+          "failed": "The settings could not be saved.",
+          "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
+        }
+      },
       "auth": {
         "heading": "Sign-in and security",
         "hint": "How customers sign in, and how you get into the admin.",
@@ -2313,6 +2341,34 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Wählen Sie mindestens ein Lieferland aus.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden.",
+          "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
+        }
+      },
+      "shipping": {
+        "heading": "Versand",
+        "hint": "Was der Versand einer Bestellung kostet und von wo Sie versenden.",
+        "fromDefault": "Noch nicht gespeichert: Das sind die Platzhalter aus der Einrichtung. Speichern Sie sie, um sie festzulegen.",
+        "flatRate": "Pauschale pro Bestellung ({currency})",
+        "flatRateHint": "Fällig bei jeder Bestellung unter der Versandkostenfrei-Grenze.",
+        "freeShippingThreshold": "Versandkostenfrei ab ({currency})",
+        "freeShippingThresholdHint": "Bestellungen ab diesem Betrag versenden kostenlos. Leer lassen, um nie kostenlos zu versenden.",
+        "label": "Name an der Kasse",
+        "labelHint": "Steht neben den Versandkosten, auch auf der Stripe-Seite.",
+        "itemWeight": "Gewicht pro Artikel (g)",
+        "itemWeightHint": "Für das Paketgewicht, das an Stripe gemeldet wird.",
+        "boxWeight": "Gewicht des leeren Kartons (g)",
+        "boxWeightHint": "Wird einmal pro Bestellung hinzugezählt.",
+        "homeCountry": "Versand aus",
+        "homeCountryHint": "Das Land, das Ihre Widerrufsangaben nennen. Die Rücksendeadresse wird es ebenfalls verwenden.",
+        "homeCountryUnset": "Nicht festgelegt — das erste Ihrer Lieferländer",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Neue Bestellungen verwenden die neuen Sätze.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
+          "invalid": "Prüfen Sie Beträge und Gewichte und versuchen Sie es erneut.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden.",
           "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."
         }
