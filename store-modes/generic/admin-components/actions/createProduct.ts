@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { parseProductFields } from '@/lib/products/catalogue';
+import { getBrandMode } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 interface CreateProductContext {
@@ -18,7 +19,7 @@ export async function createProduct(
     return { error: 'Not authorized' };
   }
 
-  const storeMode = process.env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single';
+  const storeMode = await getBrandMode();
   const name = formData.get('name')?.toString().trim();
   const slug = formData.get('slug')?.toString().trim();
   // Entered in major units and stored as cents, like every other money field.

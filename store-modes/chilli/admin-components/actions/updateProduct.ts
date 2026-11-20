@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { parseProductFields } from '@/lib/products/catalogue';
+import { getBrandMode } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 interface UpdateProductContext {
@@ -18,7 +19,7 @@ export async function updateProduct(
     return { error: 'Not authorized' };
   }
 
-  const storeMode = process.env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single';
+  const storeMode = await getBrandMode();
   const productId = formData.get('product_id')?.toString();
   if (!productId) {
     return { error: 'Missing product ID' };
