@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { AUTH_CONFIG } from '@/lib/auth/config';
+import { getAuthSettings } from '@/lib/settings/store';
 
 /**
  * Whether this session has passed the second factor. With admin MFA off
@@ -9,7 +9,8 @@ import { AUTH_CONFIG } from '@/lib/auth/config';
  * only does after a successful authenticator code in this session.
  */
 async function hasSecondFactor(supabase: SupabaseClient): Promise<boolean> {
-  if (AUTH_CONFIG.adminMfa !== 'required') return true;
+  const { adminMfa } = await getAuthSettings();
+  if (adminMfa !== 'required') return true;
   const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   return data?.currentLevel === 'aal2';
 }
