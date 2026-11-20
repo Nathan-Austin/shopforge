@@ -10,13 +10,19 @@ import {
 } from './schema';
 
 describe('settingFallback', () => {
-  it('takes the shop name from the generated environment', () => {
-    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: ' Test Shop ' } })).toEqual({ name: 'Test Shop' });
+  it('takes the shop name and brand mode from the generated environment', () => {
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: ' Test Shop ' } })).toEqual({
+      name: 'Test Shop',
+      brands: 'single'
+    });
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_STORE_MODE: 'multi' } }).brands).toBe('multi');
+    // Anything but 'multi' means single, as the product actions always read it.
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_STORE_MODE: 'Multi' } }).brands).toBe('single');
   });
 
   it('has a name even with nothing configured', () => {
-    expect(settingFallback('shop', {})).toEqual({ name: DEFAULT_SHOP_NAME });
-    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: '  ' } })).toEqual({ name: DEFAULT_SHOP_NAME });
+    expect(settingFallback('shop', {}).name).toBe(DEFAULT_SHOP_NAME);
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: '  ' } }).name).toBe(DEFAULT_SHOP_NAME);
   });
 
   it('takes the checkout settings from the generated config', () => {
@@ -39,22 +45,32 @@ describe('resolveSetting', () => {
   const sources = { env: { NEXT_PUBLIC_SHOP_NAME: 'From Env' } };
 
   it('prefers a saved value over the environment', () => {
-    expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({ name: 'Saved Name' });
+    expect(resolveSetting('shop', { name: 'Saved Name', brands: 'multi' }, sources)).toEqual({
+      name: 'Saved Name',
+      brands: 'multi'
+    });
   });
 
   it('falls back when nothing is saved', () => {
-    expect(resolveSetting('shop', null, sources)).toEqual({ name: 'From Env' });
-    expect(resolveSetting('shop', undefined, sources)).toEqual({ name: 'From Env' });
+    expect(resolveSetting('shop', null, sources)).toEqual({ name: 'From Env', brands: 'single' });
+    expect(resolveSetting('shop', undefined, sources)).toEqual({ name: 'From Env', brands: 'single' });
+  });
+
+  it('completes a shop row saved before the brand mode existed', () => {
+    expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({ name: 'Saved Name', brands: 'single' });
   });
 
   it('falls back field by field when a saved value is broken', () => {
-    expect(resolveSetting('shop', { name: '' }, sources)).toEqual({ name: 'From Env' });
-    expect(resolveSetting('shop', { name: 42 }, sources)).toEqual({ name: 'From Env' });
-    expect(resolveSetting('shop', ['not', 'an', 'object'], sources)).toEqual({ name: 'From Env' });
+    expect(resolveSetting('shop', { name: '' }, sources).name).toBe('From Env');
+    expect(resolveSetting('shop', { name: 42, brands: 'multi' }, sources)).toEqual({
+      name: 'From Env',
+      brands: 'multi'
+    });
+    expect(resolveSetting('shop', ['not', 'an', 'object'], sources).name).toBe('From Env');
   });
 
   it('ignores fields it does not know', () => {
-    expect(resolveSetting('shop', { name: 'Saved', extra: true }, sources)).toEqual({ name: 'Saved' });
+    expect(resolveSetting('shop', { name: 'Saved', extra: true }, sources).name).toBe('Saved');
   });
 
   it('prefers the saved checkout settings over the generated ones', () => {
@@ -81,14 +97,23 @@ describe('resolveSetting', () => {
 
 describe('parseSetting', () => {
   it('trims and accepts a good name', () => {
-    expect(parseSetting('shop', { name: '  Ann & Co  ' })).toEqual({ ok: true, value: { name: 'Ann & Co' } });
+    expect(parseSetting('shop', { name: '  Ann & Co  ', brands: 'single' })).toEqual({
+      ok: true,
+      value: { name: 'Ann & Co', brands: 'single' }
+    });
   });
 
   it('refuses an empty or overlong name and says where', () => {
-    const empty = parseSetting('shop', { name: '   ' });
+    const empty = parseSetting('shop', { name: '   ', brands: 'single' });
     expect(empty.ok).toBe(false);
     if (!empty.ok) expect(empty.issues[0].path).toBe('name');
-    expect(parseSetting('shop', { name: 'x'.repeat(81) }).ok).toBe(false);
+    expect(parseSetting('shop', { name: 'x'.repeat(81), brands: 'single' }).ok).toBe(false);
+  });
+
+  it('refuses a brand mode it does not know', () => {
+    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'several' });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.issues[0].path).toBe('brands');
   });
 
   it('tidies the countries it accepts', () => {

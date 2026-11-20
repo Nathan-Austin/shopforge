@@ -20,6 +20,12 @@ export const DEFAULT_SHOP_NAME = 'Our shop';
 
 export const SHOP_NAME_MAX = 80;
 
+/**
+ * Whether the shop sells its own products (single) or carries other
+ * makers' (multi). Multi makes a brand required on every product.
+ */
+export const BRAND_MODES = ['single', 'multi'] as const;
+
 /** Who asks the customer for the delivery address. */
 export const CHECKOUT_ADDRESS_COLLECTORS = ['form', 'stripe'] as const;
 
@@ -28,7 +34,8 @@ export const DEFAULT_ALLOWED_COUNTRIES = ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'G
 
 export const STORE_SETTING_SCHEMAS = {
   shop: z.object({
-    name: z.string().trim().min(1, { message: 'Enter a name' }).max(SHOP_NAME_MAX)
+    name: z.string().trim().min(1, { message: 'Enter a name' }).max(SHOP_NAME_MAX),
+    brands: z.enum(BRAND_MODES)
   }),
   checkout: z.object({
     shippingAddress: z.enum(CHECKOUT_ADDRESS_COLLECTORS),
@@ -72,7 +79,12 @@ export type SettingsSources = {
 };
 
 const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSettings[K] } = {
-  shop: ({ env = {} }) => ({ name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME }),
+  shop: ({ env = {} }) => ({
+    name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME,
+    // Exactly the reading the product actions used to do themselves:
+    // anything but 'multi', including unset, means single.
+    brands: env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single'
+  }),
   checkout: ({ generated = {} }) => {
     // The generated src/lib/checkout/config.ts, if it still says something
     // this version understands; the shipped defaults if it does not.

@@ -73,6 +73,11 @@ export async function getShopName(): Promise<string> {
   return (await getStoreSetting('shop')).name;
 }
 
+/** 'single': a product may carry no brand; 'multi': every product needs one. */
+export async function getBrandMode(): Promise<StoreSettings['shop']['brands']> {
+  return (await getStoreSetting('shop')).brands;
+}
+
 /** Who collects the delivery address, and where the shop delivers. */
 export async function getCheckoutSettings(): Promise<StoreSettings['checkout']> {
   return getStoreSetting('checkout');
