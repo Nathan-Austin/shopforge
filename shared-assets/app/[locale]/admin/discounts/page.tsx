@@ -11,6 +11,7 @@ import {
   type DiscountActionResult
 } from '../actions/discounts';
 import DiscountForm from '../components/DiscountForm';
+import { getShopCurrency } from '@/lib/settings/store';
 import { requireShopOwner } from '../lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -29,12 +30,12 @@ export default async function AdminDiscountsPage({
   const t = await getTranslations({ locale, namespace: 'Admin' });
 
   // Owner's RLS: every code.
-  const [{ data: rows }, { data: anyProduct }] = await Promise.all([
-    supabase.from('discount_codes').select(DISCOUNT_COLUMNS).order('created_at', { ascending: false }),
-    supabase.from('products').select('currency').limit(1).maybeSingle()
-  ]);
+  const { data: rows } = await supabase
+    .from('discount_codes')
+    .select(DISCOUNT_COLUMNS)
+    .order('created_at', { ascending: false });
   const codes = ((rows ?? []) as DiscountRow[]).map(toDiscountCode);
-  const defaultCurrency = anyProduct?.currency ?? 'EUR';
+  const currency = await getShopCurrency();
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
 
   const create = createDiscount.bind(null, { locale });
@@ -63,7 +64,7 @@ export default async function AdminDiscountsPage({
       case 'percent':
         return `${code.percentOff}%`;
       case 'amount':
-        return `−${formatPrice(code.amountOffCents ?? 0, code.currency ?? defaultCurrency, locale)}`;
+        return `−${formatPrice(code.amountOffCents ?? 0, code.currency ?? currency, locale)}`;
       case 'free_shipping':
         return t('discounts.kinds.free_shipping');
     }
@@ -74,7 +75,7 @@ export default async function AdminDiscountsPage({
     if (code.minSubtotalCents) {
       parts.push(
         t('discounts.minLabel', {
-          amount: formatPrice(code.minSubtotalCents, code.currency ?? defaultCurrency, locale)
+          amount: formatPrice(code.minSubtotalCents, code.currency ?? currency, locale)
         })
       );
     }
@@ -103,7 +104,7 @@ export default async function AdminDiscountsPage({
         </p>
       )}
 
-      <DiscountForm action={create} defaultCurrency={defaultCurrency} />
+      <DiscountForm action={create} currency={currency} />
 
       {codes.length === 0 ? (
         <p className="rounded-lg border border-border bg-white p-6 text-center text-stone-600">

@@ -8,6 +8,7 @@ import {
   type NewDiscountError
 } from '@/lib/discounts/rules';
 import { getStripeServerClient } from '@/lib/stripe/server';
+import { getShopCurrency } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 export type DiscountActionError =
@@ -54,7 +55,8 @@ export async function createDiscount(
     kind: field('kind') as DiscountKind,
     percent: field('percent'),
     amount: field('amount'),
-    currency: field('currency'),
+    // One currency per shop: amount codes are in it, never a typed one.
+    currency: await getShopCurrency(),
     minSubtotal: field('min_subtotal'),
     startsAt: field('starts_at'),
     endsAt: field('ends_at'),

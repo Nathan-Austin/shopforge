@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { enabledProductFieldsFrom, parseProductFieldsFor } from '@/lib/products/catalogue';
-import { getBrandMode, getProductFieldKeys } from '@/lib/settings/store';
+import { getBrandMode, getProductFieldKeys, getShopCurrency } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 interface CreateProductContext {
@@ -24,7 +24,9 @@ export async function createProduct(
   const slug = formData.get('slug')?.toString().trim();
   // Entered in major units and stored as cents, like every other money field.
   const price = Number(formData.get('price'));
-  const currency = formData.get('currency')?.toString().trim() || 'EUR';
+  // Every price is in the shop's one currency; a re-save also tidies a
+  // row whose code differs only in case.
+  const currency = await getShopCurrency();
   const categoryId = formData.get('category_id')?.toString() || null;
   const brandId =
     formData.get('brand_id')?.toString() ||

@@ -3,6 +3,7 @@ import 'server-only';
 import { getTranslations } from 'next-intl/server';
 
 import { DEFAULT_LOCALE } from '@/i18n/config';
+import { getShopCurrency } from '@/lib/settings/store';
 import type { EmailBrand, TransactionalKind } from './brand';
 import type { TransactionalOptions } from './layout';
 import { renderOrderConfirmation, type RenderedEmail } from './orderConfirmation';
@@ -38,7 +39,8 @@ export async function renderSampleEmail(kind: TransactionalKind, locale: string,
     { productName: ts('sampleProductTwo'), unitPriceCents: 1000, quantity: 1 }
   ];
   const shipping = { name: ts('sampleCustomer'), line1: ts('sampleStreet'), postalCode: '10115', city: 'Berlin', country: 'DE' };
-  const currency = 'EUR';
+  // The sample order is priced the way real ones are.
+  const currency = await getShopCurrency();
   const money = (cents: number) => formatPrice(cents, currency, locale);
 
   switch (kind) {

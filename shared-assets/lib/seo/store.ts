@@ -4,9 +4,7 @@
  * the product page, the home page and the feed say the same thing.
  */
 
-// Only for the currency default, until the currency is a shop setting (5b).
-import { SHIPPING_CONFIG } from '@/lib/shipping/config';
-import { getCheckoutSettings, getShippingSettings, getShopName } from '@/lib/settings/store';
+import { getCheckoutSettings, getShippingSettings, getShopCurrency, getShopName } from '@/lib/settings/store';
 import { siteUrl } from './alternates';
 import type { ProductJsonLdInput } from './jsonld';
 
@@ -29,14 +27,18 @@ export function logoUrl(): string | null {
 
 /**
  * The shop-wide shipping policy for structured data: the flat rate to the
- * countries the checkout accepts. Pass the order's currency when the
- * shipping config's one does not apply.
+ * countries the checkout accepts, in the shop's currency unless the
+ * caller passes the order's own.
  */
-export async function shippingPolicy(currency = SHIPPING_CONFIG.currency): Promise<ProductJsonLdInput['shipping']> {
-  const [{ allowedCountries }, shipping] = await Promise.all([getCheckoutSettings(), getShippingSettings()]);
+export async function shippingPolicy(currency?: string): Promise<ProductJsonLdInput['shipping']> {
+  const [{ allowedCountries }, shipping, shopCurrency] = await Promise.all([
+    getCheckoutSettings(),
+    getShippingSettings(),
+    getShopCurrency()
+  ]);
   return {
     rateCents: shipping.flatRateCents,
-    currency,
+    currency: currency ?? shopCurrency,
     countries: [...allowedCountries]
   };
 }

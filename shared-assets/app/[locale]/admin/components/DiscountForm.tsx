@@ -8,12 +8,12 @@ import type { DiscountActionResult } from '../actions/discounts';
 
 interface DiscountFormProps {
   action: (previous: DiscountActionResult | null, formData: FormData) => Promise<DiscountActionResult>;
-  /** The shop's usual currency, as the default for amount codes. */
-  defaultCurrency: string;
+  /** The shop's one currency; amount codes and minimums are in it. */
+  currency: string;
 }
 
 /** The "new code" form. Field errors come from planNewDiscount on the server. */
-export default function DiscountForm({ action, defaultCurrency }: DiscountFormProps) {
+export default function DiscountForm({ action, currency }: DiscountFormProps) {
   const t = useTranslations('Admin.discounts');
   const [result, formAction, pending] = useActionState(action, null);
   const [kind, setKind] = useState<DiscountKind>('percent');
@@ -65,21 +65,10 @@ export default function DiscountForm({ action, defaultCurrency }: DiscountFormPr
 
         {kind === 'amount' && (
           <label className="block text-sm font-medium">
-            {t('amount')}
+            {t('amountIn', { currency })}
             <input type="text" name="amount" inputMode="decimal" placeholder="5.00" required className={input} />
           </label>
         )}
-
-        <label className="block text-sm font-medium">
-          {t('currency')}
-          <input
-            type="text"
-            name="currency"
-            defaultValue={defaultCurrency}
-            maxLength={3}
-            className={`${input} uppercase`}
-          />
-        </label>
 
         <label className="block text-sm font-medium">
           {t('minSubtotal')}

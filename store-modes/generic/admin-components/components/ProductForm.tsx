@@ -73,6 +73,8 @@ interface ProductFormProps {
   fieldGroups: ProductFieldGroups;
   /** The shop's heat scale, for the heat dropdown. Null when it has none. */
   heatScale?: HeatScale | null;
+  /** The one currency every price is in (Admin → Settings → Shop). */
+  currency: string;
 }
 
 export default function ProductForm({
@@ -84,6 +86,7 @@ export default function ProductForm({
   successRedirectPath,
   fieldGroups,
   heatScale = null,
+  currency,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -200,7 +203,7 @@ export default function ProductForm({
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price *</Label>
+                  <Label htmlFor="price">Price ({currency}) *</Label>
                   <Input
                     id="price"
                     name="price"
@@ -208,15 +211,6 @@ export default function ProductForm({
                     step="0.01"
                     min="0"
                     defaultValue={product ? (product.price_cents / 100).toFixed(2) : ''}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency *</Label>
-                  <Input
-                    id="currency"
-                    name="currency"
-                    defaultValue={product?.currency || 'EUR'}
                     required
                   />
                 </div>
