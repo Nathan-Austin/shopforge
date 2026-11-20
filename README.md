@@ -119,8 +119,10 @@ ship for English and German; other languages start from English.
   the customer.
 - **Shipping:** one flat rate with a free-shipping threshold, set with
   placeholder values in `src/lib/shipping/config.ts`. The countries you
-  deliver to are a placeholder list in `src/lib/checkout/config.ts`; the
-  checkout form offers exactly those and stores the two-letter code.
+  deliver to, and who asks for the address, are picked under **Admin →
+  Settings → Checkout** (`src/lib/checkout/config.ts` is the starting
+  point); the checkout form offers exactly those and stores the
+  two-letter code.
 
 ## Requirements
 
@@ -205,7 +207,8 @@ To skip the questions, preset `SHOPFORGE_PRODUCT_FIELDS` (`all`,
 `SHOPFORGE_HEAT_BANDS` (`Mild:3,Hot:10`), `SHOPFORGE_HEAT_DISPLAY`,
 `SHOPFORGE_CUSTOMER_AUTH` (`password` or `otp`) and `SHOPFORGE_ADMIN_MFA`
 (`required` or `off`). The answers end up in `src/lib/products/config.ts` and
-`src/lib/auth/config.ts`, which you can edit afterwards.
+`src/lib/auth/config.ts`. The two sign-in answers are what the shop starts
+with: once you save **Admin → Settings → Sign-in and security**, that decides.
 
 `extend-commerce-template.sh [--mode=…] [--shipping=form|stripe]` runs inside
 an existing generated shop and adds the profile API, the Stripe checkout
@@ -220,7 +223,8 @@ admin components for that mode. It doesn't change migrations or ask for keys.
 | `stripe` | Stripe's payment page, alongside the card | Nothing personal is posted to your server before payment, Stripe validates the address, and some owners prefer the customer to see they are typing into Stripe |
 
 Either way the webhook stores the same address on the order. The choice is
-written to `src/lib/checkout/config.ts`, which you can edit later.
+written to `src/lib/checkout/config.ts` and can be changed at any time under
+**Admin → Settings → Checkout**, which from its first save is what counts.
 
 ## Security model
 

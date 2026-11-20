@@ -50,8 +50,8 @@ need an answer before code is written.
 | # | Choice | Prompt / variable | Lands in | Runtime readers | Route | Effort |
 |---|---|---|---|---|---|---|
 | 6 | Single or multi brand | "Store mode (single/multi)", `NEXT_PUBLIC_STORE_MODE` | `.env.local`; single also gets `0101_brand_single.sql` (a "House Brand" row) | `createProduct` / `updateProduct` in both modes (assign the house brand when single) | `store_settings:shop` → `{ brands: 'single' \| 'multi' }`. The house-brand row becomes something the wizard creates, not a migration — done 2026-11-20 (the row is created on saving single with no brands) | S |
-| 7 | Customer sign-in (`password` / `otp`) | `SHOPFORGE_CUSTOMER_AUTH` | `src/lib/auth/config.ts` `AUTH_CONFIG.customerSignIn` | Sign-in and sign-up pages, `OtpSignIn` | `store_settings:auth` → `{ customerSignIn, adminMfa }`. Client pages need it, so it is read in the server layout and passed down (it is not secret) | S |
-| 8 | Admin MFA (`required` / `off`) | `SHOPFORGE_ADMIN_MFA` | same file, `adminMfa` | Admin guard (`requireShopOwner`, `ensureShopOwner`) | Same row as #7. Turning MFA **off** from the admin must itself require an MFA-verified session | S |
+| 7 | Customer sign-in (`password` / `otp`) | `SHOPFORGE_CUSTOMER_AUTH` | `src/lib/auth/config.ts` `AUTH_CONFIG.customerSignIn` | Sign-in and sign-up pages, `OtpSignIn` | `store_settings:auth` → `{ customerSignIn, adminMfa }`. Read in the server page and passed to the client form (it is not secret) — done 2026-11-20 | S |
+| 8 | Admin MFA (`required` / `off`) | `SHOPFORGE_ADMIN_MFA` | same file, `adminMfa` | Admin guard (`requireShopOwner`, `ensureShopOwner`) | Same row as #7. Turning MFA **off** requires an MFA-verified session, in the admin and in the database (`0013`) — done 2026-11-20 | S |
 | 9 | Product fields the admin manages | field picker menu, `SHOPFORGE_PRODUCT_FIELDS` | `src/lib/products/config.ts` `PRODUCT_FIELD_KEYS` (every column exists either way) | Product form, create/update actions, product page, feeds | `store_settings:product_fields` → `{ keys }`. Already planned in section 2 ("Admin UI for products/config.ts"); no migration needed | M |
 | 10 | Heat scale (chilli only): max, word bands, display | `SHOPFORGE_HEAT_MAX`, `_BANDS`, `_DISPLAY` | `src/lib/products/config.ts` `HEAT_SCALE`; seeds rescaled from `__HEAT_n__` | `formatHeat`, heat meter, filters, product card | `store_settings:heat` → the `HeatScale` object. Seeds stop being rescaled at generation: store heat on a fixed 0–10 basis and scale at display (Q4) | M |
 | 11 | Supabase URL, anon key, service-role key, project ref | `prompt_env_var` | `.env.local` | Every Supabase client | **env**, set by Vercel's Supabase integration | — |
@@ -127,7 +127,14 @@ is retired.
    `getBrandMode()`, and a radio pair in the Shop section; switching to
    single in a shop with no brands creates one named after the shop
    (slug `house-brand`), existing products keep their brands.
-   Still to do: sign-in and MFA (#7, #8).
+   ~~Sign-in and MFA (#7, #8)~~ done 2026-11-20: `store_settings:auth`,
+   the admin guard, and the sign-in and sign-up pages moved out of the
+   generator into `shared-assets` (a server page reading the setting plus
+   a client form each). Turning the factor off goes through
+   `ensureShopOwner()`, which refuses a session that has not passed it,
+   and unenrols the authenticator so the two agree; `0013` makes the
+   database insist on the same thing, since the row is reachable over the
+   Data API. Step 3 is complete.
    Each one: a schema and fallback in `lib/settings/schema.ts`, a section
    on `/admin/settings`, readers switched to `getStoreSetting()`.
 4. **Product fields and heat scale** (M). Already on the roadmap; no

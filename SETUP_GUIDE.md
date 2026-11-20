@@ -118,7 +118,8 @@ Use the same `--mode` as in step 3. This adds:
 asks on your checkout page; `stripe` asks only for an email there and lets
 Stripe's payment page collect the address, which suits owners who would
 rather no personal details reach their server before payment. If you choose
-`stripe`, set the countries you ship to in `src/lib/checkout/config.ts`.
+`stripe`, set the countries you ship to under **Admin → Settings →
+Checkout**; `src/lib/checkout/config.ts` is only what the shop starts with.
 
 It doesn't touch migrations or ask for keys. Re-running it overwrites the
 files it adds, including the copied store and admin components, so commit any
@@ -145,7 +146,7 @@ NEXT_PUBLIC_SUPABASE_URL=https://abcd1234xyz.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=…
 SUPABASE_SERVICE_ROLE_KEY=…          # server only
 SUPABASE_PROJECT_REF=abcd1234xyz
-NEXT_PUBLIC_STORE_MODE=single        # or multi
+NEXT_PUBLIC_STORE_MODE=single        # or multi; until you pick under Admin → Settings
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 STRIPE_SECRET_KEY=sk_test_…          # from dashboard.stripe.com → Developers → API keys
 STRIPE_WEBHOOK_SECRET=whsec_…        # from the webhook you create below

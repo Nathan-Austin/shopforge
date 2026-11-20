@@ -63,8 +63,9 @@ details for each item are in the numbered sections below.
    admin files moved to `shared-assets/app/[locale]/admin/` and the cached
    settings reader landed with the shop name as its first setting
    (`/admin/settings`), both 2026-11-19; the checkout address and delivery
-   countries followed on 2026-11-20, as did the single/multi brand mode.
-   Next is the last small setting (plan step 3: sign-in and MFA).
+   countries followed on 2026-11-20, as did the single/multi brand mode
+   and the sign-in and MFA settings — plan step 3 is done. Next is plan
+   step 4: the product fields and the heat scale.
 
 ## 1. Storefront and orders
 
@@ -231,7 +232,10 @@ details for each item are in the numbered sections below.
 ## 2b. Accounts and sign-in
 
 - [x] Customer sign-in by password or six-digit email code, chosen at
-      generation; admin always by password — done 2026-11-03
+      generation; admin always by password — done 2026-11-03. Both are
+      store settings since 2026-11-20 (Admin → Settings → Sign-in and
+      security), and the sign-in and sign-up pages live in
+      `shared-assets` rather than the generator
 - [x] Authenticator-app second factor for the admin, required by default —
       done 2026-11-03
 - [x] Translate the auth pages — done 2026-11-19: sign-in, sign-up, the
@@ -662,8 +666,11 @@ Decided on 2026-11-02:
 - Store settings have a home: `store_settings` (0012), a cached typed
   reader (`lib/settings/`, falling back to the shop's environment and its
   generated files), and `/admin/settings` with a Shop section (the name,
-  one brand or many) and a Checkout section (who collects the delivery
-  address, and where the shop delivers). The plan for moving the other generation-time choices
+  one brand or many), a Checkout section (who collects the delivery
+  address, and where the shop delivers) and a Sign-in and security section
+  (how customers sign in, and the admin's second factor). Writing any
+  setting needs the second factor when the account has one enrolled
+  (`0013`), because the MFA switch is now a row like any other. The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
