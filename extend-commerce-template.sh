@@ -194,14 +194,13 @@ import type Stripe from 'stripe';
 import { z } from 'zod';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
-import { SHIPPING_RATE_LABEL } from '@/lib/checkout/pricing';
-import { calculatePackageWeight, type OrderItem } from '@/lib/shipping/config';
+import { packageWeightOn, type OrderItem } from '@/lib/checkout/pricing';
 import { getCart } from '@/lib/cart/service';
 import { getCartSessionId } from '@/lib/cart/session';
 import { resolveCartDiscount } from '@/lib/discounts/service';
 import { clearAppliedDiscountCode } from '@/lib/discounts/session';
 import { createClient } from '@/lib/supabase/server';
-import { getCheckoutSettings } from '@/lib/settings/store';
+import { getCheckoutSettings, getShippingSettings } from '@/lib/settings/store';
 
 /**
  * Built per request: where the shop delivers is a store setting the owner
@@ -241,6 +240,9 @@ export async function POST(request: Request) {
     // Stripe collecting, the form sends only the email and the address is
     // asked for on Stripe's page; otherwise it must be in the request.
     const checkout = await getCheckoutSettings();
+    // The rates, label and parcel weights the owner saved, or the shop's
+    // generated ones until then.
+    const shippingSettings = await getShippingSettings();
     const collectsAddressAtStripe = checkout.shippingAddress === 'stripe';
     const address = collectsAddressAtStripe ? null : addressSchemaFor(checkout.allowedCountries).parse(body);
     
@@ -293,12 +295,12 @@ export async function POST(request: Request) {
 
     const subtotalCents = cart.totals.subtotalCents;
 
-    // Shipping (flat rate, see lib/shipping/config.ts)
+    // Shipping (flat rate, from the shipping settings)
     const shippingItems: OrderItem[] = cart.lines.map((line) => ({
       quantity: line.quantity
     }));
 
-    const packageWeight = calculatePackageWeight(shippingItems);
+    const packageWeight = packageWeightOn(shippingSettings, shippingItems);
 
     // The promo code, re-checked at the moment of payment. A code that has
     // stopped counting since it was applied is dropped and the customer is
@@ -348,7 +350,7 @@ export async function POST(request: Request) {
         : {}),
       shipping_options: [{
         shipping_rate_data: {
-          display_name: SHIPPING_RATE_LABEL,
+          display_name: shippingSettings.label,
           type: 'fixed_amount',
           fixed_amount: {
             amount: shippingCostCents,
@@ -1577,4 +1579,4 @@ echo "   • For order confirmation and refund emails, set RESEND_API_KEY and EM
 echo "   • Point a Stripe webhook at /api/webhooks/stripe and subscribe it to
      checkout.session.completed, charge.refunded and charge.dispute.* —
      without the last two, a dashboard refund or a chargeback never reaches the admin"
-echo "   • Set your rates in src/lib/shipping/config.ts"
+echo "   • Set your shipping rates under Admin → Settings → Shipping"

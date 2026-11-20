@@ -4,8 +4,9 @@
  * the product page, the home page and the feed say the same thing.
  */
 
+// Only for the currency default, until the currency is a shop setting (5b).
 import { SHIPPING_CONFIG } from '@/lib/shipping/config';
-import { getCheckoutSettings, getShopName } from '@/lib/settings/store';
+import { getCheckoutSettings, getShippingSettings, getShopName } from '@/lib/settings/store';
 import { siteUrl } from './alternates';
 import type { ProductJsonLdInput } from './jsonld';
 
@@ -32,9 +33,9 @@ export function logoUrl(): string | null {
  * shipping config's one does not apply.
  */
 export async function shippingPolicy(currency = SHIPPING_CONFIG.currency): Promise<ProductJsonLdInput['shipping']> {
-  const { allowedCountries } = await getCheckoutSettings();
+  const [{ allowedCountries }, shipping] = await Promise.all([getCheckoutSettings(), getShippingSettings()]);
   return {
-    rateCents: SHIPPING_CONFIG.flatRateCents,
+    rateCents: shipping.flatRateCents,
     currency,
     countries: [...allowedCountries]
   };
@@ -55,12 +56,11 @@ export function returnPolicy(country: string): ProductJsonLdInput['returnPolicy'
 
 /**
  * The same policy for the shop as a whole. Structured data takes one
- * country, so this is the first of the countries the shop delivers to
- * (they are stored in alphabetical order). A shop whose returns address
- * is somewhere else wants a home-country setting; that belongs with the
- * shipping settings, see docs/single-codebase-plan.md.
+ * country: the shop's home country from the shipping settings, or, until
+ * one is saved, the first of the countries it delivers to (stored in
+ * alphabetical order), as before.
  */
 export async function shopReturnPolicy(): Promise<ProductJsonLdInput['returnPolicy']> {
-  const { allowedCountries } = await getCheckoutSettings();
-  return returnPolicy(allowedCountries[0]);
+  const [{ allowedCountries }, { homeCountry }] = await Promise.all([getCheckoutSettings(), getShippingSettings()]);
+  return returnPolicy(homeCountry ?? allowedCountries[0]);
 }

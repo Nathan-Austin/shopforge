@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { calculateShippingCost } from '@/lib/checkout/pricing';
+import { calculateShippingCostOn } from '@/lib/checkout/pricing';
+import { getShippingSettings } from '@/lib/settings/store';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   applyDiscount,
@@ -98,7 +99,7 @@ export async function resolveCartDiscount(cart: {
   subtotalCents: number;
   currency: string;
 }): Promise<CartDiscountState> {
-  const shippingCents = calculateShippingCost(cart.subtotalCents);
+  const shippingCents = calculateShippingCostOn(await getShippingSettings(), cart.subtotalCents);
   const snapshot = { subtotalCents: cart.subtotalCents, shippingCents, currency: cart.currency };
   const appliedCode = await getAppliedDiscountCode();
 

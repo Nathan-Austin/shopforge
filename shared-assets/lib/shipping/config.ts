@@ -1,7 +1,13 @@
 /**
- * Shipping Configuration
+ * Shipping configuration: what this shop starts with.
  *
- * Placeholder values: replace them with your shop's box and rates.
+ * Placeholder values. This is the fallback, not the live setting: the
+ * Shipping section of /admin/settings writes a store_settings row, and
+ * from the moment the owner saves it that row decides (src/lib/settings/).
+ * The shipping maths lives in lib/checkout/pricing.ts and takes the
+ * setting as an argument. Only the box *weight* is a setting; the box
+ * dimensions below are read by nothing yet and wait for a carrier
+ * integration. The currency stays here until it is a shop setting (5b).
  */
 
 export const SHIPPING_CONFIG = {
@@ -24,18 +30,3 @@ export const SHIPPING_CONFIG = {
   /** Shown to the customer at checkout */
   label: 'Standard Shipping',
 };
-
-export interface OrderItem {
-  quantity: number;
-}
-
-/**
- * Total package weight in kilograms
- */
-export function calculatePackageWeight(items: OrderItem[]): number {
-  const grams = items.reduce(
-    (sum, item) => sum + SHIPPING_CONFIG.itemWeightGrams * item.quantity,
-    SHIPPING_CONFIG.box.weightGrams
-  );
-  return grams / 1000;
-}

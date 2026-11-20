@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 
 import { getCart } from '@/lib/cart/service';
-import { calculateShippingCost } from '@/lib/checkout/pricing';
+import { calculateShippingCostOn } from '@/lib/checkout/pricing';
+import { getShippingSettings } from '@/lib/settings/store';
 import {
   checkDiscount,
   isWellFormedCode,
@@ -35,7 +36,7 @@ export async function applyDiscountAction(input: {
   const discount = await findDiscountCode(code);
   const check = checkDiscount(discount, {
     subtotalCents: cart.totals.subtotalCents,
-    shippingCents: calculateShippingCost(cart.totals.subtotalCents),
+    shippingCents: calculateShippingCostOn(await getShippingSettings(), cart.totals.subtotalCents),
     currency: cart.currency
   });
   if (!check.ok) {
