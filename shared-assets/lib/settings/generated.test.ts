@@ -46,6 +46,11 @@ describe('the generated configuration', () => {
     expect(fallback.display).toBe(generated.display);
   });
 
+  it('is where the shop currency falls back to', () => {
+    const generated = GENERATED_CONFIG.shipping as { currency: string };
+    expect(settingFallback('shop', { generated: GENERATED_CONFIG }).currency).toBe(generated.currency.toUpperCase());
+  });
+
   it('is what the shipping setting falls back to', () => {
     const generated = GENERATED_CONFIG.shipping as {
       flatRateCents: number;

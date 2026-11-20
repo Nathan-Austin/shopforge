@@ -89,6 +89,11 @@ export async function getAuthSettings(): Promise<StoreSettings['auth']> {
   return getStoreSetting('auth');
 }
 
+/** The one currency every price in the shop is in. */
+export async function getShopCurrency(): Promise<StoreSettings['shop']['currency']> {
+  return (await getStoreSetting('shop')).currency;
+}
+
 /** The shop's rates, parcel weights, label and home country. */
 export async function getShippingSettings(): Promise<StoreSettings['shipping']> {
   return getStoreSetting('shipping');

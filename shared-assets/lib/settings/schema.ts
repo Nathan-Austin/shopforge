@@ -40,6 +40,17 @@ export const HEAT_DISPLAYS = ['number', 'word', 'both', 'peppers'] as const;
 
 export const SHIPPING_LABEL_MAX = 80;
 
+/**
+ * Currencies a shop can choose: the two-decimal ones. Amounts are sent to
+ * Stripe as stored cents, which would be off by a factor of 100 for
+ * zero-decimal currencies (JPY, KRW — a known gap in the roadmap); those
+ * join this list when that is handled, and nothing else needs to change.
+ */
+export const SHOP_CURRENCIES = [
+  'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR',
+  'GBP', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'USD'
+] as const;
+
 export const HEAT_BAND_WORD_MAX = 40;
 
 /** Where a shop delivers until it says otherwise. */
@@ -48,7 +59,14 @@ export const DEFAULT_ALLOWED_COUNTRIES = ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'G
 export const STORE_SETTING_SCHEMAS = {
   shop: z.object({
     name: z.string().trim().min(1, { message: 'Enter a name' }).max(SHOP_NAME_MAX),
-    brands: z.enum(BRAND_MODES)
+    brands: z.enum(BRAND_MODES),
+    /**
+     * The one currency every price in the shop is in (decided 2026-11-04).
+     * Saving a different one is refused while any product or amount code
+     * still carries another — see saveShopSettings — because changing the
+     * label on a price is a repricing, not a conversion.
+     */
+    currency: z.string().trim().toUpperCase().pipe(z.enum(SHOP_CURRENCIES))
   }),
   checkout: z.object({
     shippingAddress: z.enum(CHECKOUT_ADDRESS_COLLECTORS),
@@ -151,12 +169,20 @@ export type SettingsSources = {
 };
 
 const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSettings[K] } = {
-  shop: ({ env = {} }) => ({
-    name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME,
-    // Exactly the reading the product actions used to do themselves:
-    // anything but 'multi', including unset, means single.
-    brands: env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single'
-  }),
+  shop: ({ env = {}, generated = {} }) => {
+    // The one currency the generator wrote anywhere is the shipping
+    // config's; a value this list does not know (a hand-edited file)
+    // falls back to the generator's own default.
+    const configured = ((generated.shipping ?? {}) as Record<string, unknown>).currency;
+    const currency = SHOP_CURRENCIES.find((candidate) => candidate === String(configured ?? '').toUpperCase()) ?? 'EUR';
+    return {
+      name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME,
+      // Exactly the reading the product actions used to do themselves:
+      // anything but 'multi', including unset, means single.
+      brands: env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single',
+      currency
+    };
+  },
   checkout: ({ generated = {} }) => {
     // The generated src/lib/checkout/config.ts, if it still says something
     // this version understands; the shipped defaults if it does not.

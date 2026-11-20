@@ -13,11 +13,20 @@ describe('settingFallback', () => {
   it('takes the shop name and brand mode from the generated environment', () => {
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: ' Test Shop ' } })).toEqual({
       name: 'Test Shop',
-      brands: 'single'
+      brands: 'single',
+      currency: 'EUR'
     });
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_STORE_MODE: 'multi' } }).brands).toBe('multi');
     // Anything but 'multi' means single, as the product actions always read it.
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_STORE_MODE: 'Multi' } }).brands).toBe('single');
+  });
+
+  it('takes the currency from the generated shipping config, within reason', () => {
+    expect(settingFallback('shop', { generated: { shipping: { currency: 'GBP' } } }).currency).toBe('GBP');
+    expect(settingFallback('shop', { generated: { shipping: { currency: 'gbp' } } }).currency).toBe('GBP');
+    // A hand-edited file saying something unsupported falls back to EUR.
+    expect(settingFallback('shop', { generated: { shipping: { currency: 'JPY' } } }).currency).toBe('EUR');
+    expect(settingFallback('shop', {}).currency).toBe('EUR');
   });
 
   it('has a name even with nothing configured', () => {
@@ -56,26 +65,32 @@ describe('resolveSetting', () => {
   const sources = { env: { NEXT_PUBLIC_SHOP_NAME: 'From Env' } };
 
   it('prefers a saved value over the environment', () => {
-    expect(resolveSetting('shop', { name: 'Saved Name', brands: 'multi' }, sources)).toEqual({
+    expect(resolveSetting('shop', { name: 'Saved Name', brands: 'multi', currency: 'SEK' }, sources)).toEqual({
       name: 'Saved Name',
-      brands: 'multi'
+      brands: 'multi',
+      currency: 'SEK'
     });
   });
 
   it('falls back when nothing is saved', () => {
-    expect(resolveSetting('shop', null, sources)).toEqual({ name: 'From Env', brands: 'single' });
-    expect(resolveSetting('shop', undefined, sources)).toEqual({ name: 'From Env', brands: 'single' });
+    expect(resolveSetting('shop', null, sources)).toEqual({ name: 'From Env', brands: 'single', currency: 'EUR' });
+    expect(resolveSetting('shop', undefined, sources)).toEqual({ name: 'From Env', brands: 'single', currency: 'EUR' });
   });
 
-  it('completes a shop row saved before the brand mode existed', () => {
-    expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({ name: 'Saved Name', brands: 'single' });
+  it('completes a shop row saved before the newer fields existed', () => {
+    expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({
+      name: 'Saved Name',
+      brands: 'single',
+      currency: 'EUR'
+    });
   });
 
   it('falls back field by field when a saved value is broken', () => {
     expect(resolveSetting('shop', { name: '' }, sources).name).toBe('From Env');
     expect(resolveSetting('shop', { name: 42, brands: 'multi' }, sources)).toEqual({
       name: 'From Env',
-      brands: 'multi'
+      brands: 'multi',
+      currency: 'EUR'
     });
     expect(resolveSetting('shop', ['not', 'an', 'object'], sources).name).toBe('From Env');
   });
@@ -195,22 +210,28 @@ describe('resolveSetting, auth', () => {
 });
 
 describe('parseSetting', () => {
-  it('trims and accepts a good name', () => {
-    expect(parseSetting('shop', { name: '  Ann & Co  ', brands: 'single' })).toEqual({
+  it('trims and accepts a good name, and tidies the currency', () => {
+    expect(parseSetting('shop', { name: '  Ann & Co  ', brands: 'single', currency: ' eur ' })).toEqual({
       ok: true,
-      value: { name: 'Ann & Co', brands: 'single' }
+      value: { name: 'Ann & Co', brands: 'single', currency: 'EUR' }
     });
   });
 
+  it('refuses a currency outside the supported list', () => {
+    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'single', currency: 'JPY' });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.issues[0].path).toBe('currency');
+  });
+
   it('refuses an empty or overlong name and says where', () => {
-    const empty = parseSetting('shop', { name: '   ', brands: 'single' });
+    const empty = parseSetting('shop', { name: '   ', brands: 'single', currency: 'EUR' });
     expect(empty.ok).toBe(false);
     if (!empty.ok) expect(empty.issues[0].path).toBe('name');
-    expect(parseSetting('shop', { name: 'x'.repeat(81), brands: 'single' }).ok).toBe(false);
+    expect(parseSetting('shop', { name: 'x'.repeat(81), brands: 'single', currency: 'EUR' }).ok).toBe(false);
   });
 
   it('refuses a brand mode it does not know', () => {
-    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'several' });
+    const bad = parseSetting('shop', { name: 'Ann & Co', brands: 'several', currency: 'EUR' });
     expect(bad.ok).toBe(false);
     if (!bad.ok) expect(bad.issues[0].path).toBe('brands');
   });
