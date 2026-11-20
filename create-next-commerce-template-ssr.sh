@@ -875,6 +875,28 @@ cat > src/messages/en.json <<'EOF'
           "invalid": "Enter a name of up to 80 characters.",
           "failed": "The settings could not be saved."
         }
+      },
+      "checkout": {
+        "heading": "Checkout",
+        "hint": "Who asks the customer for their delivery address, and where you deliver.",
+        "addressHeading": "Delivery address",
+        "address_form": "Ask on your checkout page",
+        "address_form_hint": "The customer fills in their address in your shop, before paying.",
+        "address_stripe": "Ask on Stripe's payment page",
+        "address_stripe_hint": "Stripe collects the address while it takes the payment.",
+        "countries": "Deliver to",
+        "countriesHint": "The countries checkout offers. Pick at least one.",
+        "countriesFromDefault": "Not saved yet: this is the list the shop was set up with. Save to make it yours.",
+        "search": "Search countries",
+        "selected": "{count, plural, one {# country} other {# countries}} selected",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. Checkout follows the new settings.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "invalid": "Pick at least one country you deliver to.",
+          "failed": "The settings could not be saved."
+        }
       }
     },
     "title": "Store admin",
@@ -2174,6 +2196,28 @@ cat > src/messages/de.json <<'EOF'
         "errors": {
           "not_authorized": "Das dürfen Sie nicht.",
           "invalid": "Geben Sie einen Namen mit höchstens 80 Zeichen ein.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+        }
+      },
+      "checkout": {
+        "heading": "Kasse",
+        "hint": "Wer die Lieferadresse abfragt und wohin Sie liefern.",
+        "addressHeading": "Lieferadresse",
+        "address_form": "Auf Ihrer Kassenseite abfragen",
+        "address_form_hint": "Die Kundin gibt die Adresse vor der Zahlung in Ihrem Shop ein.",
+        "address_stripe": "Auf der Zahlungsseite von Stripe abfragen",
+        "address_stripe_hint": "Stripe erfasst die Adresse zusammen mit der Zahlung.",
+        "countries": "Lieferländer",
+        "countriesHint": "Die Länder, die an der Kasse zur Auswahl stehen. Mindestens eines.",
+        "countriesFromDefault": "Noch nicht gespeichert: Das ist die Liste aus der Einrichtung. Speichern Sie sie, um sie festzulegen.",
+        "search": "Länder suchen",
+        "selected": "{count, plural, one {# Land} other {# Länder}} ausgewählt",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Die Kasse richtet sich nach den neuen Einstellungen.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "invalid": "Wählen Sie mindestens ein Lieferland aus.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden."
         }
       }

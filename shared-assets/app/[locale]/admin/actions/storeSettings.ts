@@ -40,3 +40,35 @@ export async function saveShopSettings(
   revalidatePath(`/${context.locale}/admin/settings`);
   return { ok: true };
 }
+
+export async function saveCheckoutSettings(
+  context: Context,
+  _previous: StoreSettingsActionResult | null,
+  formData: FormData
+): Promise<StoreSettingsActionResult> {
+  const { error, supabase, user } = await ensureShopOwner();
+  if (error || !supabase) return { ok: false, error: 'not_authorized' };
+
+  const saved = await saveStoreSetting(
+    supabase,
+    'checkout',
+    {
+      shippingAddress: formData.get('shippingAddress')?.toString() ?? '',
+      // Unticked boxes send nothing, so an empty list means "none picked"
+      // and the schema refuses it.
+      allowedCountries: formData.getAll('countries').map((value) => value.toString())
+    },
+    user?.id ?? null
+  );
+  if (!saved.ok) {
+    return saved.error === 'invalid'
+      ? { ok: false, error: 'invalid', issues: saved.issues }
+      : { ok: false, error: 'failed', message: saved.message };
+  }
+
+  // The checkout page and the delivery countries in every page's
+  // structured data.
+  revalidatePath('/', 'layout');
+  revalidatePath(`/${context.locale}/admin/settings`);
+  return { ok: true };
+}
