@@ -187,18 +187,24 @@ is retired.
      generated — read it instead. Three admin files stopped differing and
      moved to `shared-assets`: `ImageUploader`, `deleteProduct` and the
      product list (its heat column is now a mode check).
-   - **Session 2 — the admin product pages.** `ProductForm`, the new and
-     edit pages, and the create and update actions: the chilli-type
-     multi-select and the join-table sync on save, behind the mode. The
-     care needed is in the join sync — a generated chilli store once wiped
-     a product's chilli types on every save (ROADMAP section 4), and that
-     is the bug to not reintroduce.
-   - **Session 3 — the storefront and the switch.** `ProductCard`,
-     `ProductArchive`, `ShopArchive`, `ProductExtras`, `BrandCard`,
-     `types.ts` (which the admin list is currently working around) and the
-     email starters, then the mode picker on `/admin/settings` — deliberately
-     not shipped before the components follow it, so the switch never
-     half-works — and finally one `0001_init` for both modes.
+   - **Session 2 — done 2026-11-20.** `ProductForm`, the new and edit
+     pages and the create and update actions are one set in
+     `shared-assets`; only the email starters are left per mode. The join
+     sync is guarded the way it had to be: the form sends a marker
+     whenever it renders the chilli-type control, and
+     `lib/products/chilliTypes.ts` (pure, unit tested) turns that into
+     submitted/ids, so a form that never showed the control leaves the
+     links alone instead of clearing them. The mode picker shipped in the
+     same session, earlier than planned and deliberately: nobody is
+     running this yet, so the admin half can land before the storefront
+     follows.
+   - **Session 3 — the storefront.** `ProductCard`, `ProductArchive`,
+     `ShopArchive`, `ProductExtras`, `BrandCard`, `Chip.tsx` and
+     `types.ts` (which the admin pages are working around with shapes of
+     their own), plus the email starters. Until it lands, a shop switched
+     to chilli gets the admin side only — the storefront still renders
+     whatever its generated components do. Then one `0001_init` for both
+     modes, and `--mode` stops copying directories.
 7. **Languages at runtime** (M). `src/proxy.ts` reads the locales through
    the same cached reader (Q3).
 8. **Then** section 0's later items: the deploy button, the first-run wizard

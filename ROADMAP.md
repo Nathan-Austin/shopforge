@@ -91,10 +91,11 @@ details for each item are in the numbered sections below.
    country — followed the same day, and so did 5b, one currency per shop:
    no migration was needed in the end, a save-time guard instead (the
    dry run first, as agreed). Step 5 is done, and step 6 has started:
-   session 1 landed 2026-11-20 — every shop has the chilli tables
-   (`0014`), the store mode is a setting, and three admin product files
-   stopped differing. Session 2 is the product form, its pages and the
-   create/update actions.
+   sessions 1 and 2 landed 2026-11-20 — every shop has the chilli tables
+   (`0014`), the store mode is a setting with a picker in the admin, and
+   the admin product files are one set for both modes (only the email
+   starters still differ). Session 3 is the storefront: the product card,
+   archive, extras, brand card and the shared types.
 3. **Storefront content without code** (section 2f), once the settings
    above are in place. The logo landed 2026-11-20 (Q5 closed); next are
    the home page sections, then navigation. These are what make a shop
@@ -779,7 +780,9 @@ Decided on 2026-11-02:
   section holds the rates, the label, the parcel weights and the home
   country, and the Shop section holds the one currency every price is in,
   guarded so it can only change when nothing priced disagrees, plus the
-  shop's one logo (header, structured data, and emails without their own). The plan for moving the other generation-time choices
+  shop's one logo (header, structured data, and emails without their own),
+  and what the shop sells (ordinary products or chillies — the admin
+  follows it already, the storefront in the next session). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
