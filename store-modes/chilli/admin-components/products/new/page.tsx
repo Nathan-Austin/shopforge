@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import type { Category, ChilliType, StoreBrand } from '@/components/store/types';
 import { requireShopOwner } from '../../lib/auth';
+import { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
+import { getProductFieldKeys } from '@/lib/settings/store';
 import ProductForm from '../../components/ProductForm';
 import { createProduct } from '../../actions/createProduct';
 
@@ -38,6 +40,8 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
   const defaultBrandId = brands[0]?.id;
   const createAction = createProduct.bind(null, { locale, defaultBrandId });
 
+  // The fields this shop manages, as saved under Admin → Settings.
+  const fieldGroups = enabledProductFieldGroupsFrom(await getProductFieldKeys());
   return (
     <div className="space-y-4">
       <div>
@@ -46,6 +50,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
       </div>
 
       <ProductForm
+        fieldGroups={fieldGroups}
         categories={categories}
         chilliTypes={chilliTypes}
         brands={brands}

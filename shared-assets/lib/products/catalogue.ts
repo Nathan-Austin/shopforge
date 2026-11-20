@@ -2,15 +2,21 @@
  * Product field catalogue.
  *
  * Every field a product can have, in one place. The columns all exist in the
- * database (see supabase/migrations/0001_init.sql); `PRODUCT_FIELD_KEYS` in
- * ./config.ts decides which ones the admin form shows and the server actions
- * persist. That means a shop can switch a field on later without a migration.
+ * database (see supabase/migrations/0001_init.sql); which ones the admin
+ * form shows and the server actions persist is the `product_fields` store
+ * setting, falling back to `PRODUCT_FIELD_KEYS` in ./config.ts until the
+ * owner saves one. That means a shop can switch a field on later without a
+ * migration — and now without a deploy.
+ *
+ * The `*From` functions take the saved list; a page or action reads it once
+ * (getProductFieldKeys()) and passes it down, so client components never
+ * have to.
  *
  * To add a field: add the column to the schema, add an entry here, and it
  * appears in the form and is saved automatically.
  */
 
-import { PRODUCT_FIELD_KEYS } from './config';
+import { HEAT_SCALE } from './config';
 
 export type ProductFieldType =
   /** Single-line text. */
@@ -394,40 +400,52 @@ export const PRODUCT_FIELDS: ProductField[] = [
 
 const FIELDS_BY_KEY = new Map(PRODUCT_FIELDS.map((field) => [field.key, field]));
 
-/** Every field this shop uses, in catalogue order. */
-export function enabledProductFields(): ProductField[] {
-  const enabled = new Set<string>(PRODUCT_FIELD_KEYS);
-  return PRODUCT_FIELDS.filter((field) => enabled.has(field.key));
+/**
+ * Every field this shop *could* offer: the whole catalogue, minus fields
+ * belonging to a store mode this shop is not. Heat is the only marker a
+ * shop carries at runtime today (a generic shop has no scale and no
+ * heat_level column), so it stands in for the mode until the mode itself
+ * becomes a setting — plan step 6 in docs/single-codebase-plan.md.
+ */
+export function availableProductFields(): ProductField[] {
+  const mode = HEAT_SCALE ? 'chilli' : 'generic';
+  return PRODUCT_FIELDS.filter((field) => !field.modes || field.modes.includes(mode));
 }
 
-export function isProductFieldEnabled(key: string): boolean {
-  return (PRODUCT_FIELD_KEYS as readonly string[]).includes(key);
-}
-
-export function getProductField(key: string): ProductField | undefined {
-  return FIELDS_BY_KEY.get(key);
+/**
+ * The fields behind a saved list of keys, in catalogue order. A key this
+ * shop has no field for is ignored rather than trusted, so a list saved in
+ * a chilli shop cannot make a generic one write a column it has not got.
+ */
+export function enabledProductFieldsFrom(keys: readonly string[]): ProductField[] {
+  const wanted = new Set(keys);
+  return availableProductFields().filter((field) => wanted.has(field.key));
 }
 
 /** Enabled fields grouped for rendering, skipping groups with no fields. */
-export function enabledProductFieldGroups(): {
+export function enabledProductFieldGroupsFrom(keys: readonly string[]): {
   group: ProductFieldGroup;
   fields: ProductField[];
 }[] {
-  const fields = enabledProductFields();
+  const fields = enabledProductFieldsFrom(keys);
   return PRODUCT_FIELD_GROUPS.map((group) => ({
     group,
     fields: fields.filter((field) => field.group === group.key)
   })).filter((entry) => entry.fields.length > 0);
 }
 
-/** Columns to select for the admin edit form. */
-export function productSelectColumns(): string[] {
+/** Columns to select for the admin edit form, for a saved list of keys. */
+export function productSelectColumnsFrom(keys: readonly string[]): string[] {
   const columns = [...CORE_PRODUCT_COLUMNS, 'id'];
-  for (const field of enabledProductFields()) {
+  for (const field of enabledProductFieldsFrom(keys)) {
     columns.push(field.column);
     if (field.unitColumn) columns.push(field.unitColumn);
   }
   return Array.from(new Set(columns));
+}
+
+export function getProductField(key: string): ProductField | undefined {
+  return FIELDS_BY_KEY.get(key);
 }
 
 export const NUTRITION_KEYS = [
@@ -473,10 +491,6 @@ function list(formData: FormData, name: string): string[] | null {
  * Builds the `products` row for the enabled fields from a submitted form.
  * Core columns are handled by the caller, which validates them.
  */
-export function parseProductFields(formData: FormData): Record<string, unknown> {
-  return parseProductFieldsFor(enabledProductFields(), formData);
-}
-
 /** The same parse against an explicit field list, which is what tests use. */
 export function parseProductFieldsFor(
   fields: ProductField[],

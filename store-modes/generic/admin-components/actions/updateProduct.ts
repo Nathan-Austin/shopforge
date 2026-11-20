@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { parseProductFields } from '@/lib/products/catalogue';
-import { getBrandMode } from '@/lib/settings/store';
+import { enabledProductFieldsFrom, parseProductFieldsFor } from '@/lib/products/catalogue';
+import { getBrandMode, getProductFieldKeys } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
 interface UpdateProductContext {
@@ -43,8 +43,8 @@ export async function updateProduct(
     return { error: 'Brand is required in multi-store mode' };
   }
 
-  // Everything the shop enabled in src/lib/products/config.ts.
-  const fields = parseProductFields(formData);
+  // Everything the shop manages (Admin → Settings → Product fields).
+  const fields = parseProductFieldsFor(enabledProductFieldsFrom(await getProductFieldKeys()), formData);
 
   const { error: updateError } = await supabase
     .from('products')

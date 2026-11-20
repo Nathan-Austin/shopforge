@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
 import ProductFieldInput from '@/components/admin/ProductFieldInput';
-import { enabledProductFieldGroups } from '@/lib/products/catalogue';
 import type { DbId } from '@/components/store/types';
 import { ImageUploader } from './ImageUploader';
 
@@ -40,6 +40,12 @@ interface SelectOption {
   slug?: string;
 }
 
+/**
+ * The grouped fields the page passes in: whatever
+ * enabledProductFieldGroupsFrom() returns for this shop's setting.
+ */
+export type ProductFieldGroups = ReturnType<typeof enabledProductFieldGroupsFrom>;
+
 export interface ProductFormResult {
   error?: string;
   success?: string;
@@ -59,6 +65,11 @@ interface ProductFormProps {
   onDelete?: (formData: FormData) => Promise<ProductFormResult>;
   /** Where to go after a successful save or delete. */
   successRedirectPath?: string;
+  /**
+   * The fields this shop manages, grouped, as the page read them from the
+   * product_fields setting.
+   */
+  fieldGroups: ProductFieldGroups;
 }
 
 export default function ProductForm({
@@ -68,6 +79,7 @@ export default function ProductForm({
   onSubmit,
   onDelete,
   successRedirectPath,
+  fieldGroups,
 }: ProductFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -82,7 +94,6 @@ export default function ProductForm({
     product?.image_url || null
   );
 
-  const fieldGroups = enabledProductFieldGroups();
 
   const finish = (result: ProductFormResult) => {
     if (result?.error) {

@@ -4,7 +4,7 @@ import {
   PRODUCT_FIELDS,
   PRODUCT_FIELD_GROUPS,
   parseProductFieldsFor,
-  productSelectColumns,
+  productSelectColumnsFrom,
   type ProductField
 } from './catalogue';
 
@@ -137,16 +137,27 @@ describe('parseProductFieldsFor', () => {
   });
 });
 
-describe('productSelectColumns', () => {
-  it('always includes the core columns', () => {
-    const columns = productSelectColumns();
+describe('productSelectColumnsFrom', () => {
+  it('always includes the core columns, whatever the shop enabled', () => {
+    const columns = productSelectColumnsFrom([]);
     for (const column of ['id', 'name', 'slug', 'price_cents', 'currency']) {
       expect(columns).toContain(column);
     }
   });
 
+  it('adds the column of each enabled field, and its unit column', () => {
+    const columns = productSelectColumnsFrom(['net_content']);
+    expect(columns).toContain('net_content');
+    expect(columns).toContain('net_content_unit');
+    expect(productSelectColumnsFrom([])).not.toContain('net_content');
+  });
+
+  it('ignores a key this shop has no field for', () => {
+    expect(productSelectColumnsFrom(['not_a_field'])).toEqual(productSelectColumnsFrom([]));
+  });
+
   it('has no duplicates', () => {
-    const columns = productSelectColumns();
+    const columns = productSelectColumnsFrom(['net_content', 'net_content']);
     expect(new Set(columns).size).toBe(columns.length);
   });
 });
