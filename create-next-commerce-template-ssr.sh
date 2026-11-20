@@ -505,10 +505,14 @@ echo "🔐 Writing auth config (customer sign-in: $SHOPFORGE_CUSTOMER_AUTH, admi
 mkdir -p src/lib/auth
 cat > src/lib/auth/config.ts <<EOF
 /**
- * Authentication configuration.
+ * Authentication configuration: what this shop starts with.
  *
  * Written by create-next-commerce-template-ssr.sh from the answers given at
- * generation time. Edit by hand to change it.
+ * generation time. This is the fallback, not the live setting: the
+ * "Sign-in and security" section of /admin/settings writes a store_settings
+ * row, and from the moment the owner saves it that row decides
+ * (src/lib/settings/). Editing this file changes a shop that has never
+ * saved those settings.
  */
 export const AUTH_CONFIG = {
   /**
