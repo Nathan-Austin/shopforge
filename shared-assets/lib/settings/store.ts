@@ -88,6 +88,11 @@ export async function getAuthSettings(): Promise<StoreSettings['auth']> {
   return getStoreSetting('auth');
 }
 
+/** The catalogue keys this shop's admin manages. */
+export async function getProductFieldKeys(): Promise<string[]> {
+  return (await getStoreSetting('product_fields')).keys;
+}
+
 export type SaveSettingResult<K extends StoreSettingKey> =
   | { ok: true; value: StoreSettings[K] }
   | { ok: false; error: 'invalid'; issues: SettingIssue[] }

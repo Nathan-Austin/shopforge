@@ -11,9 +11,11 @@
 
 import { AUTH_CONFIG } from '@/lib/auth/config';
 import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+import { PRODUCT_FIELD_KEYS } from '@/lib/products/config';
 import type { GeneratedConfig } from './schema';
 
 export const GENERATED_CONFIG: GeneratedConfig = {
   checkout: CHECKOUT_CONFIG,
-  auth: AUTH_CONFIG
+  auth: AUTH_CONFIG,
+  productFields: PRODUCT_FIELD_KEYS
 };

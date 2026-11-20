@@ -62,6 +62,16 @@ export const STORE_SETTING_SCHEMAS = {
   auth: z.object({
     customerSignIn: z.enum(CUSTOMER_SIGN_IN_METHODS),
     adminMfa: z.enum(ADMIN_MFA_MODES)
+  }),
+  product_fields: z.object({
+    // Catalogue keys. Which keys exist is the product catalogue's business
+    // (lib/products/catalogue.ts), not this file's: a key this shop has no
+    // field for is simply ignored when the list is read, so a setting saved
+    // in a chilli shop cannot break a generic one.
+    keys: z
+      .array(z.string().trim().regex(/^[a-z][a-z0-9_]*$/, { message: 'Not a field key' }))
+      .max(200)
+      .transform((keys) => [...new Set(keys)])
   })
 };
 
@@ -81,6 +91,7 @@ export type SettingsEnv = Partial<Record<string, string | undefined>>;
 export type GeneratedConfig = {
   checkout?: unknown;
   auth?: unknown;
+  productFields?: unknown;
 };
 
 /** Where a fallback may look: the environment and the generated files. */
@@ -110,6 +121,12 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     // in with, and a second factor on the admin.
     const parsed = STORE_SETTING_SCHEMAS.auth.safeParse(generated.auth);
     return parsed.success ? parsed.data : { customerSignIn: 'password', adminMfa: 'required' };
+  },
+  product_fields: ({ generated = {} }) => {
+    // PRODUCT_FIELD_KEYS from the generated src/lib/products/config.ts,
+    // which the generator already filtered to this shop's store mode.
+    const parsed = STORE_SETTING_SCHEMAS.product_fields.safeParse({ keys: generated.productFields });
+    return parsed.success ? parsed.data : { keys: [] };
   }
 };
 
