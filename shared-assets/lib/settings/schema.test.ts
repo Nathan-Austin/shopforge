@@ -14,7 +14,8 @@ describe('settingFallback', () => {
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_NAME: ' Test Shop ' } })).toEqual({
       name: 'Test Shop',
       brands: 'single',
-      currency: 'EUR'
+      currency: 'EUR',
+      logoUrl: null
     });
     expect(settingFallback('shop', { env: { NEXT_PUBLIC_STORE_MODE: 'multi' } }).brands).toBe('multi');
     // Anything but 'multi' means single, as the product actions always read it.
@@ -27,6 +28,15 @@ describe('settingFallback', () => {
     // A hand-edited file saying something unsupported falls back to EUR.
     expect(settingFallback('shop', { generated: { shipping: { currency: 'JPY' } } }).currency).toBe('EUR');
     expect(settingFallback('shop', {}).currency).toBe('EUR');
+  });
+
+  it('takes the logo from the environment, when it looks like one', () => {
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_LOGO_URL: 'https://cdn.example/logo.png' } }).logoUrl).toBe(
+      'https://cdn.example/logo.png'
+    );
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_LOGO_URL: '/logo.png' } }).logoUrl).toBe('/logo.png');
+    expect(settingFallback('shop', { env: { NEXT_PUBLIC_SHOP_LOGO_URL: 'http://plain.example/logo.png' } }).logoUrl).toBeNull();
+    expect(settingFallback('shop', {}).logoUrl).toBeNull();
   });
 
   it('has a name even with nothing configured', () => {
@@ -65,23 +75,28 @@ describe('resolveSetting', () => {
   const sources = { env: { NEXT_PUBLIC_SHOP_NAME: 'From Env' } };
 
   it('prefers a saved value over the environment', () => {
-    expect(resolveSetting('shop', { name: 'Saved Name', brands: 'multi', currency: 'SEK' }, sources)).toEqual({
+    expect(
+      resolveSetting('shop', { name: 'Saved Name', brands: 'multi', currency: 'SEK', logoUrl: null }, sources)
+    ).toEqual({
       name: 'Saved Name',
       brands: 'multi',
-      currency: 'SEK'
+      currency: 'SEK',
+      logoUrl: null
     });
   });
 
   it('falls back when nothing is saved', () => {
-    expect(resolveSetting('shop', null, sources)).toEqual({ name: 'From Env', brands: 'single', currency: 'EUR' });
-    expect(resolveSetting('shop', undefined, sources)).toEqual({ name: 'From Env', brands: 'single', currency: 'EUR' });
+    const expected = { name: 'From Env', brands: 'single', currency: 'EUR', logoUrl: null };
+    expect(resolveSetting('shop', null, sources)).toEqual(expected);
+    expect(resolveSetting('shop', undefined, sources)).toEqual(expected);
   });
 
   it('completes a shop row saved before the newer fields existed', () => {
     expect(resolveSetting('shop', { name: 'Saved Name' }, sources)).toEqual({
       name: 'Saved Name',
       brands: 'single',
-      currency: 'EUR'
+      currency: 'EUR',
+      logoUrl: null
     });
   });
 
@@ -90,7 +105,8 @@ describe('resolveSetting', () => {
     expect(resolveSetting('shop', { name: 42, brands: 'multi' }, sources)).toEqual({
       name: 'From Env',
       brands: 'multi',
-      currency: 'EUR'
+      currency: 'EUR',
+      logoUrl: null
     });
     expect(resolveSetting('shop', ['not', 'an', 'object'], sources).name).toBe('From Env');
   });
@@ -211,10 +227,15 @@ describe('resolveSetting, auth', () => {
 
 describe('parseSetting', () => {
   it('trims and accepts a good name, and tidies the currency', () => {
-    expect(parseSetting('shop', { name: '  Ann & Co  ', brands: 'single', currency: ' eur ' })).toEqual({
+    expect(
+      parseSetting('shop', { name: '  Ann & Co  ', brands: 'single', currency: ' eur ', logoUrl: null })
+    ).toEqual({
       ok: true,
-      value: { name: 'Ann & Co', brands: 'single', currency: 'EUR' }
+      value: { name: 'Ann & Co', brands: 'single', currency: 'EUR', logoUrl: null }
     });
+    expect(
+      parseSetting('shop', { name: 'Ann & Co', brands: 'single', currency: 'EUR', logoUrl: 'ftp://no' }).ok
+    ).toBe(false);
   });
 
   it('refuses a currency outside the supported list', () => {

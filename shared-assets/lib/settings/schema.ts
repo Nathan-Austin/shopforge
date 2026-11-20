@@ -46,6 +46,20 @@ export const SHIPPING_LABEL_MAX = 80;
  * zero-decimal currencies (JPY, KRW — a known gap in the roadmap); those
  * join this list when that is handled, and nothing else needs to change.
  */
+/**
+ * A logo lives at an https address (an upload to the shop's image bucket,
+ * or any address the owner pastes) or at a path on the site itself, like
+ * /logo.png in public/.
+ */
+export const SHOP_LOGO_MAX = 600;
+const shopLogoSchema = z
+  .string()
+  .trim()
+  .max(SHOP_LOGO_MAX)
+  .refine((value) => /^https:\/\/[^\s"'<>]+$/i.test(value) || /^\/[^\s"'<>]+$/.test(value), {
+    message: 'A logo is an https:// address or a path like /logo.png'
+  });
+
 export const SHOP_CURRENCIES = [
   'AUD', 'BGN', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR',
   'GBP', 'NOK', 'NZD', 'PLN', 'RON', 'SEK', 'USD'
@@ -66,7 +80,13 @@ export const STORE_SETTING_SCHEMAS = {
      * still carries another — see saveShopSettings — because changing the
      * label on a price is a repricing, not a conversion.
      */
-    currency: z.string().trim().toUpperCase().pipe(z.enum(SHOP_CURRENCIES))
+    currency: z.string().trim().toUpperCase().pipe(z.enum(SHOP_CURRENCIES)),
+    /**
+     * The one logo (Q5): the header, the structured data and — unless the
+     * email brand carries its own — the emails all show this. Null means
+     * the shop has none and the header shows its name.
+     */
+    logoUrl: shopLogoSchema.nullable().default(null)
   }),
   checkout: z.object({
     shippingAddress: z.enum(CHECKOUT_ADDRESS_COLLECTORS),
@@ -175,12 +195,15 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     // falls back to the generator's own default.
     const configured = ((generated.shipping ?? {}) as Record<string, unknown>).currency;
     const currency = SHOP_CURRENCIES.find((candidate) => candidate === String(configured ?? '').toUpperCase()) ?? 'EUR';
+    // The environment's logo, if it is one this schema would accept.
+    const envLogo = shopLogoSchema.safeParse(env.NEXT_PUBLIC_SHOP_LOGO_URL ?? '');
     return {
       name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME,
       // Exactly the reading the product actions used to do themselves:
       // anything but 'multi', including unset, means single.
       brands: env.NEXT_PUBLIC_STORE_MODE === 'multi' ? 'multi' : 'single',
-      currency
+      currency,
+      logoUrl: envLogo.success ? envLogo.data : null
     };
   },
   checkout: ({ generated = {} }) => {
