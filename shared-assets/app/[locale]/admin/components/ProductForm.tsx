@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
+import { CHILLI_TYPES_PRESENT } from '@/lib/products/chilliTypes';
 import type { HeatScale } from '@/lib/products/heat';
 import ProductFieldInput from '@/components/admin/ProductFieldInput';
 import type { DbId } from '@/components/store/types';
@@ -276,6 +277,11 @@ export default function ProductForm({
                   />
                 ))}
 
+                {/* The chilli types this product is made of. The hidden
+                    marker tells the save action that the selection was on
+                    this form at all: without it, a form that never showed
+                    the control would read as "none selected" and wipe the
+                    links. */}
                 {group.key === 'chilli' && chilliTypes.length > 0 && (
                   <div className="space-y-2">
                     <Label htmlFor="chilliTypeIds">Chilli types</Label>
@@ -295,6 +301,7 @@ export default function ProductForm({
                     <p className="text-xs text-muted-foreground">
                       Hold Cmd/Ctrl to select more than one pepper.
                     </p>
+                    <input type="hidden" name={CHILLI_TYPES_PRESENT} value="1" />
                   </div>
                 )}
               </CardContent>

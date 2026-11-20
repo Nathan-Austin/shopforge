@@ -2,31 +2,28 @@
 
 import { revalidatePath } from 'next/cache';
 import { enabledProductFieldsFrom, parseProductFieldsFor } from '@/lib/products/catalogue';
+import { chilliTypeSelection } from '@/lib/products/chilliTypes';
 import { getBrandMode, getProductFieldKeys, getShopCurrency, getShopMode } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
-interface UpdateProductContext {
+interface CreateProductContext {
   locale: string;
   defaultBrandId?: string | number;
 }
 
-export async function updateProduct(
-  context: UpdateProductContext,
+export async function createProduct(
+  context: CreateProductContext,
   formData: FormData
-): Promise<{ error?: string; success?: string }> {
+): Promise<{ error?: string; success?: string; productId?: string }> {
   const { error, supabase } = await ensureShopOwner();
   if (error || !supabase) {
     return { error: 'Not authorized' };
   }
 
   const storeMode = await getBrandMode();
-  const productId = formData.get('product_id')?.toString();
-  if (!productId) {
-    return { error: 'Missing product ID' };
-  }
-
   const name = formData.get('name')?.toString().trim();
   const slug = formData.get('slug')?.toString().trim();
+  // Entered in major units and stored as cents, like every other money field.
   const price = Number(formData.get('price'));
   // Every price is in the shop's one currency; a re-save also tidies a
   // row whose code differs only in case.
@@ -36,6 +33,7 @@ export async function updateProduct(
     formData.get('brand_id')?.toString() ||
     (context.defaultBrandId ? String(context.defaultBrandId) : null);
   const imageUrl = formData.get('image_url')?.toString() || null;
+  const { ids: chilliTypeIds } = chilliTypeSelection(formData);
 
   if (!name || !slug || !Number.isFinite(price)) {
     return { error: 'Missing required fields' };
@@ -51,9 +49,9 @@ export async function updateProduct(
     formData
   );
 
-  const { error: updateError } = await supabase
+  const { data: product, error: insertError } = await supabase
     .from('products')
-    .update({
+    .insert({
       ...fields,
       name,
       slug,
@@ -61,17 +59,29 @@ export async function updateProduct(
       currency,
       image_url: imageUrl,
       category_id: categoryId,
-      brand_id: brandId,
-      updated_at: new Date().toISOString()
+      brand_id: brandId
     })
-    .eq('id', productId);
+    .select('id')
+    .single();
 
-  if (updateError) {
-    return { error: updateError.message };
+  if (insertError || !product) {
+    return { error: insertError?.message || 'Unable to create product' };
+  }
+
+  if (chilliTypeIds.length > 0) {
+    const joinRows = chilliTypeIds.map((chilliId) => ({
+      product_id: product.id,
+      chilli_type_id: chilliId
+    }));
+    const { error: joinError } = await supabase
+      .from('products_chilli_types')
+      .insert(joinRows);
+    if (joinError) {
+      return { error: joinError.message };
+    }
   }
 
   revalidatePath(`/${context.locale}/admin/products`);
-  revalidatePath(`/${context.locale}/admin/products/${productId}`);
 
-  return { success: 'updated' };
+  return { success: 'created', productId: product.id };
 }

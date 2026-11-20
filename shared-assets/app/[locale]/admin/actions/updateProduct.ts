@@ -2,27 +2,32 @@
 
 import { revalidatePath } from 'next/cache';
 import { enabledProductFieldsFrom, parseProductFieldsFor } from '@/lib/products/catalogue';
+import { chilliTypeSelection } from '@/lib/products/chilliTypes';
 import { getBrandMode, getProductFieldKeys, getShopCurrency, getShopMode } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
-interface CreateProductContext {
+interface UpdateProductContext {
   locale: string;
   defaultBrandId?: string | number;
 }
 
-export async function createProduct(
-  context: CreateProductContext,
+export async function updateProduct(
+  context: UpdateProductContext,
   formData: FormData
-): Promise<{ error?: string; success?: string; productId?: string }> {
+): Promise<{ error?: string; success?: string }> {
   const { error, supabase } = await ensureShopOwner();
   if (error || !supabase) {
     return { error: 'Not authorized' };
   }
 
   const storeMode = await getBrandMode();
+  const productId = formData.get('product_id')?.toString();
+  if (!productId) {
+    return { error: 'Missing product ID' };
+  }
+
   const name = formData.get('name')?.toString().trim();
   const slug = formData.get('slug')?.toString().trim();
-  // Entered in major units and stored as cents, like every other money field.
   const price = Number(formData.get('price'));
   // Every price is in the shop's one currency; a re-save also tidies a
   // row whose code differs only in case.
@@ -32,10 +37,9 @@ export async function createProduct(
     formData.get('brand_id')?.toString() ||
     (context.defaultBrandId ? String(context.defaultBrandId) : null);
   const imageUrl = formData.get('image_url')?.toString() || null;
-  const chilliTypeIds = formData
-    .getAll('chilliTypeIds')
-    .map((id) => id.toString())
-    .filter(Boolean);
+  // A form without the control (a generic shop, or a chilli shop with no
+  // types defined yet) must leave the links alone; see chilliTypes.ts.
+  const { submitted: submitsChilliTypes, ids: chilliTypeIds } = chilliTypeSelection(formData);
 
   if (!name || !slug || !Number.isFinite(price)) {
     return { error: 'Missing required fields' };
@@ -51,9 +55,9 @@ export async function createProduct(
     formData
   );
 
-  const { data: product, error: insertError } = await supabase
+  const { error: updateError } = await supabase
     .from('products')
-    .insert({
+    .update({
       ...fields,
       name,
       slug,
@@ -61,29 +65,36 @@ export async function createProduct(
       currency,
       image_url: imageUrl,
       category_id: categoryId,
-      brand_id: brandId
+      brand_id: brandId,
+      updated_at: new Date().toISOString()
     })
-    .select('id')
-    .single();
+    .eq('id', productId);
 
-  if (insertError || !product) {
-    return { error: insertError?.message || 'Unable to create product' };
+  if (updateError) {
+    return { error: updateError.message };
   }
 
-  if (chilliTypeIds.length > 0) {
-    const joinRows = chilliTypeIds.map((chilliId) => ({
-      product_id: product.id,
+  // The form submits the full selection, so the links are replaced —
+  // but only when it submitted one.
+  if (submitsChilliTypes) {
+    await supabase.from('products_chilli_types').delete().eq('product_id', productId);
+  }
+
+  if (submitsChilliTypes && chilliTypeIds.length > 0) {
+    const rows = chilliTypeIds.map((chilliId) => ({
+      product_id: productId,
       chilli_type_id: chilliId
     }));
-    const { error: joinError } = await supabase
+    const { error: insertError } = await supabase
       .from('products_chilli_types')
-      .insert(joinRows);
-    if (joinError) {
-      return { error: joinError.message };
+      .insert(rows);
+    if (insertError) {
+      return { error: insertError.message };
     }
   }
 
   revalidatePath(`/${context.locale}/admin/products`);
+  revalidatePath(`/${context.locale}/admin/products/${productId}`);
 
-  return { success: 'created', productId: product.id };
+  return { success: 'updated' };
 }

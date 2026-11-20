@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
-import { BRAND_MODES, SHOP_CURRENCIES, SHOP_NAME_MAX } from '@/lib/settings/schema';
+import { BRAND_MODES, SHOP_CURRENCIES, SHOP_NAME_MAX, STORE_MODES } from '@/lib/settings/schema';
 import type { StoreSettingsActionResult } from '../actions/storeSettings';
 import { Field, inputClass } from './email-designer/fields';
 import ImageField from './email-designer/ImageField';
@@ -14,6 +14,7 @@ interface ShopSettingsFormProps {
   name: string;
   brands: (typeof BRAND_MODES)[number];
   currency: (typeof SHOP_CURRENCIES)[number];
+  mode: (typeof STORE_MODES)[number];
   logoUrl: string | null;
   /** For the links to whatever still disagrees with a new currency. */
   locale: string;
@@ -22,7 +23,16 @@ interface ShopSettingsFormProps {
 }
 
 /** The "Shop" section of /admin/settings. */
-export default function ShopSettingsForm({ save, name, brands, currency, logoUrl, locale, fromDefault }: ShopSettingsFormProps) {
+export default function ShopSettingsForm({
+  save,
+  name,
+  brands,
+  currency,
+  mode,
+  logoUrl,
+  locale,
+  fromDefault
+}: ShopSettingsFormProps) {
   const t = useTranslations('Admin.settings.shop');
   const [result, action, pending] = useActionState(save, null);
   const [logo, setLogo] = useState(logoUrl ?? '');
@@ -51,6 +61,19 @@ export default function ShopSettingsForm({ save, name, brands, currency, logoUrl
           ))}
         </select>
       </Field>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{t('modeHeading')}</legend>
+        {STORE_MODES.map((option) => (
+          <label key={option} className="flex items-start gap-2 text-sm font-normal">
+            <input type="radio" name="mode" value={option} defaultChecked={mode === option} className="mt-1" />
+            <span>
+              {t(`mode_${option}`)}
+              <span className="block text-xs text-stone-500">{t(`mode_${option}_hint`)}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium">{t('brandsHeading')}</legend>

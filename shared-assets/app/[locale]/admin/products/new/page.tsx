@@ -1,5 +1,16 @@
 import { getTranslations } from 'next-intl/server';
 import type { Category, StoreBrand } from '@/components/store/types';
+
+/**
+ * A chilli type as the form needs it. Its own shape rather than the
+ * storefront's ChilliType, which still differs between the store modes.
+ */
+interface ChilliTypeOption {
+  id: string;
+  name: string;
+  slug: string;
+  heatLevel: number | null;
+}
 import { requireShopOwner } from '../../lib/auth';
 import { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
 import { getHeatScale, getProductFieldKeys, getShopCurrency, getShopMode } from '@/lib/settings/store';
@@ -11,8 +22,14 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
   const { supabase } = await requireShopOwner(locale);
   const t = await getTranslations({ locale, namespace: 'Admin' });
 
-  const [{ data: categoriesData }, { data: brandsData }] = await Promise.all([
+  // Every shop has the chilli tables (0014); only a chilli shop has any
+  // use for what is in them.
+  const isChilli = (await getShopMode()) === 'chilli';
+  const [{ data: categoriesData }, { data: chilliTypesData }, { data: brandsData }] = await Promise.all([
     supabase.from('categories').select('id, name, slug').order('name'),
+    isChilli
+      ? supabase.from('chilli_types').select('id, name, slug, heat_level').order('name')
+      : Promise.resolve({ data: [] }),
     supabase.from('brands').select('id, name, slug').order('name')
   ]);
 
@@ -21,6 +38,13 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
       id: cat.id,
       name: cat.name,
       slug: cat.slug
+    })) ?? [];
+  const chilliTypes: ChilliTypeOption[] =
+    chilliTypesData?.map((ct) => ({
+      id: ct.id,
+      name: ct.name,
+      slug: ct.slug,
+      heatLevel: ct.heat_level
     })) ?? [];
   const brands: StoreBrand[] =
     brandsData?.map((brand) => ({
@@ -48,6 +72,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ loc
         heatScale={heatScale}
         currency={currency}
         categories={categories}
+        chilliTypes={chilliTypes}
         brands={brands}
         onSubmit={createAction}
         successRedirectPath={`/${locale}/admin/products`}

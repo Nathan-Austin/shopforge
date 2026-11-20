@@ -1,6 +1,14 @@
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import type { Category, ChilliType, StoreBrand } from '@/components/store/types';
+import type { Category, StoreBrand } from '@/components/store/types';
+
+/** As on the new-product page: the form's own shape for a chilli type. */
+interface ChilliTypeOption {
+  id: string;
+  name: string;
+  slug: string;
+  heatLevel: number | null;
+}
 import { requireShopOwner } from '../../lib/auth';
 import { enabledProductFieldGroupsFrom } from '@/lib/products/catalogue';
 import { getHeatScale, getProductFieldKeys, getShopCurrency, getShopMode } from '@/lib/settings/store';
@@ -29,10 +37,13 @@ export default async function EditProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const isChilli = (await getShopMode()) === 'chilli';
   const [{ data: categoriesData }, { data: chilliTypesData }, { data: brandsData }] =
     await Promise.all([
       supabase.from('categories').select('id, name, slug').order('name'),
-      supabase.from('chilli_types').select('id, name, slug, heat_level').order('name'),
+      isChilli
+        ? supabase.from('chilli_types').select('id, name, slug, heat_level').order('name')
+        : Promise.resolve({ data: [] }),
       supabase.from('brands').select('id, name, slug').order('name')
     ]);
 
@@ -42,7 +53,7 @@ export default async function EditProductPage({ params }: ProductPageProps) {
       name: cat.name,
       slug: cat.slug
     })) ?? [];
-  const chilliTypes: ChilliType[] =
+  const chilliTypes: ChilliTypeOption[] =
     chilliTypesData?.map((chilliType) => ({
       id: chilliType.id,
       name: chilliType.name,
