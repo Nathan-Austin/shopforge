@@ -90,10 +90,6 @@ if ! grep -q '"server-only"' package.json; then
   pnpm add server-only
 fi
 
-echo "🧱 Syncing store components (${STORE_MODE})..."
-mkdir -p src/components/store
-cp -R "$MODE_DIR/store-components/." src/components/store/
-
 echo "🛡️ Syncing admin panel components (${STORE_MODE})..."
 # On top of the shared admin pages copied from shared-assets/app above.
 mkdir -p src/app/[locale]/admin

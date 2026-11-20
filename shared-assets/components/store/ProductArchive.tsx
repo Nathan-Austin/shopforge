@@ -41,8 +41,9 @@ interface ProductArchiveProps {
 }
 
 /**
- * The /shop listing: search, heat, chilli type and category filters and
- * sorting over products the server already fetched. The state lives in the
+ * The /shop listing: search, category and sort over products the server
+ * already fetched, plus the heat and chilli-type filters where the shop
+ * has a heat scale — that is, where it is in chilli mode. The state lives in the
  * URL (?q=…&heat=…&type=…&category=…&sort=…) so results can be shared and
  * survive a reload; updates go through history.replaceState, so typing
  * never re-runs the server page.
@@ -57,6 +58,8 @@ export default function ProductArchive({
   heatScale
 }: ProductArchiveProps) {
   const t = useTranslations('SauceArchive');
+  // A scale means the shop tracks heat: the filters below appear with it.
+  const tracksHeat = heatScale !== null;
   // Heat is stored as a number; the filter buttons are the shop's word bands.
   const heatWords = heatScale?.bands.map((band) => band.word) ?? [];
   const pathname = usePathname();
@@ -101,7 +104,11 @@ export default function ProductArchive({
       <div className="max-w-7xl mx-auto">
         {/* Filter Section */}
         <section className="border-b border-border pb-5 mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div
+            className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${
+              tracksHeat ? 'lg:grid-cols-5' : 'lg:grid-cols-3'
+            }`}
+          >
             {/* Search */}
             <label className="block text-sm font-medium text-foreground">
               {t('search.placeholder')}
@@ -116,6 +123,7 @@ export default function ProductArchive({
             </label>
 
             {/* Heat Level - Button Chips */}
+            {tracksHeat && (
             <fieldset>
               <legend className="block text-sm font-medium text-foreground">
                 {t('search.filters.heatLevel')}
@@ -138,8 +146,10 @@ export default function ProductArchive({
                 ))}
               </div>
             </fieldset>
+            )}
 
             {/* Pepper */}
+            {chilliTypes.length > 0 && (
             <label className="block text-sm font-medium text-foreground">
               {t('search.filters.pepper')}
               <select
@@ -156,6 +166,7 @@ export default function ProductArchive({
                 ))}
               </select>
             </label>
+            )}
 
             {/* Category */}
             <label className="block text-sm font-medium text-foreground">
@@ -232,7 +243,7 @@ export default function ProductArchive({
 
         {filtered.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🌶️</div>
+            <div className="text-6xl mb-4">{tracksHeat ? '🌶️' : '🛒'}</div>
             <h3 className="text-xl font-bold text-foreground mb-4">{t('results.noResults')}</h3>
             <p className="text-text-muted">
               {t('results.adjustSearch')}

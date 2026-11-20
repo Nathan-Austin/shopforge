@@ -7,18 +7,22 @@ import { itemListJsonLd } from '@/lib/seo/jsonld';
 import {
   availableSorts,
   categoriesInUse,
+  chilliTypesInUse,
   parseArchiveQuery,
   type ArchiveSort
 } from '@/lib/products/archive';
+import { many } from '@/lib/supabase/relations';
+import { getHeatScale } from '@/lib/settings/store';
 import { createClient } from '@/lib/supabase/server';
 import ProductArchive from './ProductArchive';
-import type { StoreProduct, Category } from './types';
+import type { StoreProduct, Category, ChilliType } from './types';
 
 /**
  * Server half of the /shop archive: fetches the catalogue and the filter
  * options, parses the URL state, and hands both to the client component.
  * The page itself stays one file for every store mode; this component is
- * the mode-specific part (the chilli one also loads heat and chilli types).
+ * the mode-specific part, which in a chilli shop means heat levels and
+ * each product's chilli types for the heat and pepper filters.
  */
 export interface ShopArchiveProps {
   locale: string;
@@ -45,38 +49,64 @@ interface ProductRow {
   brand_id: string | null;
   brand_name: string | null;
   brand_slug: string | null;
+  heat_level: number | null;
   created_at: string | null;
 }
 
+interface ChilliTypeRow {
+  id: string;
+  name: string;
+  slug: string;
+  heat_level: number | null;
+}
+
 /**
- * Sorts this store mode offers; the heat sorts are chilli-only.
+ * The sorts a shop offers: the heat ones only where there is heat.
  * "popular" is dropped by availableSorts() until the shop has enough sales
  * to rank. Defined here, not in ProductArchive: that file is 'use client',
  * and a server component importing a value from it gets a client reference,
  * not the array.
  */
-const ARCHIVE_SORT_OPTIONS: ArchiveSort[] = ['recent', 'popular'];
+function archiveSortOptions(tracksHeat: boolean): ArchiveSort[] {
+  return tracksHeat ? ['recent', 'popular', 'mild-first', 'hot-first'] : ['recent', 'popular'];
+}
 
 export default async function ShopArchive({ locale, searchParams }: ShopArchiveProps) {
   const supabase = await createClient();
+  // One signal for the whole page: a scale means the shop is in chilli
+  // mode, and that decides the heat sorts, the pepper filter and whether
+  // the chilli tables are worth reading at all.
+  const heatScale = await getHeatScale();
+  const tracksHeat = heatScale !== null;
 
   // products_public is the storefront view: published, unarchived rows
-  // with no supplier fields. Brand and category come pre-joined because
-  // PostgREST cannot embed a relation through a view.
-  const [{ data: productRows }, { data: categoryRows }, { data: salesRows }] =
-    await Promise.all([
-      supabase
-        .from('products_public')
-        .select(
-          'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, created_at'
-        )
-        .order('created_at', { ascending: false }),
-      supabase.from('categories').select('id, name, slug').order('name'),
-      // Units sold per product (an aggregate view, no order data). Drives
-      // the "popular" sort, which stays hidden until the shop has sold
-      // enough for it to mean anything.
-      supabase.from('product_sales').select('product_id, units_sold')
-    ]);
+  // with no supplier fields. The chilli-type links come from their own
+  // world-readable tables, in one query for the whole catalogue.
+  const [
+    { data: productRows },
+    { data: categoryRows },
+    { data: chilliTypeRows },
+    { data: linkRows },
+    { data: salesRows }
+  ] = await Promise.all([
+    supabase
+      .from('products_public')
+      .select(
+        'id, name, slug, description, image_url, price_cents, currency, stock, track_inventory, allow_backorder, max_order_quantity, size_options, color_options, category_id, category_name, category_slug, brand_id, brand_name, brand_slug, heat_level, created_at'
+      )
+      .order('created_at', { ascending: false }),
+    supabase.from('categories').select('id, name, slug').order('name'),
+    tracksHeat
+      ? supabase.from('chilli_types').select('id, name, slug, heat_level').order('name')
+      : Promise.resolve({ data: [] }),
+    tracksHeat
+      ? supabase.from('products_chilli_types').select('product_id, chilli_types ( id, name, slug, heat_level )')
+      : Promise.resolve({ data: [] }),
+    // Units sold per product (an aggregate view, no order data). Drives the
+    // "popular" sort, which stays hidden until the shop has sold enough for
+    // it to mean anything.
+    supabase.from('product_sales').select('product_id, units_sold')
+  ]);
 
   const salesByProduct = new Map<string, number>();
   let unitsSold = 0;
@@ -84,7 +114,23 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     salesByProduct.set(row.product_id, row.units_sold);
     unitsSold += row.units_sold;
   }
-  const sortOptions = availableSorts(ARCHIVE_SORT_OPTIONS, unitsSold);
+  const sortOptions = availableSorts(archiveSortOptions(tracksHeat), unitsSold);
+
+  const chilliTypes: ChilliType[] = ((chilliTypeRows ?? []) as ChilliTypeRow[]).map(
+    (row) => ({ id: row.id, name: row.name, slug: row.slug, heatLevel: row.heat_level })
+  );
+
+  const typesByProduct = new Map<string, ChilliType[]>();
+  for (const link of linkRows ?? []) {
+    const productId = (link as { product_id: string }).product_id;
+    for (const row of many(
+      (link as { chilli_types: ChilliTypeRow | ChilliTypeRow[] | null }).chilli_types
+    )) {
+      const list = typesByProduct.get(productId) ?? [];
+      list.push({ id: row.id, name: row.name, slug: row.slug, heatLevel: row.heat_level });
+      typesByProduct.set(productId, list);
+    }
+  }
 
   const products: StoreProduct[] = ((productRows ?? []) as ProductRow[]).map((row) => ({
     id: row.id,
@@ -94,6 +140,8 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     image_url: row.image_url,
     price_cents: row.price_cents,
     currency: row.currency,
+    heatLevel: row.heat_level,
+    chilliTypes: typesByProduct.get(row.id) ?? [],
     category: row.category_id
       ? {
           id: row.category_id,
@@ -147,7 +195,9 @@ export default async function ShopArchive({ locale, searchParams }: ShopArchiveP
     <>
       <JsonLd data={itemList} />
       <ProductArchive
+      heatScale={heatScale}
       products={products}
+      chilliTypes={chilliTypesInUse(chilliTypes, products)}
       categories={categories}
       locale={locale}
       initialQuery={parseArchiveQuery(searchParams, sortOptions)}

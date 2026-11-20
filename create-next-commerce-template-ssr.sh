@@ -4866,10 +4866,9 @@ export default async function CheckoutPage({ params }: { params: Promise<{ local
 }
 EOF
 
-# 10.5) Copy store components
-echo "🧱 Adding reusable store components (${STORE_MODE})..."
-mkdir -p src/components/store
-cp -R "$MODE_DIR/store-components/." src/components/store
+# 10.5) Store components come from shared-assets/components (copied in 2.5):
+# one set for every store mode since 2026-11-20, with the heat parts
+# appearing where the shop has a heat scale.
 
 # 10.5a) Header component (logo + auth state + admin link for shop_owner)
 cat > src/components/Header.tsx <<'EOF'

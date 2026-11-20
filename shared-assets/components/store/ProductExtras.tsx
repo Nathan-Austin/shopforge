@@ -8,10 +8,13 @@ import Chip from './Chip';
 import type { ChilliType } from './types';
 
 /**
- * Mode-specific section of the product page: the heat meter, Scoville
- * rating and the chilli types that go into the product. The product page
- * itself is the same file in every store mode; the generic mode's version
- * of this component renders nothing.
+ * The heat section of the product page: the heat meter, the Scoville
+ * rating and the chilli types the product is made of.
+ *
+ * One component for every shop. A shop that is not in chilli mode has no
+ * heat scale (getHeatScale() answers null), its products carry no heat and
+ * it has no chilli types, so every part below is skipped and the section
+ * renders nothing at all — which is what the generic stub used to do.
  */
 export interface ProductExtrasProps {
   locale: string;
@@ -54,8 +57,9 @@ export default async function ProductExtras({
   scovilleShu
 }: ProductExtrasProps) {
   const t = await getTranslations({ locale, namespace: 'Product' });
-  const chilliTypes = await loadChilliTypes(productId);
   const heatScale = await getHeatScale();
+  // No scale means no chilli mode, and nothing here to show.
+  const chilliTypes = heatScale ? await loadChilliTypes(productId) : [];
 
   const hasHeat = heatLevel !== null && heatLevel !== undefined && heatScale !== null;
   const hasScoville = typeof scovilleShu === 'number' && scovilleShu > 0;

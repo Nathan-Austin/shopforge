@@ -1,5 +1,9 @@
 export type DbId = string | number;
 
+/**
+ * A chilli type. Every shop carries the tables (0014) and these types;
+ * only a shop in chilli mode has rows to put in them.
+ */
 export interface ChilliType {
   id: DbId;
   name: string;

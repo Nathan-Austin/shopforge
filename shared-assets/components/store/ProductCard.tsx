@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/format';
 import type { ReactNode } from 'react';
 import type { StoreProduct } from './types';
+import { formatHeatOn, type HeatScale } from '@/lib/products/heat';
 
 interface ProductCardProps {
   product: StoreProduct;
@@ -20,6 +21,9 @@ interface ProductCardProps {
    * is invalid HTML and swallows the click.
    */
   action?: ReactNode;
+  /** The shop's heat scale, passed down from the server page. */
+  heatScale?: HeatScale | null;
+
 }
 
 export default function ProductCard({
@@ -27,10 +31,19 @@ export default function ProductCard({
   specialPrice,
   locale: propLocale,
   action,
+  heatScale = null,
 }: ProductCardProps) {
   const hookLocale = useLocale();
   const locale = propLocale || hookLocale;
 
+  // A heat scale means the shop is in chilli mode: one signal for the two
+  // flourishes that differ, the accent colour and the empty-photo
+  // placeholder. Both belong to the theme system in the end (roadmap 2e).
+  // Written out whole, both variants: Tailwind reads the source for class
+  // names and never sees one pasted together at runtime.
+  const accent = heatScale ? 'text-orange-600' : 'text-primary';
+  const accentOnHover = heatScale ? 'group-hover:text-orange-600' : 'group-hover:text-primary';
+  const heat = formatHeatOn(heatScale, product.heatLevel);
   const displayPrice = specialPrice ?? product.price_cents;
   const hasDiscount = specialPrice && specialPrice < product.price_cents;
   const productUrl = `/${locale}/shop/${product.slug}`;
@@ -52,7 +65,7 @@ export default function ProductCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center text-zinc-300">
-              <span className="text-4xl">📦</span>
+              <span className="text-4xl">{heatScale ? '🌶️' : '📦'}</span>
             </div>
           )}
         </Link>
@@ -65,10 +78,12 @@ export default function ProductCard({
                 {product.category.name}
               </Badge>
             )}
+            {/* Empty in a shop with no scale, so no check for the mode. */}
+            {heat && <span className={`text-xs font-bold uppercase ${accent}`}>{heat}</span>}
           </div>
 
           <h3 className="text-lg font-semibold line-clamp-1">
-            <Link href={productUrl} className="group-hover:text-primary transition-colors">
+            <Link href={productUrl} className={`transition-colors ${accentOnHover}`}>
               {product.name}
             </Link>
           </h3>
@@ -87,7 +102,7 @@ export default function ProductCard({
             </span>
           )}
           <span
-            className={`text-lg font-bold ${hasDiscount ? 'text-primary' : ''}`}
+            className={`text-lg font-bold ${hasDiscount ? accent : ''}`}
           >
             {formatPrice(displayPrice, product.currency, locale)}
           </span>
