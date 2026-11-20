@@ -84,8 +84,10 @@ details for each item are in the numbered sections below.
    (`/admin/settings`), both 2026-11-19; the checkout address and delivery
    countries followed on 2026-11-20, as did the single/multi brand mode
    and the sign-in and MFA settings — plan step 3 is done, and so is step
-   4 (product fields and the heat scale, both 2026-11-20). Next is plan
-   step 5: shipping and currency, which carries the home-country setting.
+   4 (product fields and the heat scale, both 2026-11-20), and the
+   shipping half of step 5 — rates, label, parcel weights and the home
+   country — followed the same day. Next is step 5b: one currency per
+   shop, the plan's riskiest migration, with a dry-run query first.
 3. **Storefront content without code** (section 2f), once the settings
    above are in place: the logo first, then the home page sections, then
    navigation. These are what make a shop editable by its owner rather
@@ -215,9 +217,12 @@ details for each item are in the numbered sections below.
 - [ ] Categories and brands admin
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
       hardcoded `src/lib/shipping/config.ts`. The table exists since
-      2026-11-19 (`store_settings`, one JSON document per key, see 2d G1)
-      and the delivery countries moved into it with the checkout settings
-      on 2026-11-20; what is left is the shipping rates and the currency
+      2026-11-19 (`store_settings`, one JSON document per key, see 2d G1),
+      the delivery countries moved into it with the checkout settings on
+      2026-11-20, and the shipping rates, label, parcel weights and home
+      country followed the same day (the Shipping section on
+      `/admin/settings`; the return-policy markup names the home country
+      now). What is left is the currency — step 5b in the plan
 - [ ] Shop currency as a generator choice: ask for it in the CLI (default
       EUR), seed products and the admin form with it, and use it as the
       default for amount discount codes and minimums. One currency per shop
@@ -754,7 +759,9 @@ Decided on 2026-11-02:
   setting needs the second factor when the account has one enrolled
   (`0013`), because the MFA switch is now a row like any other. A Product
   fields section picks what the product form asks for, and a chilli shop
-  also gets a Heat section (scale, presentation, words). The plan for moving the other generation-time choices
+  also gets a Heat section (scale, presentation, words). A Shipping
+  section holds the rates, the label, the parcel weights and the home
+  country. The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.

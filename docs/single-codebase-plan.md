@@ -71,7 +71,7 @@ need an answer before code is written.
 
 | # | What | File | Route | Effort |
 |---|---|---|---|---|
-| 14 | Shipping box, item weight, flat rate, free-shipping threshold, label, currency | `src/lib/shipping/config.ts` | `store_settings:shipping` (already a roadmap item: "Store settings (currency, shipping zones)") | M |
+| 14 | Shipping box, item weight, flat rate, free-shipping threshold, label, currency | `src/lib/shipping/config.ts` | `store_settings:shipping` — done 2026-11-20 except the currency, which is 5b (the box dimensions stay generated, read by nothing yet) | M |
 | — | Allowed delivery countries | `CHECKOUT_CONFIG.allowedCountries` | with #3 — done 2026-11-20 | S |
 | — | Currency | per product, free text in the product form; `EUR` in shipping config | `store_settings:shop` → `{ currency }`, one per shop (decided 2026-11-04). Needs a migration that checks every product matches before the per-product column goes read-only | M |
 
@@ -155,11 +155,20 @@ is retired.
    seeds; changing the scale rewrites the rows instead (`rescaleHeat`).
    A generic shop has no scale and never reads the row — which store modes
    track heat is still step 6's question. **Step 4 is complete.**
-5. **Shipping and currency** (M). The currency migration is the risky one;
-   it gets its own session and a dry-run query first. Includes a home
-   country setting (decided 2026-11-20): the one country the return-policy
-   markup names, instead of the alphabetically first the shop delivers to,
-   and later the returns address.
+5. **Shipping and currency** (M). ~~Shipping and the home country~~ done
+   2026-11-20: `store_settings:shipping` (flat rate, free-shipping
+   threshold, label, parcel weights, home country),
+   `lib/checkout/pricing.ts` made pure (`calculateShippingCostOn`,
+   `packageWeightOn`), the discount pricing, the session route and the
+   structured data reading the setting, `shopReturnPolicy()` naming the
+   home country, and a Shipping section on `/admin/settings`. The box
+   dimensions stay in the generated file (read by nothing, waiting for a
+   carrier integration).
+   **Still to do (5b, its own session): one currency per shop.** The
+   migration is the risky one — it gets a dry-run query first. The
+   shipping setting deliberately carries no currency: today the amounts
+   are in the generated config's currency, and 5b moves that single fact
+   to `shop.currency`.
 6. **Chilli as a toggle** (L, two or three sessions). The chilli-tables
    migration, then the admin pages, then the storefront, then the starters.
    Only after this does `--mode` stop meaning "copy a different directory".
