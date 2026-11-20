@@ -33,6 +33,17 @@ describe('settingFallback', () => {
     });
   });
 
+  it('takes the sign-in method and MFA mode from the generated config', () => {
+    const generated = { auth: { customerSignIn: 'otp', adminMfa: 'off' } };
+    expect(settingFallback('auth', { generated })).toEqual({ customerSignIn: 'otp', adminMfa: 'off' });
+  });
+
+  it('falls back to a password and a second factor when the generated auth config is unusable', () => {
+    const safe = { customerSignIn: 'password', adminMfa: 'required' };
+    expect(settingFallback('auth', {})).toEqual(safe);
+    expect(settingFallback('auth', { generated: { auth: { customerSignIn: 'magic-link' } } })).toEqual(safe);
+  });
+
   it('ships a checkout default when the generated config is missing or unusable', () => {
     const shipped = { shippingAddress: 'form', allowedCountries: [...DEFAULT_ALLOWED_COUNTRIES].sort() };
     expect(settingFallback('checkout', {})).toEqual(shipped);
@@ -95,6 +106,24 @@ describe('resolveSetting', () => {
   });
 });
 
+describe('resolveSetting, auth', () => {
+  const generated = { auth: { customerSignIn: 'otp', adminMfa: 'off' } };
+
+  it('prefers the saved pair', () => {
+    expect(resolveSetting('auth', { customerSignIn: 'password', adminMfa: 'required' }, { generated })).toEqual({
+      customerSignIn: 'password',
+      adminMfa: 'required'
+    });
+  });
+
+  it('never leaves the admin unprotected because of a broken field', () => {
+    // A row that says nothing usable about MFA keeps the generated answer,
+    // rather than quietly reading as 'off'.
+    expect(resolveSetting('auth', { customerSignIn: 'password', adminMfa: 'maybe' }, {}).adminMfa).toBe('required');
+    expect(resolveSetting('auth', null, {}).adminMfa).toBe('required');
+  });
+});
+
 describe('parseSetting', () => {
   it('trims and accepts a good name', () => {
     expect(parseSetting('shop', { name: '  Ann & Co  ', brands: 'single' })).toEqual({
@@ -121,6 +150,16 @@ describe('parseSetting', () => {
       ok: true,
       value: { shippingAddress: 'form', allowedCountries: ['AT', 'DE'] }
     });
+  });
+
+  it('accepts a sign-in method and MFA mode it knows, and no others', () => {
+    expect(parseSetting('auth', { customerSignIn: 'otp', adminMfa: 'off' })).toEqual({
+      ok: true,
+      value: { customerSignIn: 'otp', adminMfa: 'off' }
+    });
+    const bad = parseSetting('auth', { customerSignIn: 'otp', adminMfa: 'optional' });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.issues[0].path).toBe('adminMfa');
   });
 
   it('refuses no countries, an unknown code and an unknown collector', () => {

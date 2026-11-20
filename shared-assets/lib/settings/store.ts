@@ -83,6 +83,11 @@ export async function getCheckoutSettings(): Promise<StoreSettings['checkout']> 
   return getStoreSetting('checkout');
 }
 
+/** How customers sign in, and whether the admin asks for a second factor. */
+export async function getAuthSettings(): Promise<StoreSettings['auth']> {
+  return getStoreSetting('auth');
+}
+
 export type SaveSettingResult<K extends StoreSettingKey> =
   | { ok: true; value: StoreSettings[K] }
   | { ok: false; error: 'invalid'; issues: SettingIssue[] }

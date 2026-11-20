@@ -29,6 +29,12 @@ export const BRAND_MODES = ['single', 'multi'] as const;
 /** Who asks the customer for the delivery address. */
 export const CHECKOUT_ADDRESS_COLLECTORS = ['form', 'stripe'] as const;
 
+/** How customers sign in. The shop owner always has a password. */
+export const CUSTOMER_SIGN_IN_METHODS = ['password', 'otp'] as const;
+
+/** Whether the admin asks for an authenticator code as well as the password. */
+export const ADMIN_MFA_MODES = ['required', 'off'] as const;
+
 /** Where a shop delivers until it says otherwise. */
 export const DEFAULT_ALLOWED_COUNTRIES = ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'];
 
@@ -52,6 +58,10 @@ export const STORE_SETTING_SCHEMAS = {
       .min(1, { message: 'Pick at least one country' })
       .max(COUNTRY_CODES.length)
       .transform((codes) => [...new Set(codes)].sort())
+  }),
+  auth: z.object({
+    customerSignIn: z.enum(CUSTOMER_SIGN_IN_METHODS),
+    adminMfa: z.enum(ADMIN_MFA_MODES)
   })
 };
 
@@ -70,6 +80,7 @@ export type SettingsEnv = Partial<Record<string, string | undefined>>;
  */
 export type GeneratedConfig = {
   checkout?: unknown;
+  auth?: unknown;
 };
 
 /** Where a fallback may look: the environment and the generated files. */
@@ -92,6 +103,13 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     return parsed.success
       ? parsed.data
       : { shippingAddress: 'form', allowedCountries: [...DEFAULT_ALLOWED_COUNTRIES].sort() };
+  },
+  auth: ({ generated = {} }) => {
+    // The generated src/lib/auth/config.ts. The default when it cannot be
+    // read is the safe pair, and the generator's own: a password to sign
+    // in with, and a second factor on the admin.
+    const parsed = STORE_SETTING_SCHEMAS.auth.safeParse(generated.auth);
+    return parsed.success ? parsed.data : { customerSignIn: 'password', adminMfa: 'required' };
   }
 };
 

@@ -9,9 +9,11 @@
  * A setting that falls back to an environment variable needs nothing here.
  */
 
+import { AUTH_CONFIG } from '@/lib/auth/config';
 import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 import type { GeneratedConfig } from './schema';
 
 export const GENERATED_CONFIG: GeneratedConfig = {
-  checkout: CHECKOUT_CONFIG
+  checkout: CHECKOUT_CONFIG,
+  auth: AUTH_CONFIG
 };

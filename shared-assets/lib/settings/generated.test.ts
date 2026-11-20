@@ -17,6 +17,17 @@ describe('the generated configuration', () => {
     expect(parsed.success).toBe(true);
   });
 
+  it('holds an auth setting the schema accepts', () => {
+    const parsed = STORE_SETTING_SCHEMAS.auth.safeParse(GENERATED_CONFIG.auth);
+    expect(parsed.error?.issues ?? []).toEqual([]);
+    expect(parsed.success).toBe(true);
+  });
+
+  it('is what the auth setting falls back to', () => {
+    const generated = GENERATED_CONFIG.auth as { customerSignIn: string; adminMfa: string };
+    expect(settingFallback('auth', { generated: GENERATED_CONFIG })).toEqual(generated);
+  });
+
   it('is what the checkout setting falls back to', () => {
     const generated = GENERATED_CONFIG.checkout as { shippingAddress: string; allowedCountries: string[] };
     const fallback = settingFallback('checkout', { generated: GENERATED_CONFIG });
