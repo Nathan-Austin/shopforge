@@ -37,7 +37,9 @@ customise a shop beyond what the admin offers.
   Vercel's Supabase integration to create and link the database.
 - **First-run setup wizard in the admin.** Shop name and logo, mode,
   currency and languages, connecting Stripe with a test step, the email
-  provider, legal pages.
+  provider, legal pages. When the owner picks a currency and the seeded
+  demo products block it (the save guard lists them), the wizard should
+  offer deleting the demo catalogue right there (noted 2026-11-20).
 - **Updates.** Every shop runs the same codebase, so updating is pulling the
   new version and running the numbered migrations. This replaces the need to
   carry template changes into generated stores by hand.
@@ -91,10 +93,10 @@ details for each item are in the numbered sections below.
    dry run first, as agreed). Step 5 is done. Next is plan step 6, the
    big one: the chilli mode as a feature toggle (two or three sessions).
 3. **Storefront content without code** (section 2f), once the settings
-   above are in place: the logo first, then the home page sections, then
-   navigation. These are what make a shop editable by its owner rather
-   than by an agent, and they reuse the email designer instead of growing
-   a second editor.
+   above are in place. The logo landed 2026-11-20 (Q5 closed); next are
+   the home page sections, then navigation. These are what make a shop
+   editable by its owner rather than by an agent, and they reuse the
+   email designer instead of growing a second editor.
 
 ## 1. Storefront and orders
 
@@ -562,12 +564,14 @@ inventing a second editor.
 
 In priority order:
 
-- [ ] **One logo and brand assets setting.** The email brand has a logo,
-      the structured data reads `NEXT_PUBLIC_SHOP_LOGO_URL`, and the site
-      header shows only the shop's name. Merge them into one `store_settings`
-      key the header, the emails and the JSON-LD all read, with an upload in
-      the admin (Q5 in `docs/single-codebase-plan.md`). Nothing else here
-      looks finished until a shop can show its own logo
+- [x] **One logo and brand assets setting** — done 2026-11-20, closing Q5:
+      `shop.logoUrl` (an upload or an https address in the Shop section,
+      falling back to `NEXT_PUBLIC_SHOP_LOGO_URL`), shown in the header in
+      place of the name, read by the structured data, and worn by the
+      transactional emails whenever the email brand has no logo of its own
+      (render paths only, resolved to absolute https as email requires).
+      Uploads land in the `product-images` bucket for now; the media
+      library item below gives them a proper home
 - [ ] **A home page made of sections.** The owner arranges a hero, featured
       products or a collection, an image banner, rich text and a newsletter
       block, and reorders them — the email designer's schema, drag and drop
@@ -771,7 +775,8 @@ Decided on 2026-11-02:
   also gets a Heat section (scale, presentation, words). A Shipping
   section holds the rates, the label, the parcel weights and the home
   country, and the Shop section holds the one currency every price is in,
-  guarded so it can only change when nothing priced disagrees. The plan for moving the other generation-time choices
+  guarded so it can only change when nothing priced disagrees, plus the
+  shop's one logo (header, structured data, and emails without their own). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.

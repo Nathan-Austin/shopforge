@@ -186,8 +186,8 @@ is retired.
 
 ## 7. Questions
 
-Answered 2026-11-19: Q1, Q2, Q3, Q6. Still open: Q4, Q5 (none blocks the
-first steps).
+Answered 2026-11-19: Q1, Q2, Q3, Q6. Answered 2026-11-20: Q4 (option c),
+Q5, Q7. Nothing is open.
 
 - **Q1. Where do a shop's generated choices go?** *Answered:* nothing is
   copied into the database; the settings reader falls back to the
@@ -231,10 +231,14 @@ first steps).
   twice. The setting is written before the rows on purpose — if the
   rewrite fails, products read low against the new scale, which is wrong
   but in range, rather than reading 14/10.
-- **Q5. One logo.** The email brand has a logo; the SEO structured data
-  (`lib/seo/store.ts`) reads `NEXT_PUBLIC_SHOP_LOGO_URL`; the site header
-  shows only the name. Merge into one shop setting that the email brand,
-  the structured data and the header all use?
+- **Q5. One logo.** *Answered 2026-11-20: yes, merged.* `shop.logoUrl`
+  is the one logo: the header shows it in place of the name, the
+  structured data reads it (site paths made absolute), and transactional
+  emails wear it whenever the email brand carries no logo of its own —
+  applied on render paths only, so the brand form keeps showing exactly
+  what is saved, and only as absolute https, which email requires. The
+  email brand's own logo stays as an override for shops that want a
+  different mark in the inbox.
 - **Q6. Chilli tables in generic shops.** *Answered: yes.* Every shop gets
   the chilli tables, empty and unused in a generic shop, in exchange for
   one schema.
