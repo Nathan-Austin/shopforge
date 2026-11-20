@@ -3,7 +3,8 @@ import { getTranslations } from 'next-intl/server';
 import { countriesByName } from '@/lib/checkout/countries';
 import { STORE_SETTING_SCHEMAS, type StoreSettingKey } from '@/lib/settings/schema';
 import { getStoreSetting } from '@/lib/settings/store';
-import { saveCheckoutSettings, saveShopSettings } from '../actions/storeSettings';
+import { saveAuthSettings, saveCheckoutSettings, saveShopSettings } from '../actions/storeSettings';
+import AuthSettingsForm from '../components/AuthSettingsForm';
 import CheckoutSettingsForm from '../components/CheckoutSettingsForm';
 import ShopSettingsForm from '../components/ShopSettingsForm';
 import { requireShopOwner } from '../lib/auth';
@@ -11,10 +12,10 @@ import { requireShopOwner } from '../lib/auth';
 export const dynamic = 'force-dynamic';
 
 /**
- * Store settings, one section per area (decided 2026-11-19). "Shop" and
- * "Checkout" so far; the order in which the rest arrive is in
- * docs/single-codebase-plan.md. Email has its own settings under
- * /admin/email/settings.
+ * Store settings, one section per area (decided 2026-11-19). "Shop",
+ * "Checkout" and "Sign-in and security" so far; the order in which the
+ * rest arrive is in docs/single-codebase-plan.md. Email has its own
+ * settings under /admin/email/settings.
  */
 export default async function AdminSettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -23,7 +24,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
 
   // Which sections have a row of their own, read fresh (not through the
   // cache) so each hint is right straight after a save.
-  const keys: StoreSettingKey[] = ['shop', 'checkout'];
+  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth'];
   const { data: rows } = await supabase.from('store_settings').select('key, value').in('key', keys);
   const isSaved = (key: StoreSettingKey) => {
     const row = rows?.find((candidate) => candidate.key === key);
@@ -32,6 +33,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
 
   const shop = await getStoreSetting('shop');
   const checkout = await getStoreSetting('checkout');
+  const auth = await getStoreSetting('auth');
 
   return (
     <div className="space-y-6">
@@ -51,6 +53,12 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         allowedCountries={checkout.allowedCountries}
         countries={countriesByName(locale)}
         fromDefault={!isSaved('checkout')}
+      />
+      <AuthSettingsForm
+        save={saveAuthSettings.bind(null, { locale })}
+        customerSignIn={auth.customerSignIn}
+        adminMfa={auth.adminMfa}
+        fromDefault={!isSaved('auth')}
       />
     </div>
   );

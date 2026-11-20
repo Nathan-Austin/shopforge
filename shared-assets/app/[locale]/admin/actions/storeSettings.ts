@@ -18,7 +18,21 @@ interface Context {
 
 export type StoreSettingsActionResult =
   | { ok: true }
-  | { ok: false; error: 'not_authorized' | 'invalid' | 'failed'; issues?: SettingIssue[]; message?: string };
+  | {
+      ok: false;
+      error: 'not_authorized' | 'mfa_required' | 'invalid' | 'failed';
+      issues?: SettingIssue[];
+      message?: string;
+    };
+
+/**
+ * Why the guard said no. A session that has not passed the second factor
+ * is told so, rather than being called unauthorized: the owner only needs
+ * to enter their code.
+ */
+function refusal(error: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'MFA_REQUIRED'): StoreSettingsActionResult {
+  return { ok: false, error: error === 'MFA_REQUIRED' ? 'mfa_required' : 'not_authorized' };
+}
 
 export async function saveShopSettings(
   context: Context,
@@ -26,7 +40,7 @@ export async function saveShopSettings(
   formData: FormData
 ): Promise<StoreSettingsActionResult> {
   const { error, supabase, user } = await ensureShopOwner();
-  if (error || !supabase) return { ok: false, error: 'not_authorized' };
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
 
   const saved = await saveStoreSetting(
     supabase,
@@ -68,7 +82,7 @@ export async function saveCheckoutSettings(
   formData: FormData
 ): Promise<StoreSettingsActionResult> {
   const { error, supabase, user } = await ensureShopOwner();
-  if (error || !supabase) return { ok: false, error: 'not_authorized' };
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
 
   const saved = await saveStoreSetting(
     supabase,
@@ -89,6 +103,48 @@ export async function saveCheckoutSettings(
 
   // The checkout page and the delivery countries in every page's
   // structured data.
+  revalidatePath('/', 'layout');
+  revalidatePath(`/${context.locale}/admin/settings`);
+  return { ok: true };
+}
+
+export async function saveAuthSettings(
+  context: Context,
+  _previous: StoreSettingsActionResult | null,
+  formData: FormData
+): Promise<StoreSettingsActionResult> {
+  // ensureShopOwner() is itself the guard on turning the second factor
+  // off: while the setting says required, it refuses a session that has
+  // not passed the factor, so only an MFA-verified owner can switch it.
+  const { error, supabase, user } = await ensureShopOwner();
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
+
+  const wanted = {
+    customerSignIn: formData.get('customerSignIn')?.toString() ?? '',
+    adminMfa: formData.get('adminMfa')?.toString() ?? ''
+  };
+
+  // Off means off: the enrolled authenticator goes too. Done before the
+  // row is written, so a failure here leaves the shop as it was, still
+  // asking for the code, rather than with MFA switched off and a factor
+  // left behind that the database would then insist on (0013).
+  if (wanted.adminMfa === 'off') {
+    const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+    if (listError) return { ok: false, error: 'failed', message: listError.message };
+    for (const factor of factors?.all ?? []) {
+      const { error: unenrollError } = await supabase.auth.mfa.unenroll({ factorId: factor.id });
+      if (unenrollError) return { ok: false, error: 'failed', message: unenrollError.message };
+    }
+  }
+
+  const saved = await saveStoreSetting(supabase, 'auth', wanted, user?.id ?? null);
+  if (!saved.ok) {
+    return saved.error === 'invalid'
+      ? { ok: false, error: 'invalid', issues: saved.issues }
+      : { ok: false, error: 'failed', message: saved.message };
+  }
+
+  // The sign-in and sign-up pages, and the admin guard on every request.
   revalidatePath('/', 'layout');
   revalidatePath(`/${context.locale}/admin/settings`);
   return { ok: true };

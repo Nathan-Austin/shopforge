@@ -877,6 +877,7 @@ cat > src/messages/en.json <<'EOF'
         "savedNotice": "Saved. The changes are live.",
         "errors": {
           "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Enter a name of up to 80 characters.",
           "failed": "The settings could not be saved."
         }
@@ -899,7 +900,33 @@ cat > src/messages/en.json <<'EOF'
         "savedNotice": "Saved. Checkout follows the new settings.",
         "errors": {
           "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
           "invalid": "Pick at least one country you deliver to.",
+          "failed": "The settings could not be saved."
+        }
+      },
+      "auth": {
+        "heading": "Sign-in and security",
+        "hint": "How customers sign in, and how you get into the admin.",
+        "fromDefault": "Not saved yet: this is how the shop was set up. Save to make it yours.",
+        "customerHeading": "Customer sign-in",
+        "customer_password": "Email and password",
+        "customer_password_hint": "Customers choose a password and can reset it by email.",
+        "customer_otp": "Email and a six-digit code",
+        "customer_otp_hint": "No passwords for customers: each sign-in sends a code. You keep yours for the admin.",
+        "mfaHeading": "Your second factor",
+        "mfa_required": "Password and an authenticator code",
+        "mfa_required_hint": "The admin asks for a code from your authenticator app on every new session.",
+        "mfa_off": "Password only",
+        "mfa_off_hint": "Faster to get in, and only as safe as your password.",
+        "mfaOffWarning": "Saving this removes the authenticator app from your account, and your password alone will open the admin.",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. Sign-in follows the new settings.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
+          "invalid": "Pick one option in each group.",
           "failed": "The settings could not be saved."
         }
       }
@@ -2205,6 +2232,7 @@ cat > src/messages/de.json <<'EOF'
         "savedNotice": "Gespeichert. Die Änderungen sind aktiv.",
         "errors": {
           "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Geben Sie einen Namen mit höchstens 80 Zeichen ein.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden."
         }
@@ -2227,7 +2255,33 @@ cat > src/messages/de.json <<'EOF'
         "savedNotice": "Gespeichert. Die Kasse richtet sich nach den neuen Einstellungen.",
         "errors": {
           "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Wählen Sie mindestens ein Lieferland aus.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+        }
+      },
+      "auth": {
+        "heading": "Anmeldung und Sicherheit",
+        "hint": "Wie Kundinnen sich anmelden und wie Sie in die Verwaltung kommen.",
+        "fromDefault": "Noch nicht gespeichert: So wurde der Shop eingerichtet. Speichern Sie, um es festzulegen.",
+        "customerHeading": "Anmeldung für Kundinnen",
+        "customer_password": "E-Mail und Passwort",
+        "customer_password_hint": "Kundinnen wählen ein Passwort und können es per E-Mail zurücksetzen.",
+        "customer_otp": "E-Mail und sechsstelliger Code",
+        "customer_otp_hint": "Keine Passwörter für Kundinnen: Jede Anmeldung schickt einen Code. Ihres behalten Sie für die Verwaltung.",
+        "mfaHeading": "Ihr zweiter Faktor",
+        "mfa_required": "Passwort und Authenticator-Code",
+        "mfa_required_hint": "Die Verwaltung fragt bei jeder neuen Sitzung nach dem Code aus Ihrer Authenticator-App.",
+        "mfa_off": "Nur Passwort",
+        "mfa_off_hint": "Schneller hinein und nur so sicher wie Ihr Passwort.",
+        "mfaOffWarning": "Beim Speichern wird die Authenticator-App aus Ihrem Konto entfernt, und Ihr Passwort allein öffnet die Verwaltung.",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Die Anmeldung richtet sich nach den neuen Einstellungen.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
+          "invalid": "Wählen Sie in jeder Gruppe eine Option.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden."
         }
       }
