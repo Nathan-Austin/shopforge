@@ -84,9 +84,9 @@ and one chilli-only file (`Chip.tsx`). Grouped by what would replace them:
 |---|---|---|---|
 | **Schema** | `migrations/0001_init.sql` | Chilli adds `chilli_types`, `products_chilli_types`, `heat_level` and `scoville_shu` on products, their RLS and the view that exposes them (not on brands — the 2026-11-19 note said so and was wrong) | ~~Ship the chilli tables to every shop~~ **done 2026-11-20 in `lib/migrations/0014_chilli_everywhere.sql`**: a no-op in a chilli shop, empty tables and two more null columns in a generic one, `products_public` recreated with heat in it. The two `0001_init` files can be collapsed into one once nothing else differs |
 | **Seeds** | `seeds.sql`, `brand-single.sql` | Different example categories, brands, pepper types; `__HEAT_n__` rescaled | Seeds leave the migration series. The wizard offers "add example products" per mode, or nothing |
-| **Admin product pages** | `products/page.tsx`, `products/new`, `products/[id]`, `ProductForm.tsx`, `createProduct.ts`, `updateProduct.ts`, `deleteProduct.ts`, `ImageUploader.tsx` | Heat, chilli types and Scoville fields; chilli-type joins on save and delete | One set of files that render the chilli fields when `mode === 'chilli'`. The field catalogue already marks chilli-only fields (`modes: ['chilli']`), so most of the form can be driven by it |
-| **Storefront** | `ProductCard`, `ProductArchive`, `ShopArchive`, `ProductExtras`, `BrandCard`, `types.ts`, `Chip.tsx` | Heat meter, heat filter and sort, chilli-type chips | Same: one component, a mode check around the chilli parts. `ShopArchive` already isolates the fetching, so the query adds the chilli join only when enabled |
-| **Email starters** | `admin/email/mode.ts` | Different starter templates and accent colour, heat on product blocks | One file with both starter sets, picked by mode |
+| **Admin product pages** | `products/page.tsx`, `products/new`, `products/[id]`, `ProductForm.tsx`, `createProduct.ts`, `updateProduct.ts`, `deleteProduct.ts`, `ImageUploader.tsx` | Heat, chilli types and Scoville fields; chilli-type joins on save and delete | **Done 2026-11-20** (sessions 1–2): one set in `shared-assets`, driven by `shop.mode` and the field catalogue, with the join sync guarded by a marker field (`lib/products/chilliTypes.ts`) so a form without the control cannot clear a product's types |
+| **Storefront** | `ProductCard`, `ProductArchive`, `ShopArchive`, `ProductExtras`, `BrandCard`, `types.ts`, `Chip.tsx` | Heat meter, heat filter and sort, chilli-type chips | **Done 2026-11-20** (session 3): one component each in `shared-assets`, with the heat scale as the signal and the chilli-type queries skipped where there is none |
+| **Email starters** | `admin/email/mode.ts` | Different starter templates and accent colour, heat on product blocks | **Done 2026-11-20**: one file with both starter sets, `startersFor(mode)` picking one; the campaign hooks read the heat columns everywhere and add heat lines only where there is a scale |
 
 Messages are already shared: both modes use the same message files (the
 `SauceArchive` and `UI.product.featuredSauces` keys carry chilli-era names
@@ -198,13 +198,19 @@ is retired.
      same session, earlier than planned and deliberately: nobody is
      running this yet, so the admin half can land before the storefront
      follows.
-   - **Session 3 — the storefront.** `ProductCard`, `ProductArchive`,
-     `ShopArchive`, `ProductExtras`, `BrandCard`, `Chip.tsx` and
-     `types.ts` (which the admin pages are working around with shapes of
-     their own), plus the email starters. Until it lands, a shop switched
-     to chilli gets the admin side only — the storefront still renders
-     whatever its generated components do. Then one `0001_init` for both
-     modes, and `--mode` stops copying directories.
+   - **Session 3 — done 2026-11-20. Step 6 is complete.** Every store
+     component (`types.ts`, `BrandShowcase`, `Chip`, `ProductCard`,
+     `BrandCard`, `ProductExtras`, `ShopArchive`, `ProductArchive`) and
+     the email starters are in `shared-assets`, and `0001_init` is one
+     file in `lib/migrations/`. The storefront reads one signal: the heat
+     scale, null unless the shop is in chilli mode, which is what makes
+     the heat badge, meter, sorts, filters and chips appear or vanish;
+     `ShopArchive` skips the chilli-type queries where there is no scale.
+     Two cosmetic differences (the accent colour, the empty-photo
+     placeholder) are conditionals awaiting the theme system (2e).
+     `store-modes/` now holds example data only — `seeds.sql` and
+     `brand-single.sql` — so `--mode` chooses a starting setting and a
+     demo catalogue, not a codebase.
 7. **Languages at runtime** (M). `src/proxy.ts` reads the locales through
    the same cached reader (Q3).
 8. **Then** section 0's later items: the deploy button, the first-run wizard

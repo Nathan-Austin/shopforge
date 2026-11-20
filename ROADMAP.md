@@ -91,11 +91,12 @@ details for each item are in the numbered sections below.
    country — followed the same day, and so did 5b, one currency per shop:
    no migration was needed in the end, a save-time guard instead (the
    dry run first, as agreed). Step 5 is done, and step 6 has started:
-   sessions 1 and 2 landed 2026-11-20 — every shop has the chilli tables
-   (`0014`), the store mode is a setting with a picker in the admin, and
-   the admin product files are one set for both modes (only the email
-   starters still differ). Session 3 is the storefront: the product card,
-   archive, extras, brand card and the shared types.
+   **step 6 is done** (all three sessions, 2026-11-20): every shop has the
+   chilli tables (`0014`), the store mode is a setting with a picker in
+   the admin, and the admin pages, the storefront components, the email
+   starters and `0001_init` are each one thing for both modes.
+   `store-modes/` holds example data only. Next is plan step 7, the
+   locales at runtime, and then section 0's deploy button and wizard.
 3. **Storefront content without code** (section 2f), once the settings
    above are in place. The logo landed 2026-11-20 (Q5 closed); next are
    the home page sections, then navigation. These are what make a shop
@@ -781,8 +782,8 @@ Decided on 2026-11-02:
   country, and the Shop section holds the one currency every price is in,
   guarded so it can only change when nothing priced disagrees, plus the
   shop's one logo (header, structured data, and emails without their own),
-  and what the shop sells (ordinary products or chillies — the admin
-  follows it already, the storefront in the next session). The plan for moving the other generation-time choices
+  and what the shop sells (ordinary products or chillies — the admin and
+  the storefront both follow it since 2026-11-20). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
