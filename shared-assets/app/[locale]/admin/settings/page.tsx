@@ -68,6 +68,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         name={shop.name}
         brands={shop.brands}
         currency={shop.currency}
+        logoUrl={shop.logoUrl}
         locale={locale}
         fromDefault={!isSaved('shop')}
       />

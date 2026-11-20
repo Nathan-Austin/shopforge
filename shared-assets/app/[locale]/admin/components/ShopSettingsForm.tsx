@@ -1,18 +1,20 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import { BRAND_MODES, SHOP_CURRENCIES, SHOP_NAME_MAX } from '@/lib/settings/schema';
 import type { StoreSettingsActionResult } from '../actions/storeSettings';
 import { Field, inputClass } from './email-designer/fields';
+import ImageField from './email-designer/ImageField';
 
 interface ShopSettingsFormProps {
   save: (previous: StoreSettingsActionResult | null, formData: FormData) => Promise<StoreSettingsActionResult>;
   name: string;
   brands: (typeof BRAND_MODES)[number];
   currency: (typeof SHOP_CURRENCIES)[number];
+  logoUrl: string | null;
   /** For the links to whatever still disagrees with a new currency. */
   locale: string;
   /** True while these still come from the generated environment. */
@@ -20,9 +22,10 @@ interface ShopSettingsFormProps {
 }
 
 /** The "Shop" section of /admin/settings. */
-export default function ShopSettingsForm({ save, name, brands, currency, locale, fromDefault }: ShopSettingsFormProps) {
+export default function ShopSettingsForm({ save, name, brands, currency, logoUrl, locale, fromDefault }: ShopSettingsFormProps) {
   const t = useTranslations('Admin.settings.shop');
   const [result, action, pending] = useActionState(save, null);
+  const [logo, setLogo] = useState(logoUrl ?? '');
   const conflicts = result && !result.ok && result.error === 'currency_conflict' ? result.conflicts : null;
 
   return (
@@ -35,6 +38,9 @@ export default function ShopSettingsForm({ save, name, brands, currency, locale,
       <Field label={t('name')} hint={fromDefault ? t('nameFromDefault') : t('nameHint')}>
         <input name="name" defaultValue={name} required maxLength={SHOP_NAME_MAX} className={inputClass} />
       </Field>
+
+      <ImageField label={t('logo')} value={logo} onChange={setLogo} hint={t('logoHint')} />
+      <input type="hidden" name="logo_url" value={logo} />
 
       <Field label={t('currency')} hint={t('currencyHint')}>
         <select name="currency" defaultValue={currency} className={inputClass}>

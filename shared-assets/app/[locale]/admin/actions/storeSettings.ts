@@ -60,7 +60,8 @@ export async function saveShopSettings(
   const parsed = parseSetting('shop', {
     name: formData.get('name')?.toString() ?? '',
     brands: formData.get('brands')?.toString() ?? '',
-    currency: formData.get('currency')?.toString() ?? ''
+    currency: formData.get('currency')?.toString() ?? '',
+    logoUrl: formData.get('logo_url')?.toString().trim() || null
   });
   if (!parsed.ok) return { ok: false, error: 'invalid', issues: parsed.issues };
 
