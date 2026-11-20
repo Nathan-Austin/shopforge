@@ -3,12 +3,14 @@ import 'server-only';
 import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js';
 import { unstable_cache, updateTag } from 'next/cache';
 
+import { GENERATED_CONFIG } from './generated';
 import {
   parseSetting,
   resolveSetting,
   settingFallback,
   storeSettingTag,
   type SettingIssue,
+  type SettingsSources,
   type StoreSettingKey,
   type StoreSettings
 } from './schema';
@@ -49,23 +51,31 @@ async function readRow(key: StoreSettingKey): Promise<unknown> {
   return data?.value ?? null;
 }
 
+/** What a setting falls back to in this shop: its environment and its generated files. */
+const SOURCES: SettingsSources = { env: process.env, generated: GENERATED_CONFIG };
+
 export async function getStoreSetting<K extends StoreSettingKey>(key: K): Promise<StoreSettings[K]> {
-  if (!anonClient()) return settingFallback(key, process.env);
+  if (!anonClient()) return settingFallback(key, SOURCES);
   try {
     const cached = unstable_cache(() => readRow(key), ['store-settings', key], {
       tags: [storeSettingTag(key)],
       revalidate: SAFETY_NET_SECONDS
     });
-    return resolveSetting(key, await cached(), process.env);
+    return resolveSetting(key, await cached(), SOURCES);
   } catch (error) {
     console.error(`Could not read the ${key} settings; using the shop's defaults:`, error instanceof Error ? error.message : error);
-    return settingFallback(key, process.env);
+    return settingFallback(key, SOURCES);
   }
 }
 
 /** The shop's name, as customers see it. */
 export async function getShopName(): Promise<string> {
   return (await getStoreSetting('shop')).name;
+}
+
+/** Who collects the delivery address, and where the shop delivers. */
+export async function getCheckoutSettings(): Promise<StoreSettings['checkout']> {
+  return getStoreSetting('checkout');
 }
 
 export type SaveSettingResult<K extends StoreSettingKey> =

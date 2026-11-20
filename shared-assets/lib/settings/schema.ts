@@ -13,14 +13,38 @@
 
 import { z } from 'zod';
 
+import { COUNTRY_CODES, isCountryCode } from '@/lib/checkout/countries';
+
 /** Shown wherever a shop has no name at all. */
 export const DEFAULT_SHOP_NAME = 'Our shop';
 
 export const SHOP_NAME_MAX = 80;
 
+/** Who asks the customer for the delivery address. */
+export const CHECKOUT_ADDRESS_COLLECTORS = ['form', 'stripe'] as const;
+
+/** Where a shop delivers until it says otherwise. */
+export const DEFAULT_ALLOWED_COUNTRIES = ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'];
+
 export const STORE_SETTING_SCHEMAS = {
   shop: z.object({
     name: z.string().trim().min(1, { message: 'Enter a name' }).max(SHOP_NAME_MAX)
+  }),
+  checkout: z.object({
+    shippingAddress: z.enum(CHECKOUT_ADDRESS_COLLECTORS),
+    // Deduplicated and sorted, so the list a shop stores does not depend on
+    // the order the admin's checkboxes happened to be in.
+    allowedCountries: z
+      .array(
+        z
+          .string()
+          .trim()
+          .toUpperCase()
+          .refine(isCountryCode, { message: 'Not a country code' })
+      )
+      .min(1, { message: 'Pick at least one country' })
+      .max(COUNTRY_CODES.length)
+      .transform((codes) => [...new Set(codes)].sort())
   })
 };
 
@@ -30,12 +54,37 @@ export type StoreSettings = { [K in StoreSettingKey]: z.infer<(typeof STORE_SETT
 /** The environment a fallback may read; process.env in the shop, a fixture in tests. */
 export type SettingsEnv = Partial<Record<string, string | undefined>>;
 
-const FALLBACKS: { [K in StoreSettingKey]: (env: SettingsEnv) => StoreSettings[K] } = {
-  shop: (env) => ({ name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME })
+/**
+ * The shop's generated configuration, as much of it as the fallbacks read.
+ * Each entry is whatever the generated file holds and is checked here
+ * before it is believed, so this file never has to match the shape of a
+ * file a developer may have edited by hand. ./generated wires the real
+ * files in; a test passes a fixture.
+ */
+export type GeneratedConfig = {
+  checkout?: unknown;
 };
 
-export function settingFallback<K extends StoreSettingKey>(key: K, env: SettingsEnv): StoreSettings[K] {
-  return FALLBACKS[key](env);
+/** Where a fallback may look: the environment and the generated files. */
+export type SettingsSources = {
+  env?: SettingsEnv;
+  generated?: GeneratedConfig;
+};
+
+const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSettings[K] } = {
+  shop: ({ env = {} }) => ({ name: env.NEXT_PUBLIC_SHOP_NAME?.trim() || DEFAULT_SHOP_NAME }),
+  checkout: ({ generated = {} }) => {
+    // The generated src/lib/checkout/config.ts, if it still says something
+    // this version understands; the shipped defaults if it does not.
+    const parsed = STORE_SETTING_SCHEMAS.checkout.safeParse(generated.checkout);
+    return parsed.success
+      ? parsed.data
+      : { shippingAddress: 'form', allowedCountries: [...DEFAULT_ALLOWED_COUNTRIES].sort() };
+  }
+};
+
+export function settingFallback<K extends StoreSettingKey>(key: K, sources: SettingsSources): StoreSettings[K] {
+  return FALLBACKS[key](sources);
 }
 
 /**
@@ -43,8 +92,12 @@ export function settingFallback<K extends StoreSettingKey>(key: K, env: Settings
  * where it is missing or broken, field by field, so one bad field never
  * takes the others down with it.
  */
-export function resolveSetting<K extends StoreSettingKey>(key: K, stored: unknown, env: SettingsEnv): StoreSettings[K] {
-  const fallback = settingFallback(key, env);
+export function resolveSetting<K extends StoreSettingKey>(
+  key: K,
+  stored: unknown,
+  sources: SettingsSources
+): StoreSettings[K] {
+  const fallback = settingFallback(key, sources);
   if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return fallback;
 
   const schema = STORE_SETTING_SCHEMAS[key];
