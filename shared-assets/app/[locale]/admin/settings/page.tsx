@@ -2,9 +2,6 @@ import { getTranslations } from 'next-intl/server';
 
 import { countriesByName } from '@/lib/checkout/countries';
 import { availableProductFields, PRODUCT_FIELD_GROUPS } from '@/lib/products/catalogue';
-// Only for the currency the money fields are labelled with, until the
-// currency is a shop setting (5b).
-import { SHIPPING_CONFIG } from '@/lib/shipping/config';
 import { STORE_SETTING_SCHEMAS, type StoreSettingKey } from '@/lib/settings/schema';
 import { getHeatScale, getStoreSetting } from '@/lib/settings/store';
 import {
@@ -70,6 +67,8 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         save={saveShopSettings.bind(null, { locale })}
         name={shop.name}
         brands={shop.brands}
+        currency={shop.currency}
+        locale={locale}
         fromDefault={!isSaved('shop')}
       />
       <CheckoutSettingsForm
@@ -83,7 +82,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         save={saveShippingSettings.bind(null, { locale })}
         shipping={shipping}
         countries={countriesByName(locale)}
-        currency={SHIPPING_CONFIG.currency}
+        currency={shop.currency}
         fromDefault={!isSaved('shipping')}
       />
       <AuthSettingsForm

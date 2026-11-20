@@ -871,6 +871,11 @@ cat > src/messages/en.json <<'EOF'
         "name": "Shop name",
         "nameHint": "In the header, page titles, search results and emails.",
         "nameFromDefault": "Not saved yet: this is the name the shop was set up with. Save to make it yours.",
+        "currency": "Currency",
+        "currencyHint": "Every price in the shop is in this currency. Changing it never converts a price: each number keeps its value and gets the new label, so everything priced must be brought over first.",
+        "conflictProducts": "{count, plural, one {This product is} other {These products are}} priced in a different currency — open each and save it with its new price:",
+        "conflictDiscounts": "{count, plural, one {This discount code is} other {These discount codes are}} in a different currency — recreate {count, plural, one {it} other {them}} under Discounts:",
+        "conflictMore": "…and {count} more.",
         "brandsHeading": "Brands",
         "brands_single": "Only my own products",
         "brands_single_hint": "A brand is optional on products. If your shop has none yet, one named after the shop is created for you.",
@@ -882,6 +887,7 @@ cat > src/messages/en.json <<'EOF'
         "errors": {
           "not_authorized": "You are not allowed to do that.",
           "mfa_required": "Enter your authenticator code first, then try again.",
+          "currency_conflict": "Not saved: some prices are still in a different currency.",
           "invalid": "Enter a name of up to 80 characters.",
           "failed": "The settings could not be saved.",
           "rescale_failed": "The scale was saved, but your products still carry their old numbers. Try saving again."
@@ -2305,6 +2311,11 @@ cat > src/messages/de.json <<'EOF'
         "name": "Shop-Name",
         "nameHint": "Im Kopfbereich, in Seitentiteln, Suchergebnissen und E-Mails.",
         "nameFromDefault": "Noch nicht gespeichert: Das ist der Name aus der Einrichtung. Speichern Sie ihn, um ihn festzulegen.",
+        "currency": "Währung",
+        "currencyHint": "Jeder Preis im Shop ist in dieser Währung. Ein Wechsel rechnet nichts um: Jede Zahl behält ihren Wert und bekommt das neue Kürzel, daher muss vorher alles Bepreiste umgestellt werden.",
+        "conflictProducts": "{count, plural, one {Dieses Produkt ist} other {Diese Produkte sind}} in einer anderen Währung ausgezeichnet — öffnen und mit neuem Preis speichern:",
+        "conflictDiscounts": "{count, plural, one {Dieser Gutscheincode ist} other {Diese Gutscheincodes sind}} in einer anderen Währung — unter Gutscheincodes neu anlegen:",
+        "conflictMore": "…und {count} weitere.",
         "brandsHeading": "Marken",
         "brands_single": "Nur eigene Produkte",
         "brands_single_hint": "Eine Marke ist bei Produkten optional. Hat Ihr Shop noch keine, wird eine mit dem Namen des Shops angelegt.",
@@ -2316,6 +2327,7 @@ cat > src/messages/de.json <<'EOF'
         "errors": {
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
+          "currency_conflict": "Nicht gespeichert: Einige Preise sind noch in einer anderen Währung.",
           "invalid": "Geben Sie einen Namen mit höchstens 80 Zeichen ein.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden.",
           "rescale_failed": "Die Skala wurde gespeichert, Ihre Produkte tragen aber noch die alten Zahlen. Bitte erneut speichern."

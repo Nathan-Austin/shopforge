@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { rescaleHeat } from '@/lib/products/heat';
-import type { SettingIssue } from '@/lib/settings/schema';
+import { parseSetting, type SettingIssue } from '@/lib/settings/schema';
 import { getHeatScale, saveStoreSetting } from '@/lib/settings/store';
 import { ensureShopOwner } from '../lib/auth';
 
@@ -19,13 +19,25 @@ interface Context {
   locale: string;
 }
 
+/**
+ * What still carries another currency than the one being saved. A sample
+ * of each, with the full counts, so the form can link to the work left.
+ */
+export interface CurrencyConflicts {
+  products: { id: string; name: string; currency: string }[];
+  productCount: number;
+  discounts: { code: string; currency: string }[];
+  discountCount: number;
+}
+
 export type StoreSettingsActionResult =
   | { ok: true }
   | {
       ok: false;
-      error: 'not_authorized' | 'mfa_required' | 'invalid' | 'failed' | 'rescale_failed';
+      error: 'not_authorized' | 'mfa_required' | 'invalid' | 'failed' | 'rescale_failed' | 'currency_conflict';
       issues?: SettingIssue[];
       message?: string;
+      conflicts?: CurrencyConflicts;
     };
 
 /**
@@ -45,15 +57,55 @@ export async function saveShopSettings(
   const { error, supabase, user } = await ensureShopOwner();
   if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
 
-  const saved = await saveStoreSetting(
-    supabase,
-    'shop',
-    {
-      name: formData.get('name')?.toString() ?? '',
-      brands: formData.get('brands')?.toString() ?? ''
-    },
-    user?.id ?? null
-  );
+  const parsed = parseSetting('shop', {
+    name: formData.get('name')?.toString() ?? '',
+    brands: formData.get('brands')?.toString() ?? '',
+    currency: formData.get('currency')?.toString() ?? ''
+  });
+  if (!parsed.ok) return { ok: false, error: 'invalid', issues: parsed.issues };
+
+  // One currency per shop means nothing priced may disagree with it.
+  // Checked before the row is written, and refused with the work left
+  // rather than rewritten: putting a new currency code on an old number
+  // is a repricing only the owner can do. ilike without wildcards is
+  // case-insensitive equality, so a product saved as 'eur' matches EUR.
+  const sample = 20;
+  const [conflictingProducts, conflictingDiscounts] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, name, currency', { count: 'exact' })
+      .not('currency', 'ilike', parsed.value.currency)
+      .order('name')
+      .limit(sample),
+    supabase
+      .from('discount_codes')
+      .select('code, currency', { count: 'exact' })
+      .not('currency', 'is', null)
+      .not('currency', 'ilike', parsed.value.currency)
+      .order('code')
+      .limit(sample)
+  ]);
+  if (conflictingProducts.error || conflictingDiscounts.error) {
+    return {
+      ok: false,
+      error: 'failed',
+      message: (conflictingProducts.error ?? conflictingDiscounts.error)?.message
+    };
+  }
+  if ((conflictingProducts.count ?? 0) > 0 || (conflictingDiscounts.count ?? 0) > 0) {
+    return {
+      ok: false,
+      error: 'currency_conflict',
+      conflicts: {
+        products: (conflictingProducts.data ?? []) as CurrencyConflicts['products'],
+        productCount: conflictingProducts.count ?? 0,
+        discounts: (conflictingDiscounts.data ?? []) as CurrencyConflicts['discounts'],
+        discountCount: conflictingDiscounts.count ?? 0
+      }
+    };
+  }
+
+  const saved = await saveStoreSetting(supabase, 'shop', parsed.value, user?.id ?? null);
   if (!saved.ok) {
     return saved.error === 'invalid'
       ? { ok: false, error: 'invalid', issues: saved.issues }
