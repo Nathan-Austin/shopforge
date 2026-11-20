@@ -12,11 +12,13 @@
 import { AUTH_CONFIG } from '@/lib/auth/config';
 import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 import { HEAT_SCALE, PRODUCT_FIELD_KEYS } from '@/lib/products/config';
+import { SHIPPING_CONFIG } from '@/lib/shipping/config';
 import type { GeneratedConfig } from './schema';
 
 export const GENERATED_CONFIG: GeneratedConfig = {
   checkout: CHECKOUT_CONFIG,
   auth: AUTH_CONFIG,
   productFields: PRODUCT_FIELD_KEYS,
-  heat: HEAT_SCALE
+  heat: HEAT_SCALE,
+  shipping: SHIPPING_CONFIG
 };

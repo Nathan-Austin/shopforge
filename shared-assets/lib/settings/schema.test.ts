@@ -106,6 +106,76 @@ describe('resolveSetting', () => {
   });
 });
 
+describe('settingFallback, shipping', () => {
+  it('maps the generated config onto the setting, with no home country', () => {
+    const generated = {
+      shipping: {
+        box: { length: 300, width: 200, height: 100, weightGrams: 250 },
+        itemWeightGrams: 400,
+        flatRateCents: 700,
+        currency: 'EUR',
+        freeShippingThresholdCents: 6000,
+        label: 'Post'
+      }
+    };
+    expect(settingFallback('shipping', { generated })).toEqual({
+      flatRateCents: 700,
+      freeShippingThresholdCents: 6000,
+      label: 'Post',
+      itemWeightGrams: 400,
+      boxWeightGrams: 250,
+      homeCountry: null
+    });
+  });
+
+  it('keeps free shipping off when the generated config turned it off', () => {
+    const generated = {
+      shipping: {
+        box: { weightGrams: 200 },
+        itemWeightGrams: 500,
+        flatRateCents: 500,
+        freeShippingThresholdCents: null,
+        label: 'Standard Shipping'
+      }
+    };
+    expect(settingFallback('shipping', { generated }).freeShippingThresholdCents).toBeNull();
+  });
+
+  it('ships a default when the generated config is missing or unusable', () => {
+    expect(settingFallback('shipping', {})).toEqual({
+      flatRateCents: 500,
+      freeShippingThresholdCents: 5000,
+      label: 'Standard Shipping',
+      itemWeightGrams: 500,
+      boxWeightGrams: 200,
+      homeCountry: null
+    });
+    expect(settingFallback('shipping', { generated: { shipping: 'nonsense' } }).flatRateCents).toBe(500);
+  });
+});
+
+describe('parseSetting, shipping', () => {
+  const good = {
+    flatRateCents: 500,
+    freeShippingThresholdCents: null,
+    label: 'Standard Shipping',
+    itemWeightGrams: 500,
+    boxWeightGrams: 200,
+    homeCountry: 'de'
+  };
+
+  it('accepts a sensible document and tidies the home country', () => {
+    const parsed = parseSetting('shipping', good);
+    expect(parsed).toEqual({ ok: true, value: { ...good, homeCountry: 'DE' } });
+  });
+
+  it('refuses a negative rate, an unknown country and a missing label', () => {
+    expect(parseSetting('shipping', { ...good, flatRateCents: -1 }).ok).toBe(false);
+    expect(parseSetting('shipping', { ...good, homeCountry: 'XX' }).ok).toBe(false);
+    expect(parseSetting('shipping', { ...good, label: '  ' }).ok).toBe(false);
+  });
+});
+
 describe('resolveSetting, auth', () => {
   const generated = { auth: { customerSignIn: 'otp', adminMfa: 'off' } };
 

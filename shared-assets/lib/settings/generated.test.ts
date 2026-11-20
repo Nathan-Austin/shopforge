@@ -46,6 +46,18 @@ describe('the generated configuration', () => {
     expect(fallback.display).toBe(generated.display);
   });
 
+  it('is what the shipping setting falls back to', () => {
+    const generated = GENERATED_CONFIG.shipping as {
+      flatRateCents: number;
+      label: string;
+      box: { weightGrams: number };
+    };
+    const fallback = settingFallback('shipping', { generated: GENERATED_CONFIG });
+    expect(fallback.flatRateCents).toBe(generated.flatRateCents);
+    expect(fallback.label).toBe(generated.label);
+    expect(fallback.boxWeightGrams).toBe(generated.box.weightGrams);
+  });
+
   it('is what the checkout setting falls back to', () => {
     const generated = GENERATED_CONFIG.checkout as { shippingAddress: string; allowedCountries: string[] };
     const fallback = settingFallback('checkout', { generated: GENERATED_CONFIG });

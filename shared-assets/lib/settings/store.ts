@@ -89,6 +89,11 @@ export async function getAuthSettings(): Promise<StoreSettings['auth']> {
   return getStoreSetting('auth');
 }
 
+/** The shop's rates, parcel weights, label and home country. */
+export async function getShippingSettings(): Promise<StoreSettings['shipping']> {
+  return getStoreSetting('shipping');
+}
+
 /** The catalogue keys this shop's admin manages. */
 export async function getProductFieldKeys(): Promise<string[]> {
   return (await getStoreSetting('product_fields')).keys;

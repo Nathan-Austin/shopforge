@@ -38,6 +38,8 @@ export const ADMIN_MFA_MODES = ['required', 'off'] as const;
 /** How heat reads in the shop. Mirrors HeatDisplay in lib/products/heat.ts. */
 export const HEAT_DISPLAYS = ['number', 'word', 'both', 'peppers'] as const;
 
+export const SHIPPING_LABEL_MAX = 80;
+
 export const HEAT_BAND_WORD_MAX = 40;
 
 /** Where a shop delivers until it says otherwise. */
@@ -84,6 +86,30 @@ export const STORE_SETTING_SCHEMAS = {
       // Ascending, so the first band a level fits inside is its word.
       .transform((bands) => [...bands].sort((a, b) => a.upTo - b.upTo))
   }),
+  shipping: z.object({
+    /** Charged per order. The amounts here are in the shop's currency,
+     * which stays in the generated config until it is a setting (5b). */
+    flatRateCents: z.number().int().min(0).max(1_000_000),
+    /** Orders at or above this ship free; null turns free shipping off. */
+    freeShippingThresholdCents: z.number().int().min(0).max(100_000_000).nullable(),
+    /** Shown at checkout, on Stripe's page too. */
+    label: z.string().trim().min(1, { message: 'Enter a label' }).max(SHIPPING_LABEL_MAX),
+    /** Assumed weight per item, for the parcel weight Stripe is told. */
+    itemWeightGrams: z.number().int().min(0).max(1_000_000),
+    /** The empty box. */
+    boxWeightGrams: z.number().int().min(0).max(1_000_000),
+    /**
+     * Where the shop ships from: the one country the return-policy markup
+     * names, later the returns address. Null means not set, and the first
+     * delivery country stands in, as it always did.
+     */
+    homeCountry: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .refine(isCountryCode, { message: 'Not a country code' })
+      .nullable()
+  }),
   product_fields: z.object({
     // Catalogue keys. Which keys exist is the product catalogue's business
     // (lib/products/catalogue.ts), not this file's: a key this shop has no
@@ -115,6 +141,7 @@ export type GeneratedConfig = {
   productFields?: unknown;
   /** The generated HEAT_SCALE, or null in a store mode without heat. */
   heat?: unknown;
+  shipping?: unknown;
 };
 
 /** Where a fallback may look: the environment and the generated files. */
@@ -151,6 +178,32 @@ const FALLBACKS: { [K in StoreSettingKey]: (sources: SettingsSources) => StoreSe
     // the default below is only for a chilli shop with an unusable config.
     const parsed = STORE_SETTING_SCHEMAS.heat.safeParse(generated.heat);
     return parsed.success ? parsed.data : { max: 10, display: 'both', bands: [] };
+  },
+  shipping: ({ generated = {} }) => {
+    // The generated src/lib/shipping/config.ts, whose shape differs from
+    // the setting's: the box is an object there (its unused dimensions
+    // stay in the file for a later carrier integration), and it has no
+    // home country. Mapped field by field, checked as a whole.
+    const config = (generated.shipping ?? {}) as Record<string, unknown>;
+    const box = (config.box ?? {}) as Record<string, unknown>;
+    const parsed = STORE_SETTING_SCHEMAS.shipping.safeParse({
+      flatRateCents: config.flatRateCents,
+      freeShippingThresholdCents: config.freeShippingThresholdCents ?? null,
+      label: config.label,
+      itemWeightGrams: config.itemWeightGrams,
+      boxWeightGrams: box.weightGrams,
+      homeCountry: null
+    });
+    return parsed.success
+      ? parsed.data
+      : {
+          flatRateCents: 500,
+          freeShippingThresholdCents: 5000,
+          label: 'Standard Shipping',
+          itemWeightGrams: 500,
+          boxWeightGrams: 200,
+          homeCountry: null
+        };
   },
   product_fields: ({ generated = {} }) => {
     // PRODUCT_FIELD_KEYS from the generated src/lib/products/config.ts,
