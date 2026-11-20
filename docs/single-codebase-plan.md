@@ -137,8 +137,22 @@ is retired.
    Data API. Step 3 is complete.
    Each one: a schema and fallback in `lib/settings/schema.ts`, a section
    on `/admin/settings`, readers switched to `getStoreSetting()`.
-4. **Product fields and heat scale** (M). Already on the roadmap; no
-   migration for fields, one design decision for heat (Q4).
+4. **Product fields and heat scale** (M). ~~Product fields~~ done
+   2026-11-20: `store_settings:product_fields`, the catalogue's `*From`
+   helpers (the wrappers that read the generated keys are gone, so the
+   setting is the only source), the four product actions and the four
+   product pages reading it, the two `ProductForm`s taking the grouped
+   fields as a prop, and a picker on `/admin/settings`. No migration, as
+   expected: every column already exists.
+   The heat scale is what is left, and it waits on Q4, whose answer
+   changed once the column type and the view that depends on it were
+   looked at. Shape of the work: `lib/products/heat.ts` loses its
+   module-level scale the way the catalogue lost its key list (everything
+   through the `*On` functions), the scale is read by the server parents
+   and passed into `ProductCard`, `ProductArchive`, `ProductExtras`,
+   `BrandCard`, `ProductFieldInput` and the chilli email starters, the
+   generator stops rescaling `__HEAT_n__` seeds, and `/admin/settings`
+   gains the scale, the display choice and the word bands.
 5. **Shipping and currency** (M). The currency migration is the risky one;
    it gets its own session and a dry-run query first. Includes a home
    country setting (decided 2026-11-20): the one country the return-policy
@@ -172,7 +186,31 @@ first steps).
   through the Vercel API.)
 - **Q4. Heat storage.** Heat is stored on the shop's chosen scale today
   (seeds rescaled at generation). A runtime scale change would then need a
-  data migration. Proposal: store 0–10 always, scale at display.
+  data migration. The proposal was: store 0–10 always, scale at display.
+  *Looked at properly on 2026-11-20, and it is not free.* Two facts
+  decide it: `products.heat_level` and `chilli_types.heat_level` are
+  `integer`, and `products_public` selects `heat_level`, so a type change
+  means dropping and recreating that view inside a migration that must
+  also no-op on generic shops, which have no such column. The options:
+  - **(a) canonical 0–10 as integer.** No migration. But a shop on the
+    generator's 20-point scale then has only 11 distinct values, so half
+    its scale is decorative — it would show 0/20, 2/20, 4/20 and nothing
+    between.
+  - **(b) canonical 0–10 as `numeric(4,1)`.** Keeps every scale exact
+    (a 20-point scale lands on 0.5 steps) and no scale change ever touches
+    a row, which is what Q4 wanted. Costs the column-type migration and
+    the view recreation above.
+  - **(c) keep storing on the shop's scale, and rescale the rows when the
+    owner changes the scale** — one `update` over `products` and
+    `chilli_types` inside the save action, under the owner's RLS.
+    No migration, no view churn, no reinterpretation of existing values,
+    and the display code stays exactly as it is. The loss is only at the
+    moment of a rescale, which is inherent to rescaling.
+
+  *Recommendation (revised after looking): (c).* Scale changes are rare
+  and one-off, the rounding cost is the same as (b) at the moment it
+  happens, and it avoids both the type migration and the view rebuild.
+  **Needs a decision before the heat half of step 4 is written.**
 - **Q5. One logo.** The email brand has a logo; the SEO structured data
   (`lib/seo/store.ts`) reads `NEXT_PUBLIC_SHOP_LOGO_URL`; the site header
   shows only the name. Merge into one shop setting that the email brand,

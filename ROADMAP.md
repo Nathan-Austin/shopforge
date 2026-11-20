@@ -83,8 +83,10 @@ details for each item are in the numbered sections below.
    settings reader landed with the shop name as its first setting
    (`/admin/settings`), both 2026-11-19; the checkout address and delivery
    countries followed on 2026-11-20, as did the single/multi brand mode
-   and the sign-in and MFA settings — plan step 3 is done. Next is plan
-   step 4: the product fields and the heat scale.
+   and the sign-in and MFA settings — plan step 3 is done. Plan step 4 is
+   half done: the product fields landed 2026-11-20, and the heat scale is
+   next, once Q4 in the plan is answered (see the decision recorded
+   there).
 
 ## 1. Storefront and orders
 
@@ -216,13 +218,18 @@ details for each item are in the numbered sections below.
       EUR), seed products and the admin form with it, and use it as the
       default for amount discount codes and minimums. One currency per shop
       is the decision (2026-11-04); today it is per product and free text
-- [ ] Admin UI for `src/lib/products/config.ts`: tick which product fields the
-      shop manages, without editing the file. The columns already all exist,
-      so this needs no migration. Lands as a `product_fields` key in
-      `store_settings` and a section on `/admin/settings` (plan step 4)
+- [x] Admin UI for `src/lib/products/config.ts`: tick which product fields the
+      shop manages, without editing the file — done 2026-11-20 as a
+      `product_fields` key in `store_settings` and a section on
+      `/admin/settings`, with no migration (every column already exists).
+      A field switched off is hidden, never cleared, and a key belonging to
+      another store mode is ignored rather than trusted
 - [ ] Admin UI for the heat scale: rename or drop the word bands and switch
       how heat appears in the shop (word and number, word only, number only,
-      chilli icons). `HEAT_SCALE.display` already drives `formatHeat`
+      chilli icons). `HEAT_SCALE.display` already drives `formatHeat`.
+      Next in plan step 4, and it carries Q4 (how heat is stored when the
+      scale can change): the answer changed once `heat_level` turned out to
+      be an `integer` that `products_public` depends on
 - [ ] Theme tokens instead of hardcoded colours (the first step of the theme
       system, see section 2e)
 - [x] Discount codes — done 2026-11-04: `/admin/discounts` creates percent,
@@ -689,7 +696,8 @@ Decided on 2026-11-02:
   address, and where the shop delivers) and a Sign-in and security section
   (how customers sign in, and the admin's second factor). Writing any
   setting needs the second factor when the account has one enrolled
-  (`0013`), because the MFA switch is now a row like any other. The plan for moving the other generation-time choices
+  (`0013`), because the MFA switch is now a row like any other. A Product
+  fields section picks what the product form asks for. The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
