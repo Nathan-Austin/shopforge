@@ -1,11 +1,18 @@
 import { getTranslations } from 'next-intl/server';
 
 import { countriesByName } from '@/lib/checkout/countries';
+import { availableProductFields, PRODUCT_FIELD_GROUPS } from '@/lib/products/catalogue';
 import { STORE_SETTING_SCHEMAS, type StoreSettingKey } from '@/lib/settings/schema';
 import { getStoreSetting } from '@/lib/settings/store';
-import { saveAuthSettings, saveCheckoutSettings, saveShopSettings } from '../actions/storeSettings';
+import {
+  saveAuthSettings,
+  saveCheckoutSettings,
+  saveProductFieldSettings,
+  saveShopSettings
+} from '../actions/storeSettings';
 import AuthSettingsForm from '../components/AuthSettingsForm';
 import CheckoutSettingsForm from '../components/CheckoutSettingsForm';
+import ProductFieldsForm from '../components/ProductFieldsForm';
 import ShopSettingsForm from '../components/ShopSettingsForm';
 import { requireShopOwner } from '../lib/auth';
 
@@ -24,7 +31,7 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
 
   // Which sections have a row of their own, read fresh (not through the
   // cache) so each hint is right straight after a save.
-  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth'];
+  const keys: StoreSettingKey[] = ['shop', 'checkout', 'auth', 'product_fields'];
   const { data: rows } = await supabase.from('store_settings').select('key, value').in('key', keys);
   const isSaved = (key: StoreSettingKey) => {
     const row = rows?.find((candidate) => candidate.key === key);
@@ -34,6 +41,14 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
   const shop = await getStoreSetting('shop');
   const checkout = await getStoreSetting('checkout');
   const auth = await getStoreSetting('auth');
+  const productFields = await getStoreSetting('product_fields');
+
+  // Every field this shop could offer, grouped for the picker.
+  const available = availableProductFields();
+  const fieldGroups = PRODUCT_FIELD_GROUPS.map((group) => ({
+    group,
+    fields: available.filter((field) => field.group === group.key)
+  })).filter((entry) => entry.fields.length > 0);
 
   return (
     <div className="space-y-6">
@@ -59,6 +74,12 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         customerSignIn={auth.customerSignIn}
         adminMfa={auth.adminMfa}
         fromDefault={!isSaved('auth')}
+      />
+      <ProductFieldsForm
+        save={saveProductFieldSettings.bind(null, { locale })}
+        groups={fieldGroups}
+        keys={productFields.keys}
+        fromDefault={!isSaved('product_fields')}
       />
     </div>
   );

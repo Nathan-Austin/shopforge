@@ -149,3 +149,31 @@ export async function saveAuthSettings(
   revalidatePath(`/${context.locale}/admin/settings`);
   return { ok: true };
 }
+
+export async function saveProductFieldSettings(
+  context: Context,
+  _previous: StoreSettingsActionResult | null,
+  formData: FormData
+): Promise<StoreSettingsActionResult> {
+  const { error, supabase, user } = await ensureShopOwner();
+  if (error || !supabase) return refusal(error ?? 'FORBIDDEN');
+
+  // An empty list is allowed: a shop may manage nothing but the core
+  // columns (name, slug, price, image), which are not fields.
+  const saved = await saveStoreSetting(
+    supabase,
+    'product_fields',
+    { keys: formData.getAll('keys').map((value) => value.toString()) },
+    user?.id ?? null
+  );
+  if (!saved.ok) {
+    return saved.error === 'invalid'
+      ? { ok: false, error: 'invalid', issues: saved.issues }
+      : { ok: false, error: 'failed', message: saved.message };
+  }
+
+  // The product form, the product pages and the feeds.
+  revalidatePath('/', 'layout');
+  revalidatePath(`/${context.locale}/admin/settings`);
+  return { ok: true };
+}

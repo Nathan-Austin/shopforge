@@ -933,6 +933,22 @@ cat > src/messages/en.json <<'EOF'
           "invalid": "Pick one option in each group.",
           "failed": "The settings could not be saved."
         }
+      },
+      "productFields": {
+        "heading": "Product fields",
+        "hint": "What the product form asks for. Every field is already in the database, so switching one on needs nothing else.",
+        "fromDefault": "Not saved yet: these are the fields the shop was set up with. Save to make them yours.",
+        "selected": "{count, plural, =0 {No fields} one {# field} other {# fields}} selected",
+        "switchingOff": "Switching a field off hides it from the form and the shop. Nothing already saved is deleted, and switching it back on brings it into view again.",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedNotice": "Saved. The product form follows the new settings.",
+        "errors": {
+          "not_authorized": "You are not allowed to do that.",
+          "mfa_required": "Enter your authenticator code first, then try again.",
+          "invalid": "Those fields could not be saved.",
+          "failed": "The settings could not be saved."
+        }
       }
     },
     "title": "Store admin",
@@ -2286,6 +2302,22 @@ cat > src/messages/de.json <<'EOF'
           "not_authorized": "Das dürfen Sie nicht.",
           "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
           "invalid": "Wählen Sie in jeder Gruppe eine Option.",
+          "failed": "Die Einstellungen konnten nicht gespeichert werden."
+        }
+      },
+      "productFields": {
+        "heading": "Produktfelder",
+        "hint": "Wonach das Produktformular fragt. Jedes Feld existiert bereits in der Datenbank, Einschalten genügt.",
+        "fromDefault": "Noch nicht gespeichert: Das sind die Felder aus der Einrichtung. Speichern Sie sie, um sie festzulegen.",
+        "selected": "{count, plural, =0 {Keine Felder} one {# Feld} other {# Felder}} ausgewählt",
+        "switchingOff": "Ein ausgeschaltetes Feld verschwindet aus dem Formular und aus dem Shop. Gespeicherte Inhalte bleiben erhalten und sind nach dem Wiedereinschalten wieder da.",
+        "save": "Speichern",
+        "saving": "Wird gespeichert…",
+        "savedNotice": "Gespeichert. Das Produktformular richtet sich nach den neuen Einstellungen.",
+        "errors": {
+          "not_authorized": "Das dürfen Sie nicht.",
+          "mfa_required": "Geben Sie zuerst Ihren Authenticator-Code ein und versuchen Sie es erneut.",
+          "invalid": "Diese Felder konnten nicht gespeichert werden.",
           "failed": "Die Einstellungen konnten nicht gespeichert werden."
         }
       }
