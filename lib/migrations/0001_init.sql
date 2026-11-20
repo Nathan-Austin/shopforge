@@ -1,4 +1,9 @@
--- 0001_init: the base schema for the generic store mode.
+-- 0001_init: the base schema every shop starts from.
+--
+-- One file for both store modes since 2026-11-20 (plan step 6): it carries
+-- the chilli tables and columns too, empty and unused in a shop that is
+-- not in chilli mode. 0014_chilli_everywhere adds the same things to a
+-- shop generated before that date and is a no-op here.
 --
 -- Profiles, addresses, brands, categories, products and the server-side
 -- cart, with their indexes, triggers and row-level security; the
@@ -54,6 +59,15 @@ create table if not exists public.categories (
   updated_at timestamptz default now()
 );
 
+create table if not exists public.chilli_types (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text not null unique,
+  heat_level integer,
+  description text,
+  created_at timestamptz default now()
+);
+
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id),
@@ -65,6 +79,8 @@ create table if not exists public.products (
   details text,
   price_cents integer not null,
   currency text not null default 'EUR',
+  heat_level integer,
+  scoville_shu integer,
   image_url text,
   ingredients text,
   headline text,
@@ -101,6 +117,12 @@ create table if not exists public.products (
   updated_at timestamptz default now()
 );
 
+create table if not exists public.products_chilli_types (
+  product_id uuid references public.products(id) on delete cascade,
+  chilli_type_id uuid references public.chilli_types(id) on delete cascade,
+  primary key (product_id, chilli_type_id)
+);
+
 -- New table for server-side cart management
 create table if not exists public.cart_items (
   id uuid primary key default gen_random_uuid(),
@@ -134,6 +156,7 @@ create index if not exists idx_products_owner on public.products(owner_id);
 create index if not exists idx_products_slug on public.products(slug);
 create index if not exists idx_categories_slug on public.categories(slug);
 create index if not exists idx_brands_slug on public.brands(slug);
+create index if not exists idx_chilli_types_slug on public.chilli_types(slug);
 create index if not exists idx_cart_items_session on public.cart_items(cart_session_id);
 create index if not exists idx_cart_items_user on public.cart_items(user_id);
 
@@ -216,7 +239,9 @@ alter table public.profiles enable row level security;
 alter table public.addresses enable row level security;
 alter table public.brands enable row level security;
 alter table public.categories enable row level security;
+alter table public.chilli_types enable row level security;
 alter table public.products enable row level security;
+alter table public.products_chilli_types enable row level security;
 alter table public.cart_items enable row level security;
 
 drop policy if exists "Profiles select own" on public.profiles;
@@ -304,6 +329,19 @@ create policy "Categories manage"
   using (public.is_shop_owner())
   with check (public.is_shop_owner());
 
+drop policy if exists "Chilli types select all" on public.chilli_types;
+create policy "Chilli types select all"
+  on public.chilli_types
+  for select
+  using (true);
+
+drop policy if exists "Chilli types manage" on public.chilli_types;
+create policy "Chilli types manage"
+  on public.chilli_types
+  for all
+  using (public.is_shop_owner())
+  with check (public.is_shop_owner());
+
 -- The products table is no longer world-readable. It holds supplier-only
 -- columns (cost_price_cents, sku, barcode) and unpublished rows, and the anon
 -- key is public, so a `using (true)` select policy would hand a competitor
@@ -358,6 +396,8 @@ select
   p.country_of_origin,
   p.meta_title,
   p.meta_description,
+  p.heat_level,
+  p.scoville_shu,
   p.is_featured,
   p.created_at,
   p.updated_at,
@@ -422,6 +462,19 @@ revoke all on function public.decrement_product_stock(uuid, integer) from anon, 
 drop policy if exists "Products manage" on public.products;
 create policy "Products manage"
   on public.products
+  for all
+  using (public.is_shop_owner())
+  with check (public.is_shop_owner());
+
+drop policy if exists "Product chilli select" on public.products_chilli_types;
+create policy "Product chilli select"
+  on public.products_chilli_types
+  for select
+  using (true);
+
+drop policy if exists "Product chilli manage" on public.products_chilli_types;
+create policy "Product chilli manage"
+  on public.products_chilli_types
   for all
   using (public.is_shop_owner())
   with check (public.is_shop_owner());

@@ -8,14 +8,15 @@ that shops generated before 2026-11-06 were built from.
 
 | Source | Copied to | Notes |
 | --- | --- | --- |
-| `store-modes/<mode>/migrations/0001_init.sql` | `0001_init.sql` | The base schema. The only migration that differs per store mode |
+| `lib/migrations/0001_init.sql` | `0001_init.sql` | The base schema, shared by both store modes since 2026-11-20 (it carries the chilli tables, empty in a shop that does not use them) |
 | `lib/migrations/00NN_*.sql` | same name | Feature migrations, shared by every store mode |
 | `store-modes/<mode>/seeds.sql` | `0100_seeds.sql` | Example categories, brands and (chilli) pepper types |
 | `store-modes/<mode>/brand-single.sql` | `0101_brand_single.sql` | Single-brand shops only |
 | `lib/migrations/0102_storage_policies.sql` | same name | Policies on the `product-images` bucket |
 
-A store mode may override any shared file by shipping one with the same name
-in its own `migrations/` directory; the mode's copy wins.
+A store mode may still override any shared file by shipping one with the same
+name in its own `migrations/` directory; the mode's copy wins. No mode does
+today — the store mode is a setting (`shop.mode`), not a different schema.
 
 ## Numbering
 

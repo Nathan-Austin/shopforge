@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildStarterDocument } from '@/lib/email/campaigns/templates';
 import { validateCampaignDocument } from '@/lib/email/campaigns/schema';
-import { STARTER_KEYS, STARTERS } from './mode';
+import { STARTER_KEYS, startersFor } from './mode';
 
 /**
  * Every starter must be a valid document for any shop: one whose locales
@@ -14,11 +14,18 @@ const SHOPS = [
   { locales: ['fr', 'nl'], defaultLocale: 'fr' }
 ];
 
-describe.each(STARTER_KEYS)('the %s starter', (key) => {
-  it.each(SHOPS)('validates for locales $locales', ({ locales, defaultLocale }) => {
-    const result = validateCampaignDocument(buildStarterDocument(STARTERS[key], locales, defaultLocale));
-    if (!result.ok) throw new Error(JSON.stringify(result.issues));
-    expect(result.document.defaultLocale).toBe(defaultLocale);
-    expect(result.document.subject[defaultLocale]).toBeTruthy();
-  });
-});
+const MODES = ['generic', 'chilli'] as const;
+
+describe.each(MODES.flatMap((mode) => STARTER_KEYS.map((key) => [mode, key] as const)))(
+  'the %s shop\'s %s starter',
+  (mode, key) => {
+    it.each(SHOPS)('validates for locales $locales', ({ locales, defaultLocale }) => {
+      const result = validateCampaignDocument(
+        buildStarterDocument(startersFor(mode)[key], locales, defaultLocale)
+      );
+      if (!result.ok) throw new Error(JSON.stringify(result.issues));
+      expect(result.document.defaultLocale).toBe(defaultLocale);
+      expect(result.document.subject[defaultLocale]).toBeTruthy();
+    });
+  }
+);

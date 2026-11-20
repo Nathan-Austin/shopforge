@@ -564,16 +564,17 @@ fi
 echo "📝 Preparing database migrations (${STORE_MODE})..."
 mkdir -p supabase/migrations
 
-# 1. Schema, as a numbered series (see lib/migrations/README.md). 0001_init is
-# the mode's own base schema; 0002+ are the feature migrations every mode
-# shares. A mode may override a shared file by shipping the same name, so the
-# mode's directory is copied second. Numbers 0001-0099 are the schema; the
-# seeds and policies below take 0100+, so a schema migration added later can
-# never collide with a number a live shop has already applied.
+# 1. Schema, as a numbered series (see lib/migrations/README.md). Every file
+# is shared by both store modes, 0001_init included since 2026-11-20. A mode
+# may still override one by shipping the same name, so its directory is
+# copied second if it has one. Numbers 0001-0099 are the schema; the seeds
+# and policies below take 0100+, so a schema migration added later can never
+# collide with a number a live shop has already applied.
 for migration in "$SCRIPT_DIR"/lib/migrations/[0-9]*.sql; do
   cp "$migration" "supabase/migrations/$(basename "$migration")"
 done
 for migration in "$MODE_DIR"/migrations/[0-9]*.sql; do
+  [ -e "$migration" ] || continue
   cp "$migration" "supabase/migrations/$(basename "$migration")"
 done
 

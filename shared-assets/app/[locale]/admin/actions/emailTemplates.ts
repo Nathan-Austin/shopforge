@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { DEFAULT_LOCALE, LOCALES } from '@/i18n/config';
 import { campaignThemeFromBrand } from '@/lib/email/brand';
 import { loadEmailBrand } from '@/lib/email/brandStore';
+import { getShopMode } from '@/lib/settings/store';
 import type { CampaignIssue } from '@/lib/email/campaigns/schema';
 import { searchCatalog, sendCampaignTest } from '@/lib/email/campaigns/server';
 import type { CatalogProduct } from '@/lib/email/campaigns/context';
@@ -21,7 +22,7 @@ import {
   type TemplateSaveError
 } from '@/lib/email/campaigns/templates';
 import { maskEmail, type TestSendResult, type TestSendStatus } from '@/lib/email/campaigns/testSendLog';
-import { CAMPAIGN_MODE, STARTER_KEYS, STARTERS, type StarterKey } from '../email/mode';
+import { CAMPAIGN_MODE, STARTER_KEYS, startersFor, type StarterKey } from '../email/mode';
 import { ensureShopOwner } from '../lib/auth';
 
 export type EmailTemplateActionError = TemplateSaveError | 'starter' | 'not_found' | 'not_authorized' | 'failed';
@@ -56,7 +57,8 @@ export async function createEmailTemplate(
 
   // A shop that has set its email brand gets new templates in it; one that
   // has not keeps the starter's own accent colour.
-  const starterDocument = buildStarterDocument(STARTERS[starter], LOCALES, DEFAULT_LOCALE);
+  const starters = startersFor(await getShopMode());
+  const starterDocument = buildStarterDocument(starters[starter], LOCALES, DEFAULT_LOCALE);
   const { brand, stored } = await loadEmailBrand(supabase);
   const plan = planTemplateSave({
     name: formData.get('name'),
