@@ -4,9 +4,8 @@
  * the product page, the home page and the feed say the same thing.
  */
 
-import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
 import { SHIPPING_CONFIG } from '@/lib/shipping/config';
-import { getShopName } from '@/lib/settings/store';
+import { getCheckoutSettings, getShopName } from '@/lib/settings/store';
 import { siteUrl } from './alternates';
 import type { ProductJsonLdInput } from './jsonld';
 
@@ -32,11 +31,12 @@ export function logoUrl(): string | null {
  * countries the checkout accepts. Pass the order's currency when the
  * shipping config's one does not apply.
  */
-export function shippingPolicy(currency = SHIPPING_CONFIG.currency): ProductJsonLdInput['shipping'] {
+export async function shippingPolicy(currency = SHIPPING_CONFIG.currency): Promise<ProductJsonLdInput['shipping']> {
+  const { allowedCountries } = await getCheckoutSettings();
   return {
     rateCents: SHIPPING_CONFIG.flatRateCents,
     currency,
-    countries: [...CHECKOUT_CONFIG.allowedCountries]
+    countries: [...allowedCountries]
   };
 }
 
@@ -51,4 +51,16 @@ export function returnPolicy(country: string): ProductJsonLdInput['returnPolicy'
   if (!Number.isInteger(days) || days <= 0) return null;
   const fees = process.env.NEXT_PUBLIC_RETURN_FEES === 'customer' ? 'customer' : 'free';
   return { country, days, fees };
+}
+
+/**
+ * The same policy for the shop as a whole. Structured data takes one
+ * country, so this is the first of the countries the shop delivers to
+ * (they are stored in alphabetical order). A shop whose returns address
+ * is somewhere else wants a home-country setting; that belongs with the
+ * shipping settings, see docs/single-codebase-plan.md.
+ */
+export async function shopReturnPolicy(): Promise<ProductJsonLdInput['returnPolicy']> {
+  const { allowedCountries } = await getCheckoutSettings();
+  return returnPolicy(allowedCountries[0]);
 }

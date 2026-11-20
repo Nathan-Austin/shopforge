@@ -159,10 +159,13 @@ echo "🧭 Writing checkout config (shipping address: ${SHIPPING_ADDRESS})..."
 mkdir -p src/lib/checkout
 cat > src/lib/checkout/config.ts <<EOF
 /**
- * Checkout configuration.
+ * Checkout configuration: what this shop starts with.
  *
  * Written by extend-commerce-template.sh from --shipping=form|stripe.
- * Edit by hand or re-run the script to change it.
+ * This is the fallback, not the live setting: the Checkout section of
+ * /admin/settings writes a store_settings row, and from the moment the
+ * owner saves it that row decides (src/lib/settings/). Editing this file
+ * changes a shop that has never saved those settings.
  */
 export const CHECKOUT_CONFIG = {
   /**
@@ -174,8 +177,8 @@ export const CHECKOUT_CONFIG = {
   /**
    * Countries the shop delivers to, as ISO 3166-1 alpha-2 codes. The
    * checkout form offers exactly these, and in 'stripe' mode Stripe's page
-   * is limited to them too. Placeholder list: replace it with where you
-   * actually ship.
+   * is limited to them too. Placeholder list: pick where you actually ship
+   * in the admin, or edit this before the shop's first save.
    */
   allowedCountries: ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'],
 } as const;
@@ -187,6 +190,7 @@ mkdir -p src/app/api/checkout/session
 cat > src/app/api/checkout/session/route.ts <<'EOF'
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
+import type Stripe from 'stripe';
 import { z } from 'zod';
 
 import { getStripeServerClient } from '@/lib/stripe/server';
@@ -197,24 +201,29 @@ import { getCartSessionId } from '@/lib/cart/session';
 import { resolveCartDiscount } from '@/lib/discounts/service';
 import { clearAppliedDiscountCode } from '@/lib/discounts/session';
 import { createClient } from '@/lib/supabase/server';
-import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+import { getCheckoutSettings } from '@/lib/settings/store';
 
-const addressSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  addressLine1: z.string().min(1),
-  city: z.string().min(1),
-  postalCode: z.string().min(1),
-  // ISO 3166-1 alpha-2, stored uppercase so it matches what Stripe reports.
-  country: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z]{2}$/)
-    .refine((code) => (CHECKOUT_CONFIG.allowedCountries as readonly string[]).includes(code), {
-      message: 'We do not deliver to that country'
-    }),
-});
+/**
+ * Built per request: where the shop delivers is a store setting the owner
+ * can change at any time (/admin/settings), not a constant of the build.
+ */
+const addressSchemaFor = (allowedCountries: readonly string[]) =>
+  z.object({
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    addressLine1: z.string().min(1),
+    city: z.string().min(1),
+    postalCode: z.string().min(1),
+    // ISO 3166-1 alpha-2, stored uppercase so it matches what Stripe reports.
+    country: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{2}$/)
+      .refine((code) => allowedCountries.includes(code), {
+        message: 'We do not deliver to that country'
+      }),
+  });
 
 const checkoutSchema = z.object({
   email: z.email(),
@@ -228,11 +237,12 @@ export async function POST(request: Request) {
     const stripe = getStripeServerClient();
     const body = await request.json();
     const payload = checkoutSchema.parse(body);
-    // Who collects the address is decided in lib/checkout/config.ts. With
+    // Who collects the address is a store setting (/admin/settings). With
     // Stripe collecting, the form sends only the email and the address is
     // asked for on Stripe's page; otherwise it must be in the request.
-    const collectsAddressAtStripe = CHECKOUT_CONFIG.shippingAddress === 'stripe';
-    const address = collectsAddressAtStripe ? null : addressSchema.parse(body);
+    const checkout = await getCheckoutSettings();
+    const collectsAddressAtStripe = checkout.shippingAddress === 'stripe';
+    const address = collectsAddressAtStripe ? null : addressSchemaFor(checkout.allowedCountries).parse(body);
     
     // The cart is identified by the httpOnly cookie, never by anything the
     // caller sends, so a request cannot check out someone else's cart.
@@ -329,7 +339,10 @@ export async function POST(request: Request) {
       ...(collectsAddressAtStripe
         ? {
             shipping_address_collection: {
-              allowed_countries: [...CHECKOUT_CONFIG.allowedCountries],
+              // Checked against the ISO list on save; Stripe refuses one of
+              // the few it does not support, with a message naming it.
+              allowed_countries:
+                checkout.allowedCountries as Stripe.Checkout.SessionCreateParams.ShippingAddressCollection.AllowedCountry[],
             },
           }
         : {}),
@@ -971,6 +984,7 @@ import CheckoutForm from '@/components/cart/CheckoutForm';
 import DiscountCodeForm from '@/components/cart/DiscountCodeForm';
 import { resolveNewsletterStatus } from '@/lib/email/subscribers/config';
 import { createClient } from '@/lib/supabase/server';
+import { getCheckoutSettings } from '@/lib/settings/store';
 import { getCart } from '@/lib/cart/service';
 import { resolveCartDiscount } from '@/lib/discounts/service';
 import { formatPrice } from '@/lib/format';
@@ -1008,6 +1022,9 @@ export default async function CheckoutPage({
       </main>
     );
   }
+
+  // Who asks for the delivery address, and where the shop delivers.
+  const checkout = await getCheckoutSettings();
 
   return (
     <main className="mx-auto max-w-2xl p-6">
@@ -1050,7 +1067,13 @@ export default async function CheckoutPage({
         />
       </div>
 
-      <CheckoutForm locale={locale} defaultEmail={user?.email ?? ''} newsletter={(await resolveNewsletterStatus()).enabled} />
+      <CheckoutForm
+        locale={locale}
+        defaultEmail={user?.email ?? ''}
+        newsletter={(await resolveNewsletterStatus()).enabled}
+        asksForAddress={checkout.shippingAddress === 'form'}
+        countries={checkout.allowedCountries}
+      />
     </main>
   );
 }
@@ -1396,33 +1419,30 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+import { countryName } from '@/lib/checkout/countries';
 
 /**
  * Collects the delivery details and asks the server for a Stripe session.
  * The cart itself is never sent: the route reads it from the cart cookie.
- * When Stripe collects the address (lib/checkout/config.ts) only the email
- * is asked for here.
+ * Who collects the address and where the shop delivers are store settings
+ * the page reads and passes in, so changing them in the admin takes effect
+ * without a rebuild.
  */
-const ASKS_FOR_ADDRESS = CHECKOUT_CONFIG.shippingAddress === 'form';
-
-/** The country's name in the shopper's language, falling back to the code. */
-function countryName(code: string, locale: string): string {
-  try {
-    return new Intl.DisplayNames([locale], { type: 'region' }).of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
 export default function CheckoutForm({
   locale,
   defaultEmail,
-  newsletter = false
+  newsletter = false,
+  asksForAddress,
+  countries
 }: {
   locale: string;
   defaultEmail: string;
   /** Offer the newsletter box: only when the shop can send its confirmation. */
   newsletter?: boolean;
+  /** False when Stripe's own page collects the delivery address. */
+  asksForAddress: boolean;
+  /** Where the shop delivers, as ISO 3166-1 alpha-2 codes. */
+  countries: readonly string[];
 }) {
   const tNewsletter = useTranslations('Newsletter');
   const t = useTranslations('Checkout');
@@ -1480,11 +1500,11 @@ export default function CheckoutForm({
         <Input id="email" name="email" type="email" defaultValue={defaultEmail} required />
       </div>
 
-      {!ASKS_FOR_ADDRESS && (
+      {!asksForAddress && (
         <p className="text-sm text-gray-500">{t('addressAtStripe')}</p>
       )}
 
-      {ASKS_FOR_ADDRESS && (
+      {asksForAddress && (
       <>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -1523,7 +1543,7 @@ export default function CheckoutForm({
             <option value="" disabled>
               {t('selectCountry')}
             </option>
-            {CHECKOUT_CONFIG.allowedCountries.map((code) => (
+            {countries.map((code) => (
               <option key={code} value={code}>
                 {countryName(code, locale)}
               </option>

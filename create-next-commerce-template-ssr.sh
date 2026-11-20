@@ -3808,8 +3808,7 @@ import JsonLd from '@/components/seo/JsonLd';
 import { hreflangOf } from '@/lib/i18n/locales';
 import { localizedUrl, pageAlternates } from '@/lib/seo/alternates';
 import { onlineStoreJsonLd, webSiteJsonLd } from '@/lib/seo/jsonld';
-import { logoUrl, returnPolicy, shippingPolicy, shopName } from '@/lib/seo/store';
-import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+import { logoUrl, shippingPolicy, shopName, shopReturnPolicy } from '@/lib/seo/store';
 
 export async function generateMetadata({
   params
@@ -3842,8 +3841,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             name,
             url,
             logo: logoUrl(),
-            shipping: shippingPolicy(),
-            returnPolicy: returnPolicy(CHECKOUT_CONFIG.allowedCountries[0])
+            shipping: await shippingPolicy(),
+            returnPolicy: await shopReturnPolicy()
           }),
           webSiteJsonLd({ name, url, inLanguage: hreflangOf(locale) })
         ]}
@@ -3869,10 +3868,13 @@ EOF
 mkdir -p src/lib/checkout
 cat > src/lib/checkout/config.ts <<'EOF'
 /**
- * Checkout configuration.
+ * Checkout configuration: what this shop starts with.
  *
  * Written by extend-commerce-template.sh from --shipping=form|stripe.
- * Edit by hand or re-run the script to change it.
+ * This is the fallback, not the live setting: the Checkout section of
+ * /admin/settings writes a store_settings row, and from the moment the
+ * owner saves it that row decides (src/lib/settings/). Editing this file
+ * changes a shop that has never saved those settings.
  */
 export const CHECKOUT_CONFIG = {
   /**
@@ -3884,8 +3886,8 @@ export const CHECKOUT_CONFIG = {
   /**
    * Countries the shop delivers to, as ISO 3166-1 alpha-2 codes. The
    * checkout form offers exactly these, and in 'stripe' mode Stripe's page
-   * is limited to them too. Placeholder list: replace it with where you
-   * actually ship.
+   * is limited to them too. Placeholder list: pick where you actually ship
+   * in the admin, or edit this before the shop's first save.
    */
   allowedCountries: ['DE', 'AT', 'NL', 'BE', 'FR', 'IE', 'GB'],
 } as const;
@@ -4129,8 +4131,7 @@ import { formatPrice } from '@/lib/format';
 import { hreflangOf } from '@/lib/i18n/locales';
 import { localizedUrl, pageAlternates } from '@/lib/seo/alternates';
 import { availabilityFor, breadcrumbJsonLd, productJsonLd } from '@/lib/seo/jsonld';
-import { returnPolicy, shippingPolicy, shopName } from '@/lib/seo/store';
-import { CHECKOUT_CONFIG } from '@/lib/checkout/config';
+import { shippingPolicy, shopName, shopReturnPolicy } from '@/lib/seo/store';
 import {
   cleanList,
   formatDimensions,
@@ -4227,8 +4228,8 @@ export default async function ProductPage({ params }: { params: Params }) {
       priceCents: product.price_cents,
       currency: product.currency,
       availability: availabilityFor(status.kind),
-      shipping: shippingPolicy(product.currency),
-      returnPolicy: returnPolicy(CHECKOUT_CONFIG.allowedCountries[0]),
+      shipping: await shippingPolicy(product.currency),
+      returnPolicy: await shopReturnPolicy(),
       sellerName: await shopName()
     })
   ];
