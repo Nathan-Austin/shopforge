@@ -86,6 +86,11 @@ details for each item are in the numbered sections below.
    and the sign-in and MFA settings — plan step 3 is done, and so is step
    4 (product fields and the heat scale, both 2026-11-20). Next is plan
    step 5: shipping and currency, which carries the home-country setting.
+3. **Storefront content without code** (section 2f), once the settings
+   above are in place: the logo first, then the home page sections, then
+   navigation. These are what make a shop editable by its owner rather
+   than by an agent, and they reuse the email designer instead of growing
+   a second editor.
 
 ## 1. Storefront and orders
 
@@ -250,7 +255,8 @@ details for each item are in the numbered sections below.
 - [ ] Import from Shopify and WooCommerce product CSV exports (variants,
       images, prices, stock), and customers where the export allows
 - [ ] Legal page templates: Impressum, AGB, Widerrufsbelehrung, privacy
-      policy, editable in the admin
+      policy, editable in the admin. Folded into the page editor in 2f when
+      that lands: the same block editor, with these offered as drafts
 - [ ] Sales dashboard in the admin: revenue, orders, top products, low stock
 - [ ] Low stock alert email to the owner
 
@@ -481,6 +487,8 @@ loose in `/tmp`.
 Shop owners pick a theme in the admin, the way they would in Shopify or
 WordPress. A theme is a small preset file, not a fork of the components, so
 the token system and the layout variants come first and the themes after.
+Themes decide how the shop looks; what it says and how its pages are
+arranged is section 2f.
 
 What a theme is:
 
@@ -523,6 +531,55 @@ Order of work, one session each:
 - [ ] Contrast check in CI for every theme
 - [ ] Ten starter themes, a few per turn, each with a name, a one-line style
       description, its tokens, its layout choices and its font licences
+
+## 2f. Storefront content without code
+
+Themes (2e) decide how a shop looks; this section is what a shop owner can
+*say* and *arrange* without opening an editor. It is the gap between the
+settings work in section 0 and a shop an owner would recognise from Shopify
+or WordPress: today the storefront's wording, structure and navigation are
+all in the components.
+
+Two things already built are the ground to stand on: the email designer
+(2d C) is a working block editor — a validated document, drag and drop,
+per-locale text, live preview — and the email brand (2d G1) is a working
+"your look, saved as a setting". The items below reuse both rather than
+inventing a second editor.
+
+In priority order:
+
+- [ ] **One logo and brand assets setting.** The email brand has a logo,
+      the structured data reads `NEXT_PUBLIC_SHOP_LOGO_URL`, and the site
+      header shows only the shop's name. Merge them into one `store_settings`
+      key the header, the emails and the JSON-LD all read, with an upload in
+      the admin (Q5 in `docs/single-codebase-plan.md`). Nothing else here
+      looks finished until a shop can show its own logo
+- [ ] **A home page made of sections.** The owner arranges a hero, featured
+      products or a collection, an image banner, rich text and a newsletter
+      block, and reorders them — the email designer's schema, drag and drop
+      and per-locale text, rendered as storefront sections instead of email
+      tables. Stored as a settings document, validated the same way, with a
+      bad block dropped rather than breaking the page. This is the single
+      biggest thing standing between the shop and a non-technical owner
+- [ ] **Navigation the owner controls.** Header and footer menus as saved
+      links — to a category, a product, a page or a URL — with labels per
+      locale, instead of the links being written into the layout
+- [ ] **Media library.** Uploads that are not product images: hero and
+      banner artwork, the logo, anything a section or page needs. One
+      bucket with the owner-only policies `product-images` already has
+      (`0102_storage_policies.sql`), a picker shared by the section editor,
+      the page editor and the email designer
+- [ ] **Draft and publish, with preview.** Changes to a theme, the home page
+      or a page are saved as a draft the owner can look at on the real
+      storefront before customers see them, then published in one step. The
+      theme picker in 2e wants this too, and it is much cheaper to build
+      once, under the settings reader, than per feature
+- [ ] **Pages the owner writes.** About, Contact, shipping and returns, and
+      the legal pages (Impressum, AGB, Widerrufsbelehrung, privacy) from the
+      item in section 2 — one page type with a slug, a title and the same
+      block editor, with the legal ones offered as starting drafts rather
+      than as a separate feature. Replaces the "Legal page templates" item
+      above once it lands
 
 ## 3. Languages
 
