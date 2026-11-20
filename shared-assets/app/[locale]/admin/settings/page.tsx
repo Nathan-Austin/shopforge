@@ -39,7 +39,12 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
         <h2 className="text-xl font-bold">{t('heading')}</h2>
         <p className="mt-1 text-sm text-stone-600">{t('subheading')}</p>
       </div>
-      <ShopSettingsForm save={saveShopSettings.bind(null, { locale })} name={shop.name} fromDefault={!isSaved('shop')} />
+      <ShopSettingsForm
+        save={saveShopSettings.bind(null, { locale })}
+        name={shop.name}
+        brands={shop.brands}
+        fromDefault={!isSaved('shop')}
+      />
       <CheckoutSettingsForm
         save={saveCheckoutSettings.bind(null, { locale })}
         shippingAddress={checkout.shippingAddress}

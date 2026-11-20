@@ -3,19 +3,20 @@
 import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { SHOP_NAME_MAX } from '@/lib/settings/schema';
+import { BRAND_MODES, SHOP_NAME_MAX } from '@/lib/settings/schema';
 import type { StoreSettingsActionResult } from '../actions/storeSettings';
 import { Field, inputClass } from './email-designer/fields';
 
 interface ShopSettingsFormProps {
   save: (previous: StoreSettingsActionResult | null, formData: FormData) => Promise<StoreSettingsActionResult>;
   name: string;
-  /** True while the name still comes from the generated environment. */
+  brands: (typeof BRAND_MODES)[number];
+  /** True while these still come from the generated environment. */
   fromDefault: boolean;
 }
 
 /** The "Shop" section of /admin/settings. */
-export default function ShopSettingsForm({ save, name, fromDefault }: ShopSettingsFormProps) {
+export default function ShopSettingsForm({ save, name, brands, fromDefault }: ShopSettingsFormProps) {
   const t = useTranslations('Admin.settings.shop');
   const [result, action, pending] = useActionState(save, null);
 
@@ -29,6 +30,19 @@ export default function ShopSettingsForm({ save, name, fromDefault }: ShopSettin
       <Field label={t('name')} hint={fromDefault ? t('nameFromDefault') : t('nameHint')}>
         <input name="name" defaultValue={name} required maxLength={SHOP_NAME_MAX} className={inputClass} />
       </Field>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">{t('brandsHeading')}</legend>
+        {BRAND_MODES.map((mode) => (
+          <label key={mode} className="flex items-start gap-2 text-sm font-normal">
+            <input type="radio" name="brands" value={mode} defaultChecked={brands === mode} className="mt-1" />
+            <span>
+              {t(`brands_${mode}`)}
+              <span className="block text-xs text-stone-500">{t(`brands_${mode}_hint`)}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
 
       <button
         type="submit"
