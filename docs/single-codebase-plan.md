@@ -49,7 +49,7 @@ need an answer before code is written.
 
 | # | Choice | Prompt / variable | Lands in | Runtime readers | Route | Effort |
 |---|---|---|---|---|---|---|
-| 6 | Single or multi brand | "Store mode (single/multi)", `NEXT_PUBLIC_STORE_MODE` | `.env.local`; single also gets `0101_brand_single.sql` (a "House Brand" row) | `createProduct` / `updateProduct` in both modes (assign the house brand when single) | `store_settings:shop` → `{ brands: 'single' \| 'multi' }`. The house-brand row becomes something the wizard creates, not a migration | S |
+| 6 | Single or multi brand | "Store mode (single/multi)", `NEXT_PUBLIC_STORE_MODE` | `.env.local`; single also gets `0101_brand_single.sql` (a "House Brand" row) | `createProduct` / `updateProduct` in both modes (assign the house brand when single) | `store_settings:shop` → `{ brands: 'single' \| 'multi' }`. The house-brand row becomes something the wizard creates, not a migration — done 2026-11-20 (the row is created on saving single with no brands) | S |
 | 7 | Customer sign-in (`password` / `otp`) | `SHOPFORGE_CUSTOMER_AUTH` | `src/lib/auth/config.ts` `AUTH_CONFIG.customerSignIn` | Sign-in and sign-up pages, `OtpSignIn` | `store_settings:auth` → `{ customerSignIn, adminMfa }`. Client pages need it, so it is read in the server layout and passed down (it is not secret) | S |
 | 8 | Admin MFA (`required` / `off`) | `SHOPFORGE_ADMIN_MFA` | same file, `adminMfa` | Admin guard (`requireShopOwner`, `ensureShopOwner`) | Same row as #7. Turning MFA **off** from the admin must itself require an MFA-verified session | S |
 | 9 | Product fields the admin manages | field picker menu, `SHOPFORGE_PRODUCT_FIELDS` | `src/lib/products/config.ts` `PRODUCT_FIELD_KEYS` (every column exists either way) | Product form, create/update actions, product page, feeds | `store_settings:product_fields` → `{ keys }`. Already planned in section 2 ("Admin UI for products/config.ts"); no migration needed | M |
@@ -122,7 +122,12 @@ is retired.
    the config in the pages), with a country picker on `/admin/settings`.
    Fallbacks can now read the generated files as well as the environment
    (`lib/settings/generated.ts`), which the remaining two need.
-   Still to do: single/multi brand (#6), sign-in and MFA (#7, #8).
+   ~~Single/multi brand (#6)~~ done 2026-11-20: `shop.brands` with the
+   environment variable as its fallback, the four product actions ask
+   `getBrandMode()`, and a radio pair in the Shop section; switching to
+   single in a shop with no brands creates one named after the shop
+   (slug `house-brand`), existing products keep their brands.
+   Still to do: sign-in and MFA (#7, #8).
    Each one: a schema and fallback in `lib/settings/schema.ts`, a section
    on `/admin/settings`, readers switched to `getStoreSetting()`.
 4. **Product fields and heat scale** (M). Already on the roadmap; no

@@ -63,8 +63,8 @@ details for each item are in the numbered sections below.
    admin files moved to `shared-assets/app/[locale]/admin/` and the cached
    settings reader landed with the shop name as its first setting
    (`/admin/settings`), both 2026-11-19; the checkout address and delivery
-   countries followed on 2026-11-20. Next are the last two small settings
-   (plan step 3: single/multi brand, then sign-in and MFA).
+   countries followed on 2026-11-20, as did the single/multi brand mode.
+   Next is the last small setting (plan step 3: sign-in and MFA).
 
 ## 1. Storefront and orders
 
@@ -661,9 +661,9 @@ Decided on 2026-11-02:
   shop's brand and wording on the receipt, shipping and refund emails.
 - Store settings have a home: `store_settings` (0012), a cached typed
   reader (`lib/settings/`, falling back to the shop's environment and its
-  generated files), and `/admin/settings` with a Shop section (the name)
-  and a Checkout section (who collects the delivery address, and where the
-  shop delivers). The plan for moving the other generation-time choices
+  generated files), and `/admin/settings` with a Shop section (the name,
+  one brand or many) and a Checkout section (who collects the delivery
+  address, and where the shop delivers). The plan for moving the other generation-time choices
   there is `docs/single-codebase-plan.md`.
 - Shipped languages are English and German; any other locale starts as a
   copy of English.
@@ -700,6 +700,10 @@ Decided on 2026-11-02:
   state); receipts and refunds still copy `SHOP_OWNER_EMAIL`.
 - Every customer email (receipt, shipping, refund) is sent in the locale
   the customer checked out in, from the `Email.*` namespaces.
+- In a single-brand shop, a product saved with "No brand" is assigned the
+  shop's alphabetically first brand (the pages pass `brands[0]` as the
+  default), which is the house brand only while it is the only brand.
+  Picking it by its slug belongs with the categories and brands admin.
 - Promo codes are per order, not per customer: nothing stops the same
   person using a code twice from two carts. The usage cap is the only
   brake. Per-email limits are a listed follow-up.
