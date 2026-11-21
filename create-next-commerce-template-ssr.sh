@@ -4971,11 +4971,8 @@ export async function POST(request: Request) {
 EOF
 
 # 10.6) Admin panel
-echo "🛡️ Adding admin panel (${STORE_MODE})..."
-# Only what differs per mode (products, the product form, email starters);
-# the shared admin pages are already in place from shared-assets/app.
-mkdir -p src/app/[locale]/admin
-cp -R "$MODE_DIR/admin-components/." src/app/[locale]/admin
+# Nothing to do here: the admin pages are the same for both modes and are
+# already in place from shared-assets/app.
 
 # 11) Auth pages (email/password; no magic links)
 mkdir -p src/app/[locale]/auth/sign-in src/app/[locale]/auth/sign-up src/app/[locale]/auth/reset-password

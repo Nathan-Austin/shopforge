@@ -90,10 +90,8 @@ if ! grep -q '"server-only"' package.json; then
   pnpm add server-only
 fi
 
-echo "🛡️ Syncing admin panel components (${STORE_MODE})..."
-# On top of the shared admin pages copied from shared-assets/app above.
-mkdir -p src/app/[locale]/admin
-cp -R "$MODE_DIR/admin-components/." src/app/[locale]/admin/
+# The admin panel needs no per-mode files: the admin pages are the same for
+# both modes and were copied from shared-assets/app above.
 
 # --- Profile Management -----------------------------------------------------
 echo "👤 Setting up server-side profile management..."
