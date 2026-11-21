@@ -224,6 +224,19 @@ details for each item are in the numbered sections below.
       the SQL editor (setup guide, step 5)
 
 - [ ] Categories and brands admin
+- [ ] Draft products: when adding a product, the owner can save it as a
+      draft that is not live, so incoming stock can be prepared (copy,
+      photos, price, variants) before it arrives and published in one step
+      when it does. The starting point is the "Published" field
+      (`is_active`, `shared-assets/lib/products/catalogue.ts`), which
+      already hides a product from the shop, cart and product page but is
+      a plain checkbox the owner can even switch off in the product-field
+      settings. To do: make draft vs published always present and
+      explicit, with "Save as draft" and "Publish" buttons on the product
+      form, a Draft badge and filter in the admin product list, new
+      products starting as drafts unless published, and the product page
+      previewable by the owner while it is still a draft. Optional: an
+      expected-arrival date on the draft, as a reminder
 - [ ] Store settings (currency, shipping zones) in the database, replacing the
       hardcoded `src/lib/shipping/config.ts`. The table exists since
       2026-11-19 (`store_settings`, one JSON document per key, see 2d G1),
